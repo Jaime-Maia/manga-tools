@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>Gerador de Cabeças</title>
+<title>Head Generator</title>
 <style>
 :root{--font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--bg:#f3f1ec;--panel:#fff;--ink:#1d1d1f;--muted:#6d6c70;--line:#e4e1da;--chip:#f0eee8;--on:#fff;--accent:#e0474c;--paper:#fbfaf6;--dot:rgba(0,0,0,.07);--glass:rgba(255,255,255,.9);--glass-ink:#2a2a2e;--glass-muted:#6f6d68;--glass-line:#e4e1da;--glass-hover:#f0eee8}
 @media (prefers-color-scheme:dark){:root{--bg:#161618;--panel:#1f1f22;--ink:#ececee;--muted:#9a9aa1;--line:#323237;--chip:#2a2a2e;--on:#3b3b41;color-scheme:dark;
@@ -22,6 +22,8 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:14px/1
 #panel{overflow-y:auto;border-left:1px solid var(--line);background:var(--panel);padding-bottom:48px;-webkit-overflow-scrolling:touch}
 .ph{display:flex;justify-content:space-between;align-items:flex-start;padding:16px 16px 10px;gap:10px}
 .ph h1{font-size:18px;margin:0;letter-spacing:-.01em}
+.ver{font-size:11px;font-weight:600;color:var(--muted);background:var(--chip);border-radius:6px;padding:2px 6px;margin-left:6px;vertical-align:2px;letter-spacing:0}
+.help .vfoot{font-size:12px;color:var(--muted);margin:12px 0 0;text-align:center}
 .ph p{margin:2px 0 0;color:var(--muted);font-size:12px}
 .lang{display:flex;background:var(--chip);border-radius:8px;padding:2px}
 .lang button{border:0;background:transparent;color:var(--muted);font:600 12px/1 var(--font);padding:6px 8px;border-radius:6px;cursor:pointer}
@@ -30,7 +32,7 @@ details{border-top:1px solid var(--line)}
 summary{list-style:none;cursor:pointer;padding:12px 16px;font-weight:600;font-size:13px;letter-spacing:.02em;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center}
 summary::-webkit-details-marker{display:none}
 summary::after{content:"+";color:var(--muted);font-weight:400;font-size:16px}
-details[open] summary::after{content:"–"}
+details[open]>summary::after{content:"–"}
 .body{padding:0 16px 14px}
 .lbl{font-size:12px;color:var(--muted);margin:4px 0 6px}
 .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;background:var(--chip);padding:3px;border-radius:10px;margin-bottom:10px}
@@ -144,10 +146,11 @@ body.nonums .nb{display:none}
     <h2 id="help-t" data-i18n="help_t"></h2>
     <ol><li data-i18n="help_1"></li><li data-i18n="help_2"></li><li data-i18n="help_3"></li><li data-i18n="help_4"></li><li data-i18n="help_5"></li><li data-i18n="help_6"></li></ol>
     <button class="btn primary" id="help-ok" data-i18n="help_ok"></button>
+    <p class="vfoot" id="help-ver"></p>
   </div></div>
   <aside id="panel">
     <header class="ph">
-      <div><h1 data-i18n="title"></h1><p data-i18n="sub"></p></div>
+      <div><h1><span data-i18n="title"></span><span class="ver" id="ver"></span></h1><p data-i18n="sub"></p></div>
       <div class="hdr-act">
         <button class="ib" data-act="undo" data-tip="undo">↶</button><button class="ib" data-act="redo" data-tip="redo">↷</button>
         <button class="ib" id="btn-help" data-tip="help">?</button><div class="lang"><button data-lang="pt">PT</button><button data-lang="en">EN</button></div>
@@ -187,7 +190,7 @@ body.nonums .nb{display:none}
       <label class="tog" style="padding-top:0"><input type="checkbox" id="pscene"><span data-i18n="p_scene"></span></label>
       <div class="prow"><button class="btn" id="p-export" style="flex:1" data-i18n="p_export"></button><button class="btn" id="p-import" style="flex:1" data-i18n="p_import"></button></div>
       <input type="file" id="p-file" accept="application/json,.json" hidden>
-      <details class="adv" id="adv"><summary data-i18n="adv"></summary>
+      <details class="adv" id="adv" open><summary data-i18n="adv"></summary>
         <details id="sec-cran"><summary data-i18n="sec_cran"></summary><div class="body"><div class="sl"></div></div></details>
         <details id="sec-face"><summary data-i18n="sec_face"></summary><div class="body"><div class="sl"></div></div></details>
         <details id="sec-jaw"><summary data-i18n="sec_jaw"></summary><div class="body"><div class="sl"></div></div></details>
@@ -392,7 +395,7 @@ const METHODS={loomis:['skull','side','center','thirds','jaw','feat','neck'],box
 const COLORS={};GROUPS.forEach(g=>COLORS[g[0]]=g[1]);COLORS.outline=COLORS.skull;COLORS.acircleO=COLORS.acircle;
 
 const I18N={
- pt:{title:'Gerador de Cabeças',sub:'Visualizador de construção da cabeça',hint:'Arraste para girar · botão direito ou dois dedos movem a cabeça · role ou pince para zoom',
+ pt:{title:'Head Generator',sub:'Visualizador de construção da cabeça',hint:'Arraste para girar · botão direito ou dois dedos movem a cabeça · role ou pince para zoom',
   method:'Método de construção',m_loomis:'Loomis',m_box:'Caixa',m_atari:'Atari Mangá',m_fifths:'Quintos',m_reilly:'Reilly',m_bridgman:'Bridgman',
   style:'Estilo',st_loomis:'Clássico',st_manga:'Mangá',st_real:'Realista',base:'Base',b_masc:'Masculina',b_fem:'Feminina',b_inf:'Infantil',
   
@@ -409,7 +412,7 @@ const I18N={
   help:'Como usar',help_t:'Como usar',help_ok:'Começar',
   help_1:'Arraste a cabeça para girar. Dois dedos (ou o botão direito do mouse) movem a cabeça no quadro; pinça ou rodinha dão zoom.',
   help_2:'Em Modelo, escolha o método de construção, o estilo e a base (masculina, feminina ou infantil).',
-  help_3:'Os números na cabeça são os ajustes finos de proporção: toque num número para abrir o ajuste dele.',
+  help_3:'Os ajustes finos de proporção ficam em Modelo. Em Guias, ligue os números das medidas para ver no modelo onde cada ajuste age; tocar num número abre o ajuste dele.',
   help_4:'Em Luz, ligue a cabeça sólida, escolha uma predefinição de luz e regule os volumes do rosto.',
   help_5:'Em Referência, coloque seu desenho por trás do modelo. Em Exportar, saem PNG, SVG, folha de ângulos e modelo 3D.',
   help_6:'Tudo fica salvo neste navegador. ↶ desfaz. Esta ajuda volta pelo botão ? no topo.',
@@ -446,7 +449,7 @@ const I18N={
   help:'How to use',help_t:'How to use',help_ok:'Start',
   help_1:'Drag the head to turn it. Two fingers (or the right mouse button) move the head in the frame; pinch or the wheel zooms.',
   help_2:'In Model, pick the construction method, the style and the starting point (male, female or child).',
-  help_3:'The numbers on the head are the fine proportion controls: tap a number to open its control.',
+  help_3:'The fine proportion settings are in Model. In Guides, turn on the measurement numbers to see on the model where each setting acts; tapping a number opens its setting.',
   help_4:'In Light, turn on the solid head, pick a light preset and set the facial masses.',
   help_5:'In Reference, put your drawing behind the model. Export gives PNG, SVG, an angle sheet and a 3D model.',
   help_6:'Everything is saved in this browser. ↶ undoes. This help comes back with the ? button at the top.',
@@ -470,15 +473,20 @@ const I18N={
 const QUICK=[['q_front',{yaw:0,pitch:0,roll:0}],['q_34',{yaw:-35,pitch:5,roll:0}],['q_prof',{yaw:-90,pitch:0,roll:0}],
  ['q_up',{yaw:-30,pitch:35,roll:0}],['q_down',{yaw:-30,pitch:-30,roll:0}],['q_rand',null]];
 
+// version shown next to the title and in the help; second number goes up with each round of changes
+const VERSION='1.6',VERSION_DATE='21/10/2026';
 const LPRE={std:[-45,35,100,25],rem:[-50,40,115,15],side:[-90,10,120,12],top:[0,75,110,18],low:[-15,-55,120,10],rim:[170,20,130,20],flat:[0,10,90,35]};
 const VIEWS=[['v_front',0,0],['v_34',-35,5],['v_prof',-90,0],['v_up',-30,35],['v_down',-30,-30],['v_back34',-145,8],['v_back',180,5],['v_34up',-35,30],['v_34down',-35,-25]];
-const DEFAULT={sheetViews:['v_front','v_34','v_prof'],sheetC:'both',sheetSty:false,vol:60,panX:0,panY:0,nums:'open',neckFollow:45,sheetLbl:true,presetScene:true,tab:'model',expBg:'t',sheetN:'4',expSize:'2048',expCrop:true,palette:'std',snap:false,solid:true,halo:true,shade:'flat',tones:'3',mat:'#c9c5bd',lightAz:-45,lightEl:35,lightInt:100,amb:25,lang:'pt',style:'loomis',base:'masc',yaw:-30,pitch:8,roll:0,persp:30,zoom:100,lw:1.6,hidden:'dash',colorMode:'group',mono:'#1d1d1f',
- method:'loomis',groups:{skull:true,side:true,center:true,thirds:true,jaw:true,feat:true,neck:true,box:true,boxmid:true,boxthirds:true,boxjaw:true,vp:false,acircle:true,across:true,ajaw:true,q5:true,q3:true,qal:true,reilly:true,bforehead:true,bcheek:true,bmouth:true,bjaw:true}};
+const DEFAULT={defv:2,sheetViews:['v_front','v_34','v_prof'],sheetC:'both',sheetSty:false,vol:60,panX:0,panY:0,nums:'off',neckFollow:45,sheetLbl:true,presetScene:true,tab:'model',expBg:'t',sheetN:'4',expSize:'2048',expCrop:true,palette:'std',snap:false,solid:true,halo:true,shade:'flat',tones:'3',mat:'#c9c5bd',lightAz:-45,lightEl:35,lightInt:100,amb:25,lang:'pt',style:'loomis',base:'masc',yaw:-30,pitch:8,roll:0,persp:30,zoom:100,lw:1.6,hidden:'dash',colorMode:'group',mono:'#1d1d1f',
+ method:'loomis',groups:{skull:true,side:true,center:true,thirds:true,jaw:true,feat:false,neck:true,box:true,boxmid:true,boxthirds:true,boxjaw:true,vp:false,acircle:true,across:true,ajaw:true,q5:true,q3:true,qal:true,reilly:true,bforehead:true,bcheek:true,bmouth:true,bjaw:true}};
 const STORE='loomis-heads-v1';
 function loadState(){
   let saved=null;try{saved=JSON.parse(localStorage.getItem(STORE))}catch(e){}
   const s={...DEFAULT,...presetValues('loomis','masc')};
-  if(saved&&typeof saved==='object'){for(const k in s){if(k in saved)s[k]=saved[k]}s.groups={...DEFAULT.groups,...(saved.groups||{})};if(!Array.isArray(s.sheetViews))s.sheetViews=DEFAULT.sheetViews.slice();if(!['both','solid','guides'].includes(s.sheetC))s.sheetC='both'}
+  if(saved&&typeof saved==='object'){for(const k in s){if(k in saved)s[k]=saved[k]}s.groups={...DEFAULT.groups,...(saved.groups||{})};if(!Array.isArray(s.sheetViews))s.sheetViews=DEFAULT.sheetViews.slice();if(!['both','solid','guides'].includes(s.sheetC))s.sheetC='both';
+    // saved before v1.6: take the new defaults once (features guide off, measurement numbers hidden)
+    if(!(saved.defv>=2)){s.groups.feat=false;s.nums='off'}}
+  s.defv=2;
   return s;
 }
 let S=(typeof localStorage!=='undefined')?loadState():{...DEFAULT,...presetValues('loomis','masc')};
@@ -1078,7 +1086,7 @@ function buildGLB(pose,guides){
         const gc=hex3(COLORS[g]||'#2a2a2e').map(lin);gmats.push({name:'guia-'+g,pbrMetallicRoughness:{baseColorFactor:[gc[0],gc[1],gc[2],1],metallicFactor:0,roughnessFactor:1},extensions:{KHR_materials_unlit:{}}});
         prims.push({attributes:{POSITION:accs.length-1},material:gmats.length,mode:1})}}
     const col=hex3(S.mat).map(lin);
-    const json={asset:{version:'2.0',generator:'Gerador de Cabeças'},...(gmats.length?{extensionsUsed:['KHR_materials_unlit']}:{}),scene:0,scenes:[{nodes:[0]}],
+    const json={asset:{version:'2.0',generator:'Head Generator '+VERSION},...(gmats.length?{extensionsUsed:['KHR_materials_unlit']}:{}),scene:0,scenes:[{nodes:[0]}],
       nodes:[{name:'cabeca-'+S.style+'-'+S.base,mesh:0}],meshes:[{name:'cabeca',primitives:prims}],
       materials:[{name:'material',doubleSided:true,pbrMetallicRoughness:{baseColorFactor:[col[0],col[1],col[2],1],metallicFactor:0,roughnessFactor:.85}},...gmats],
       buffers:[{byteLength:off}],bufferViews:views,accessors:accs};
@@ -1319,7 +1327,8 @@ if(typeof document!=='undefined'){(function(){
     for(const k in rows){rows[k].nm.textContent=lab(k);rows[k].rs.title=t('reset_one')}
     $$('[data-gl]').forEach(el=>{const g=GROUPS.find(x=>x[0]===el.dataset.gl);el.textContent=g[S.lang==='en'?3:2]});
     $$('.lang button').forEach(b=>b.classList.toggle('on',b.dataset.lang===S.lang));
-    $('#mdesc').textContent=t('md_'+S.method);renderPresets($('#psel').value);setMove(moveRef);request()}
+    $('#mdesc').textContent=t('md_'+S.method);renderPresets($('#psel').value);setMove(moveRef);
+    $('#ver').textContent='v'+VERSION;$('#help-ver').textContent=`${t('title')} v${VERSION} · ${VERSION_DATE}`;request()}
   $$('.lang button').forEach(b=>b.addEventListener('click',()=>{S.lang=b.dataset.lang;applyLang();persist()}));
 
   // ---------- undo / redo ----------
