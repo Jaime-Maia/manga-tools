@@ -44,5 +44,7 @@ Contact
 Suggestions, bugs or ideas? Get in touch with Jaime.
 
 yo.jaimemaia@gmail.com
-instagram.com/jaimemaiax
-twitter.com/jaimemaiax
+
+http://instagram.com/jaimemaiax
+
+http://twitter.com/jaimemaiax
