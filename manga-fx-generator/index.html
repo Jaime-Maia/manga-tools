@@ -13,6 +13,7 @@
   *{box-sizing:border-box}
   html,body{height:100%}
   body{
+    display:flex; flex-direction:column;
     margin:0; background:var(--bg); color:var(--txt);
     font:14px/1.45 ui-sans-serif,system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     -webkit-font-smoothing:antialiased;
@@ -22,32 +23,77 @@
     padding:12px 18px; border-bottom:1px solid var(--line); background:var(--panel);
   }
   header h1{font-size:15px; font-weight:600; margin:0; letter-spacing:.2px}
+  #versao{font-size:11.5px; color:var(--txt-dim); font-variant-numeric:tabular-nums; margin-left:-4px}
   header .sp{flex:1}
   select,input[type=number],input[type=text]{
     background:var(--panel-2); color:var(--txt); border:1px solid var(--line);
     border-radius:7px; padding:6px 8px; font-size:13px; font-family:inherit;
   }
-  main{display:grid; grid-template-columns:minmax(0,1fr) 380px; height:calc(100% - 50px)}
-  @media (max-width:900px){ main{grid-template-columns:1fr; height:auto} }
+  main{display:grid; grid-template-columns:minmax(0,1fr) 380px; flex:1; min-height:0}
+  @media (max-width:900px){
+    html,body{height:auto} body{display:block}
+    main{grid-template-columns:minmax(0,1fr); height:auto}
+    #palco{height:62vh; height:62svh}
+  }
+  header .hb{
+    background:var(--panel-2); border:1px solid var(--line); color:var(--txt);
+    border-radius:7px; width:34px; height:32px; cursor:pointer; font-size:16px; line-height:1;
+  }
+  header .hb:disabled{opacity:.35; cursor:default}
+  #calc{
+    position:absolute; right:12px; bottom:12px; font-size:12px; color:var(--txt);
+    background:#1d1f25ee; border:1px solid var(--line); border-radius:9px; padding:7px 11px;
+    display:flex; align-items:center; gap:8px; pointer-events:none;
+  }
+  #calc[hidden]{display:none}
+  #calc::before{content:""; width:11px; height:11px; border-radius:50%; border:2px solid var(--accent); border-right-color:transparent; animation:gira .8s linear infinite}
+  @keyframes gira{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion:reduce){ #calc::before{animation:none} }
+  #ajuda{position:fixed; inset:0; background:#000a; display:flex; align-items:center; justify-content:center; padding:16px; z-index:20}
+  #ajuda[hidden]{display:none}
+  #ajuda .caixa{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px; width:min(640px,100%);
+    max-height:min(86vh,860px); overflow:auto; padding:22px 24px; box-shadow:0 20px 60px #000a;
+  }
+  #ajuda h2{font-size:18px; margin:0 0 4px} #ajuda h3{font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--txt-dim); margin:20px 0 8px}
+  #ajuda p,#ajuda li{font-size:13.5px; line-height:1.55; color:var(--txt)} #ajuda ol,#ajuda ul{padding-left:20px; margin:6px 0}
+  #ajuda .atalhos{display:grid; grid-template-columns:auto 1fr; gap:6px 14px; font-size:13px}
+  #ajuda kbd{background:var(--panel-2); border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; padding:1px 6px; font:12px ui-monospace,Menlo,Consolas,monospace; white-space:nowrap}
+  #ajuda .rodape{display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:22px}
+  #ajuda .rodape small{color:var(--txt-dim); font-size:12px}
+  #ajuda a{color:var(--accent)}
 
   /* ---------- Prévia ---------- */
   #palco{
-    display:flex; align-items:center; justify-content:center;
-    padding:24px; overflow:auto; background:
+    position:relative; overflow:hidden; min-height:0; touch-action:none; background:
       linear-gradient(45deg,#1a1b20 25%,transparent 25%,transparent 75%,#1a1b20 75%),
       linear-gradient(45deg,#1a1b20 25%,#121317 25%,#121317 75%,#1a1b20 75%);
     background-size:22px 22px; background-position:0 0,11px 11px;
   }
-  #wrap{position:relative; box-shadow:0 10px 40px #0008; line-height:0}
-  #wrap.xadrez{
-    background:
-      linear-gradient(45deg,#cfd2d8 25%,transparent 25%,transparent 75%,#cfd2d8 75%),
-      linear-gradient(45deg,#cfd2d8 25%,#eef0f3 25%,#eef0f3 75%,#cfd2d8 75%);
-    background-size:16px 16px; background-position:0 0,8px 8px;
+  #cv{position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:none; cursor:crosshair}
+  #cv.mao{cursor:grab}
+  #cv.mao.puxando{cursor:grabbing}
+  .zoom{
+    position:absolute; left:12px; bottom:12px; display:flex; align-items:center; gap:4px;
+    background:#1d1f25ee; border:1px solid var(--line); border-radius:10px; padding:4px;
   }
-  #wrap.branco{background:#fff}
-  #wrap.preto{background:#000}
-  canvas{display:block; max-width:100%; max-height:76vh; touch-action:none; cursor:crosshair}
+  .zoom button{
+    background:var(--panel-2); border:1px solid var(--line); color:var(--txt); font-family:inherit;
+    border-radius:7px; min-width:30px; height:30px; padding:0 8px; cursor:pointer; font-size:13px;
+  }
+  .zoom button:hover{border-color:#4a4f5a}
+  #z-val{min-width:50px; text-align:center; font-size:12px; color:var(--txt-dim); font-variant-numeric:tabular-nums}
+  #aviso-ret{
+    position:absolute; left:12px; right:12px; top:12px; margin:0 auto; max-width:520px;
+    display:flex; align-items:center; gap:10px; font-size:12px; color:#f3d9c9;
+    background:#3a2418ee; border:1px solid #6b3a24; border-radius:9px; padding:7px 8px 7px 12px;
+  }
+  #aviso-ret[hidden]{display:none}
+  #aviso-ret span{flex:1}
+  #aviso-ret button{
+    background:var(--accent); color:#1a0e08; border:none; border-radius:7px; font-weight:600;
+    padding:6px 10px; cursor:pointer; font-family:inherit; font-size:12px; white-space:nowrap;
+  }
   #alvo{
     position:absolute; width:26px; height:26px; margin:-13px 0 0 -13px;
     border:2px solid var(--accent); border-radius:50%; pointer-events:none;
@@ -70,6 +116,9 @@
     transition:.12s;
   }
   .tipo:hover{border-color:#4a4f5a; color:var(--txt)}
+  .tipo{touch-action:manipulation; -webkit-user-select:none; user-select:none}
+  .tipos.recolhido{grid-template-columns:1fr}
+  .tipos.recolhido .tipo:not(.on){display:none}
   .tipo.on{border-color:var(--accent); background:var(--accent-dim); color:#fff}
   .tipo svg{width:34px; height:26px; display:block}
 
@@ -104,6 +153,45 @@
   .linha.c2{grid-template-columns:1fr 1fr}
   .linha.c3{grid-template-columns:1fr 1fr 1fr}
 
+  /* ---------- Toque (iPad / celular): alvos grandes, mínimo ~48px ---------- */
+  @media (pointer:coarse){
+    header{padding:14px 20px}
+    header h1{font-size:17px}
+    select,input[type=number],input[type=text]{min-height:48px; font-size:16px; padding:8px 12px; border-radius:10px}
+    main{grid-template-columns:minmax(0,1fr) 440px}
+    .sec{padding:18px 20px}
+    .sec h2{font-size:12.5px; margin-bottom:14px}
+    .tipos{gap:10px}
+    .tipo{min-height:84px; padding:12px 6px; font-size:13px; border-radius:12px}
+    .tipo svg{width:44px; height:34px}
+    .ctl{margin-bottom:8px; padding:6px 0}
+    .ctl .top{margin-bottom:8px}
+    .ctl label{font-size:15px}
+    .ctl .val{font-size:14px}
+    input[type=range]{height:10px; border-radius:6px; margin:10px 0}
+    input[type=range]::-webkit-slider-thumb{width:34px; height:34px; border-width:3px; box-shadow:0 0 0 10px #ff7a4515}
+    input[type=range]::-moz-range-thumb{width:30px; height:30px; border-width:3px}
+    .dica{font-size:14px; padding:12px 14px}
+    .chk{font-size:15px; min-height:44px} .chk input{width:24px; height:24px}
+    .nota{font-size:13.5px}
+    .ctl .val input{width:100px; font-size:15px} .medida{font-size:13.5px}
+    .cam input.renomear{font-size:15px}
+    button.b{min-height:52px; padding:12px 14px; font-size:15px; border-radius:12px}
+    .linha{gap:10px}
+    .cam{padding:10px 12px; gap:12px; min-height:56px}
+    .cam .nome{font-size:15px}
+    .cam input[type=color]{width:40px; height:40px; border-radius:8px}
+    .cam .ic{font-size:20px; min-width:44px; min-height:44px; padding:8px}
+    #status{font-size:14px; padding:12px 20px; min-height:44px}
+    #alvo{width:44px; height:44px; margin:-22px 0 0 -22px}
+    .zoom button{min-width:46px; height:46px; font-size:16px; border-radius:10px}
+    #z-val{min-width:60px; font-size:14px}
+    #aviso-ret{font-size:14px} #aviso-ret button{padding:10px 14px; font-size:14px}
+    header .hb{width:48px; height:48px; font-size:20px; border-radius:10px}
+    #alvo::after{inset:19px}
+  }
+  @media (pointer:coarse) and (max-width:900px){ main{grid-template-columns:minmax(0,1fr)} }
+
   /* ---------- Camadas ---------- */
   .cam{
     display:flex; align-items:center; gap:8px; padding:7px 8px; margin-bottom:6px;
@@ -121,6 +209,19 @@
   }
   .cam .ic:hover{color:var(--txt)}
   .cam.off .nome{opacity:.4; text-decoration:line-through}
+  .chk{display:flex; align-items:center; gap:9px; font-size:12.5px; margin:2px 0 12px; cursor:pointer}
+  .chk input{width:17px; height:17px; accent-color:var(--accent); margin:0}
+  button.b.on{border-color:var(--accent); background:var(--accent-dim); color:#fff}
+  .nota{font-size:11.5px; color:var(--txt-dim); margin:6px 0 0}
+  .cam .tag{font-size:11px; color:var(--accent); padding:0 2px}
+  .cam .ic:disabled{opacity:.3; cursor:default}
+  .cam input.renomear{flex:1; min-width:0; font-size:12.5px; padding:3px 6px}
+  .ctl .val.edit{cursor:text; border-bottom:1px dotted #5a5f6a}
+  .ctl .val input{width:84px; font-size:12px; padding:2px 6px; text-align:right}
+  .ctl label.reset{cursor:default}
+  .medida{font-size:11.5px; color:var(--txt-dim); margin-top:6px}
+  .linha.dpi{grid-template-columns:auto 1fr; align-items:center}
+  .linha.dpi label{font-size:12.5px}
   #status{font-size:11.5px; color:var(--txt-dim); padding:9px 16px; min-height:32px}
 </style>
 </head>
@@ -128,7 +229,11 @@
 
 <header>
   <h1 id="t-titulo">Gerador de Efeitos e Tons</h1>
+  <span id="versao"></span>
   <span class="sp"></span>
+  <button class="hb" id="b-ajuda" aria-haspopup="dialog">?</button>
+  <button class="hb" id="b-desfazer" disabled>↶</button>
+  <button class="hb" id="b-refazer" disabled>↷</button>
   <select id="idioma" title="Idioma / Language">
     <option value="pt">Português</option>
     <option value="en">English</option>
@@ -137,9 +242,16 @@
 
 <main>
   <div id="palco">
-    <div id="wrap" class="xadrez">
-      <canvas id="cv"></canvas>
-      <div id="alvo"></div>
+    <canvas id="cv"></canvas>
+    <div id="alvo"></div>
+    <div id="aviso-ret" hidden><span id="t-avisoRet"></span><button id="b-ver100"></button></div>
+    <div id="calc" hidden role="status"><span id="t-calc"></span></div>
+    <div class="zoom">
+      <button id="z-menos">−</button>
+      <span id="z-val">100%</span>
+      <button id="z-mais">+</button>
+      <button id="z-ajustar"></button>
+      <button id="z-100">100%</button>
     </div>
   </div>
 
@@ -159,6 +271,11 @@
     </div>
 
     <div class="sec">
+      <h2 id="t-area">Área do efeito</h2>
+      <div id="area-ctls"></div>
+    </div>
+
+    <div class="sec">
       <h2 id="t-camadas">Camadas</h2>
       <div id="camadas"></div>
       <button class="b" id="b-add" style="width:100%">+ <span id="t-add">Adicionar camada</span></button>
@@ -174,6 +291,12 @@
         <input type="number" id="larg" min="64" max="6000" step="1">
         <input type="number" id="alt" min="64" max="6000" step="1">
       </div>
+      <div class="linha c2 dpi" style="margin-top:8px">
+        <label id="t-dpi" for="dpi">Resolução (dpi)</label>
+        <input type="number" id="dpi" min="72" max="1200" step="1">
+      </div>
+      <div class="medida" id="medida"></div>
+      <label class="chk" style="margin-top:10px"><input type="checkbox" id="manter"><span id="t-manter"></span></label>
       <div class="ctl" style="margin-top:12px">
         <div class="top"><label id="t-fundo">Fundo da prévia</label></div>
         <select id="fundo" style="width:100%">
@@ -182,6 +305,36 @@
           <option value="preto">—</option>
         </select>
       </div>
+      <div class="ctl" style="margin-top:12px">
+        <div class="top"><label id="t-ref">Imagem de referência</label></div>
+        <div class="linha c2">
+          <button class="b" id="b-ref-carregar"></button>
+          <button class="b" id="b-ref-remover"></button>
+        </div>
+        <input type="file" id="ref-arquivo" accept="image/*" hidden>
+        <div id="ref-ctls"></div>
+        <p class="nota" id="t-refNota"></p>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2 id="t-presets">Meus presets</h2>
+      <div class="ctl">
+        <select id="p-lista" style="width:100%"></select>
+      </div>
+      <div class="linha c2" style="margin-bottom:7px">
+        <button class="b" id="p-aplicar"></button>
+        <button class="b" id="p-apagar"></button>
+      </div>
+      <div class="linha c2 dpi" style="grid-template-columns:1fr auto; margin-bottom:7px">
+        <input type="text" id="p-nome" maxlength="40">
+        <button class="b" id="p-salvar"></button>
+      </div>
+      <div class="linha c2">
+        <button class="b" id="p-exportar"></button>
+        <button class="b" id="p-importar"></button>
+      </div>
+      <input type="file" id="p-arquivo" accept=".json,application/json" hidden>
     </div>
 
     <div class="sec">
@@ -198,9 +351,15 @@
         <button class="b pri" id="b-png-t"><span id="t-png-t">PNG transparente</span></button>
         <button class="b" id="b-png-b"><span id="t-png-b">PNG fundo branco</span></button>
       </div>
-      <div class="linha c2">
-        <button class="b" id="b-svg">SVG</button>
-        <button class="b" id="b-copiar"><span id="t-copiar">Copiar imagem</span></button>
+      <div class="linha c2" style="margin-bottom:7px">
+        <button class="b" id="b-copiar-t"><span id="t-copiar-t">Copiar transparente</span></button>
+        <button class="b" id="b-copiar-b"><span id="t-copiar-b">Copiar fundo branco</span></button>
+      </div>
+      <div class="linha">
+        <button class="b" id="b-svg" style="width:100%">SVG</button>
+      </div>
+      <div class="linha" style="margin-top:7px">
+        <button class="b" id="b-zip" style="width:100%"></button>
       </div>
     </div>
 
@@ -208,49 +367,14 @@
   </aside>
 </main>
 
-<script>
-"use strict";
+<div id="ajuda" hidden role="dialog" aria-modal="true" aria-labelledby="ajuda-titulo">
+  <div class="caixa" id="ajuda-conteudo"></div>
+</div>
 
-/* ============================================================
-   1. IDIOMAS
-   Um único dicionário. Para acrescentar um idioma novo, basta
-   duplicar o bloco e traduzir os valores.
-   ============================================================ */
-const I18N = {
-  pt:{
-    titulo:"Gerador de Efeitos e Tons", tipo:"Tipo de efeito", ajustes:"Ajustes",
-    camadas:"Camadas", doc:"Documento", tamanho:"Tamanho", fundo:"Fundo da prévia",
-    exportar:"Exportar", escala:"Escala", variar:"Outra forma", reset:"Restaurar",
-    add:"Adicionar camada", pngT:"PNG transparente", pngB:"PNG fundo branco",
-    copiar:"Copiar imagem", xadrez:"Xadrez (transparente)", branco:"Branco", preto:"Preto",
-    arraste:"Arraste dentro da prévia para mover o centro. Ele pode ficar fora do quadro.",
-    semAleatorio:"Este efeito é calculado, não sorteado — a forma não muda.",
-    copiado:"Imagem copiada para a área de transferência.",
-    erroCopia:"Não foi possível copiar. Use o botão de PNG.",
-    salvo:"Arquivo salvo:", limite:"Máximo de 8 camadas.",
-    personalizado:"Personalizado", camada:"Camada",
-    pesado:"Ajuste pesado — a prévia é redesenhada ao soltar o controle.",
-    svgGrande:"SVG de {} MB. Para Halftone fino, o PNG costuma ser mais prático."
-  },
-  en:{
-    titulo:"Effect Line & Tone Generator", tipo:"Effect type", ajustes:"Settings",
-    camadas:"Layers", doc:"Document", tamanho:"Size", fundo:"Preview background",
-    exportar:"Export", escala:"Scale", variar:"Reroll shape", reset:"Reset",
-    add:"Add layer", pngT:"PNG transparent", pngB:"PNG white background",
-    copiar:"Copy image", xadrez:"Checker (transparent)", branco:"White", preto:"Black",
-    arraste:"Drag inside the preview to move the center. It may sit outside the frame.",
-    semAleatorio:"This effect is computed, not randomized — the shape won't change.",
-    copiado:"Image copied to clipboard.",
-    erroCopia:"Couldn't copy. Use the PNG button instead.",
-    salvo:"File saved:", limite:"Maximum of 8 layers.",
-    personalizado:"Custom", camada:"Layer",
-    pesado:"Heavy settings — the preview redraws when you release the slider.",
-    svgGrande:"{} MB SVG. For fine halftones, PNG is usually more practical."
-  }
-};
-let LANG = "pt";
-const T = k => I18N[LANG][k];
-const L = o => (o && o[LANG]) || (o && o.pt) || "";
+<script id="nucleo">
+"use strict";
+/* Núcleo: sorteio, primitivas e efeitos. Não toca na página ao carregar,
+   então o mesmo texto roda também dentro do Worker (cálculo em segundo plano). */
 
 /* ============================================================
    2. ALEATORIEDADE COM SEMENTE
@@ -268,16 +392,50 @@ function mulberry32(a){
 
 /* ============================================================
    3. PRIMITIVAS GEOMÉTRICAS
-   Todo efeito devolve uma lista destes objetos. A mesma lista
-   alimenta o Canvas (prévia) e o SVG (exportação), o que garante
-   que os dois nunca divirjam.
+   Todo efeito devolve uma lista destes objetos:
      {t:'poly',   pts:[[x,y],...]}
      {t:'circle', cx, cy, r}
      {t:'path',   d, evenodd:true}
+   A lista é então empacotada num "lote": vetores de números contíguos
+   (tipo, início, contagem, coordenadas e caixa de cada forma). O lote
+   atravessa do Worker para a página sem cópia (transferência de
+   memória), ocupa muito menos que um milhão de objetos soltos e alimenta
+   tanto o Canvas (prévia e PNG) quanto o SVG, que assim nunca divergem.
    ============================================================ */
 const r2 = n => Math.round(n * 100) / 100;
 
-function desenharCanvas(ctx, formas, cor, opacidade){
+function empacotar(formas){
+  const n = formas.length;
+  let nxy = 0;
+  for(const f of formas) nxy += f.t === "poly" ? f.pts.length*2 : f.t === "circle" ? 3 : 0;
+  const tipo = new Uint8Array(n), ini = new Uint32Array(n), cnt = new Uint32Array(n);
+  const xy = new Float64Array(nxy), caixas = new Float32Array(n*4), paths = [];
+  let k = 0;
+  for(let i=0;i<n;i++){
+    const f = formas[i];
+    let x0=Infinity, y0=Infinity, x1=-Infinity, y1=-Infinity;
+    if(f.t === "poly"){
+      tipo[i] = 0; ini[i] = k; cnt[i] = f.pts.length;
+      for(const p of f.pts){
+        xy[k++] = p[0]; xy[k++] = p[1];
+        if(p[0]<x0)x0=p[0]; if(p[0]>x1)x1=p[0]; if(p[1]<y0)y0=p[1]; if(p[1]>y1)y1=p[1];
+      }
+    } else if(f.t === "circle"){
+      tipo[i] = 1; ini[i] = k; cnt[i] = 3;
+      xy[k++] = f.cx; xy[k++] = f.cy; xy[k++] = f.r;
+      x0=f.cx-f.r; x1=f.cx+f.r; y0=f.cy-f.r; y1=f.cy+f.r;
+    } else {
+      // caminhos não têm caixa calculada: são sempre desenhados
+      tipo[i] = 2; ini[i] = paths.length; cnt[i] = f.evenodd ? 1 : 0; paths.push(f.d);
+      x0 = y0 = -Infinity; x1 = y1 = Infinity;
+    }
+    caixas[i*4]=x0; caixas[i*4+1]=y0; caixas[i*4+2]=x1; caixas[i*4+3]=y1;
+  }
+  return {n, tipo, ini, cnt, xy, caixas, paths};
+}
+function transferiveis(l){ return [l.tipo.buffer, l.ini.buffer, l.cnt.buffer, l.xy.buffer, l.caixas.buffer]; }
+
+function desenharCanvas(ctx, lote, cor, opacidade, vis){
   // No SVG a opacidade vale para o grupo inteiro. Se cada forma fosse
   // desenhada com a opacidade própria, o Canvas escureceria onde formas
   // se sobrepõem (kakeami, pontos fundidos) e a prévia deixaria de
@@ -288,7 +446,7 @@ function desenharCanvas(ctx, formas, cor, opacidade){
     aux.width = c.width; aux.height = c.height;
     const a = aux.getContext("2d");
     a.setTransform(ctx.getTransform());
-    preencherFormas(a, formas, cor);
+    preencherFormas(a, lote, cor, vis);
     ctx.save();
     ctx.setTransform(1,0,0,1,0,0);
     ctx.globalAlpha = opacidade;
@@ -296,39 +454,50 @@ function desenharCanvas(ctx, formas, cor, opacidade){
     ctx.restore();
     return;
   }
-  preencherFormas(ctx, formas, cor);
+  preencherFormas(ctx, lote, cor, vis);
 }
 
-function preencherFormas(ctx, formas, cor){
+/* vis = área visível em coordenadas do documento (x0,y0,x1,y1): com zoom
+   alto na prévia, ou numa faixa da exportação grande, o que está fora
+   dela não é desenhado. */
+function preencherFormas(ctx, lote, cor, vis){
+  const {n, tipo, ini, cnt, xy, caixas, paths} = lote;
   ctx.save();
   ctx.fillStyle = cor;
-  for(const f of formas){
-    if(f.t === "poly"){
+  for(let i=0;i<n;i++){
+    if(vis && (caixas[i*4] > vis[2] || caixas[i*4+2] < vis[0] || caixas[i*4+1] > vis[3] || caixas[i*4+3] < vis[1])) continue;
+    const o = ini[i];
+    if(tipo[i] === 0){
       ctx.beginPath();
-      ctx.moveTo(f.pts[0][0], f.pts[0][1]);
-      for(let i=1;i<f.pts.length;i++) ctx.lineTo(f.pts[i][0], f.pts[i][1]);
+      ctx.moveTo(xy[o], xy[o+1]);
+      for(let j=1;j<cnt[i];j++) ctx.lineTo(xy[o+j*2], xy[o+j*2+1]);
       ctx.closePath(); ctx.fill();
-    } else if(f.t === "circle"){
-      ctx.beginPath(); ctx.arc(f.cx, f.cy, f.r, 0, Math.PI*2); ctx.fill();
-    } else if(f.t === "path"){
-      ctx.fill(new Path2D(f.d), f.evenodd ? "evenodd" : "nonzero");
+    } else if(tipo[i] === 1){
+      ctx.beginPath(); ctx.arc(xy[o], xy[o+1], xy[o+2], 0, Math.PI*2); ctx.fill();
+    } else {
+      ctx.fill(new Path2D(paths[o]), cnt[i] ? "evenodd" : "nonzero");
     }
   }
   ctx.restore();
 }
 
-function formasParaSVG(formas, cor, opacidade){
-  let s = `<g fill="${cor}" opacity="${r2(opacidade)}">`;
-  for(const f of formas){
-    if(f.t === "poly"){
-      s += `<polygon points="${f.pts.map(p=>r2(p[0])+","+r2(p[1])).join(" ")}"/>`;
-    } else if(f.t === "circle"){
-      s += `<circle cx="${r2(f.cx)}" cy="${r2(f.cy)}" r="${r2(f.r)}"/>`;
-    } else if(f.t === "path"){
-      s += `<path d="${f.d}"${f.evenodd?' fill-rule="evenodd"':""}/>`;
+function formasParaSVG(lote, cor, opacidade){
+  const {n, tipo, ini, cnt, xy, paths} = lote;
+  const partes = [`<g fill="${cor}" opacity="${r2(opacidade)}">`];
+  for(let i=0;i<n;i++){
+    const o = ini[i];
+    if(tipo[i] === 0){
+      const p = [];
+      for(let j=0;j<cnt[i];j++) p.push(r2(xy[o+j*2]) + "," + r2(xy[o+j*2+1]));
+      partes.push(`<polygon points="${p.join(" ")}"/>`);
+    } else if(tipo[i] === 1){
+      partes.push(`<circle cx="${r2(xy[o])}" cy="${r2(xy[o+1])}" r="${r2(xy[o+2])}"/>`);
+    } else {
+      partes.push(`<path d="${paths[o]}"${cnt[i] ? ' fill-rule="evenodd"' : ""}/>`);
     }
   }
-  return s + "</g>";
+  partes.push("</g>");
+  return partes.join("");
 }
 
 /* ============================================================
@@ -424,7 +593,7 @@ EFEITOS.velocidade = {
   params:{
     angulo:      {tipo:"slider", rot:{pt:"Ângulo",             en:"Angle"},        min:0,  max:360, passo:1, padrao:0,  suf:"°"},
     quantidade:  {tipo:"slider", rot:{pt:"Quantidade",         en:"Line count"},   min:5,  max:400, passo:1, padrao:70},
-    espessura:   {tipo:"slider", rot:{pt:"Espessura",          en:"Thickness"},    min:1,  max:60,  passo:1, padrao:7,  suf:"px"},
+    espessura:   {tipo:"slider", rot:{pt:"Espessura",          en:"Thickness"},    min:1,  max:60,  passo:1, padrao:7,  suf:"px", px:1},
     comprimento: {tipo:"slider", rot:{pt:"Comprimento",        en:"Length"},       min:5,  max:100, passo:1, padrao:72, suf:"%"},
     varComp:     {tipo:"slider", rot:{pt:"Variação do compr.", en:"Length var."},  min:0,  max:100, passo:1, padrao:55, suf:"%"},
     afunilamento:{tipo:"slider", rot:{pt:"Afunilamento",       en:"Taper"},        min:0,  max:100, passo:1, padrao:75, suf:"%"},
@@ -482,7 +651,7 @@ EFEITOS.reticula = {
     <circle cx="5" cy="17" r="2.8"/><circle cx="12" cy="17" r="2.8"/><circle cx="19" cy="17" r="2.8"/>
     <circle cx="26" cy="17" r="2.8"/></g>`,
   params:{
-    espacamento:{tipo:"slider", rot:{pt:"Espaçamento", en:"Spacing"},  min:3, max:60, passo:1, padrao:11, suf:"px"},
+    espacamento:{tipo:"slider", rot:{pt:"Espaçamento", en:"Spacing"},  min:3, max:60, passo:0.1, padrao:11, suf:"px", px:1, lpi:1},
     densidade:  {tipo:"slider", rot:{pt:"Densidade",   en:"Density"},  min:0, max:100, passo:1, padrao:70, suf:"%"},
     angulo:     {tipo:"slider", rot:{pt:"Ângulo",      en:"Angle"},    min:0, max:90,  passo:1, padrao:45, suf:"°"},
     forma:      {tipo:"opcoes", rot:{pt:"Forma do ponto", en:"Dot shape"}, padrao:"circulo",
@@ -610,11 +779,11 @@ function gerarKakeami(p, W, H, rng, grad){
 const PARAMS_KAKEAMI = {
   angulo:      {tipo:"slider", rot:{pt:"Ângulo",              en:"Angle"},             min:0,  max:180, passo:1, padrao:30,  suf:"°"},
   camadas:     {tipo:"slider", rot:{pt:"Camadas de traço",    en:"Hatch layers"},      min:1,  max:4,   passo:1, padrao:2},
-  passoAngulo: {tipo:"slider", rot:{pt:"Giro entre camadas",  en:"Layer rotation"},    min:10, max:90,  passo:1, padrao:45, suf:"°"},
-  espacamento: {tipo:"slider", rot:{pt:"Espaçamento",         en:"Line spacing"},      min:3,  max:30,  passo:1, padrao:8,  suf:"px"},
+  passoAngulo: {tipo:"slider", rot:{pt:"Giro entre camadas",  en:"Layer rotation"},    min:10, max:90,  passo:1, padrao:45, suf:"°", se:p => p.camadas > 1},
+  espacamento: {tipo:"slider", rot:{pt:"Espaçamento",         en:"Line spacing"},      min:3,  max:30,  passo:1, padrao:8,  suf:"px", px:1},
   espessura:   {tipo:"slider", rot:{pt:"Espessura (% do espaç.)", en:"Thickness (% of spacing)"}, min:5, max:90, passo:1, padrao:35, suf:"%"},
   linhasFeixe: {tipo:"slider", rot:{pt:"Linhas por feixe",    en:"Lines per bundle"},  min:3,  max:30,  passo:1, padrao:9},
-  comprimento: {tipo:"slider", rot:{pt:"Comprimento do feixe",en:"Bundle length"},     min:30, max:400, passo:1, padrao:110, suf:"px"},
+  comprimento: {tipo:"slider", rot:{pt:"Comprimento do feixe",en:"Bundle length"},     min:30, max:400, passo:1, padrao:110, suf:"px", px:1},
   afunilamento:{tipo:"slider", rot:{pt:"Afunilamento",        en:"Taper"},             min:0,  max:100, passo:1, padrao:70, suf:"%"},
   irregular:   {tipo:"slider", rot:{pt:"Irregularidade",      en:"Jitter"},            min:0,  max:100, passo:1, padrao:35, suf:"%"}
 };
@@ -720,6 +889,8 @@ EFEITOS.flash = {
     varComp:     {tipo:"slider", rot:{pt:"Variação do compr.",   en:"Length variance"}, min:0,  max:100, passo:1, padrao:60, suf:"%"},
     espessura:   {tipo:"slider", rot:{pt:"Espessura",            en:"Thickness"},       min:2,  max:100, passo:1, padrao:40, suf:"%"},
     irregular:   {tipo:"slider", rot:{pt:"Irregularidade",       en:"Jitter"},          min:0,  max:100, passo:1, padrao:45, suf:"%"},
+    borda:       {tipo:"slider", rot:{pt:"Borda interna irregular",en:"Ragged inner edge"}, min:0, max:100, passo:1, padrao:60, suf:"%"},
+    curtas:      {tipo:"slider", rot:{pt:"Agulhas curtas extras", en:"Extra short needles"}, min:0, max:100, passo:1, padrao:50, suf:"%"},
     centro:      {tipo:"ponto",  rot:{pt:"Centro", en:"Center"}, padrao:[0.5,0.5]}
   },
   gerar(p, W, H, rng){
@@ -730,13 +901,24 @@ EFEITOS.flash = {
     const irr = p.irregular/100, vc = p.varComp/100, esp = p.espessura/100;
     const pol = (r,a) => [cx + r*Math.cos(a), cy + r*Math.sin(a)];
     const formas = [];
+    const rag = p.borda/100;
     for(let i=0;i<n;i++){
       const a  = i*vao + (rng()-0.5)*vao*irr*1.6;
       const ao = vao*0.5*esp*(1 - rng()*irr*0.5);
       const L  = Math.max(6, alcance * (p.comprimento/100) * (1 - rng()*vc*0.95));
-      const rS = rIn + L*0.2;                       // onde a agulha está mais larga
+      const r0 = rIn * (1 + rag*(Math.pow(rng(),2)*1.5 - 0.3*rng()));   // cada agulha nasce num raio
+      const rS = r0 + L*0.2;                        // onde a agulha está mais larga
       // Losango: ponta no círculo interno, ombros em rS, ponta no fim.
-      formas.push({t:"poly", pts:[pol(rIn,a), pol(rS,a-ao), pol(rIn+L,a), pol(rS,a+ao)]});
+      formas.push({t:"poly", pts:[pol(r0,a), pol(rS,a-ao), pol(r0+L,a), pol(rS,a+ao)]});
+    }
+    // Agulhas curtas e finas entre as longas, nascendo um pouco além do miolo.
+    const nc = Math.round(n * p.curtas/100 * 0.9);
+    for(let i=0;i<nc;i++){
+      const a  = rng()*Math.PI*2;
+      const r0 = Math.max(rIn,1) * (0.95 + rng()*0.9) + alcance*Math.pow(rng(),2.2)*0.3;
+      const L  = Math.max(5, alcance * (p.comprimento/100) * (0.05 + rng()*0.22));
+      const w  = vao*0.5*esp*(0.25 + rng()*0.6);
+      formas.push({t:"poly", pts:[pol(r0,a), pol(r0+L*0.3,a-w), pol(r0+L,a), pol(r0+L*0.3,a+w)]});
     }
     return formas;
   }
@@ -771,6 +953,7 @@ EFEITOS.betaflash = {
     afunilamento:{tipo:"slider", rot:{pt:"Afunilamento",          en:"Taper"},          min:0,  max:100, passo:1, padrao:85, suf:"%"},
     variacao:    {tipo:"slider", rot:{pt:"Variação de largura",   en:"Width variance"}, min:0,  max:100, passo:1, padrao:55, suf:"%"},
     irregular:   {tipo:"slider", rot:{pt:"Irregularidade",        en:"Jitter"},         min:0,  max:100, passo:1, padrao:45, suf:"%"},
+    borda:       {tipo:"slider", rot:{pt:"Borda do centro irregular",en:"Ragged center edge"}, min:0, max:100, passo:1, padrao:50, suf:"%"},
     centro:      {tipo:"ponto",  rot:{pt:"Centro", en:"Center"}, padrao:[0.5,0.5]}
   },
   gerar(p, W, H, rng){
@@ -789,15 +972,15 @@ EFEITOS.betaflash = {
       const ho = hwMax * (1 - rng()*vari*0.8);               // meia-largura externa
       const folga = Math.max(0, cel/2 - ho);                  // cada raio fica na própria célula,
       const a = (i+0.5)*cel + (rng()-0.5)*2*folga*irr;        // então nunca cruza o vizinho
-      sp.push({a, ho, hi: ho*(1-afun)});
+      sp.push({a, ho, hi: ho*(1-afun), r0: rIn*(1 + (p.borda/100)*(rng()*1.2 - 0.35))});
     }
     const formas = [];
     for(let i=0;i<n;i++){
       const s = sp[i], t = sp[(i+1)%n];
       const ta = t.a + (i === n-1 ? Math.PI*2 : 0);
       formas.push({t:"poly", pts:[
-        pol(rIn, s.a + s.hi), pol(Ro, s.a + s.ho),
-        pol(Ro, ta - t.ho),   pol(rIn, ta - t.hi)
+        pol(s.r0, s.a + s.hi), pol(Ro, s.a + s.ho),
+        pol(Ro, ta - t.ho),    pol(t.r0, ta - t.hi)
       ]});
     }
     return formas;
@@ -829,6 +1012,8 @@ EFEITOS.uniflash = {
     base:        {tipo:"slider", rot:{pt:"Largura da base",        en:"Base width"},      min:20, max:100, passo:1, padrao:70, suf:"%"},
     irregular:   {tipo:"slider", rot:{pt:"Irregularidade",         en:"Jitter"},          min:0,  max:100, passo:1, padrao:40, suf:"%"},
     vazio:       {tipo:"slider", rot:{pt:"Vazio no centro",        en:"Hollow center"},   min:0,  max:90,  passo:1, padrao:0,  suf:"%"},
+    borda:       {tipo:"slider", rot:{pt:"Núcleo irregular",       en:"Ragged core"},     min:0,  max:100, passo:1, padrao:50, suf:"%"},
+    curtas:      {tipo:"slider", rot:{pt:"Espinhos curtos extras", en:"Extra short spikes"}, min:0, max:100, passo:1, padrao:50, suf:"%"},
     centro:      {tipo:"ponto",  rot:{pt:"Centro", en:"Center"}, padrao:[0.5,0.5]}
   },
   gerar(p, W, H, rng){
@@ -842,16 +1027,29 @@ EFEITOS.uniflash = {
     for(let i=0;i<n;i++){
       const hw = cel * 0.5 * base * (1 - rng()*irr*0.3);
       const a  = (i+0.5)*cel + (rng()-0.5)*2*Math.max(0, cel/2 - hw)*irr;
-      const R  = core + Math.max(2, comp * (1 - rng()*vc*0.9));
-      sp.push({a, hw, R});
+      const cr = core * (1 - (p.borda/100)*rng()*0.45);       // núcleo de raio variável
+      const R  = cr + Math.max(2, comp * (1 - rng()*vc*0.9));
+      sp.push({a, hw, R, cr});
     }
-    const pts = [];
+    // Espinhos curtos: entram no meio de alguns vãos, só se couberem.
+    const lista = [];
     for(let i=0;i<n;i++){
       const s = sp[i], t = sp[(i+1)%n];
       const ta = t.a + (i === n-1 ? Math.PI*2 : 0);
-      pts.push(pol(core, s.a - s.hw), pol(s.R, s.a), pol(core, s.a + s.hw));
+      lista.push(s);
+      const folga = (ta - t.hw) - (s.a + s.hw);
+      if(folga > 0.002 && rng() < p.curtas/100){
+        const hw = folga*(0.12 + rng()*0.25), cr = Math.min(s.cr, t.cr);
+        lista.push({a:(s.a + s.hw + ta - t.hw)/2, hw, cr, R: cr + Math.max(2, comp*(0.1 + rng()*0.3))});
+      }
+    }
+    const m = lista.length, pts = [];
+    for(let i=0;i<m;i++){
+      const s = lista[i], t = lista[(i+1)%m];
+      const ta = t.a + (i === m-1 ? Math.PI*2 : 0);
+      pts.push(pol(s.cr, s.a - s.hw), pol(s.R, s.a), pol(s.cr, s.a + s.hw));
       // ponto no meio do vão, sobre o núcleo, para o contorno seguir o círculo
-      pts.push(pol(core, ((s.a + s.hw) + (ta - t.hw)) / 2));
+      pts.push(pol((s.cr + t.cr)/2, ((s.a + s.hw) + (ta - t.hw)) / 2));
     }
     const rv = p.vazio/100 * core;
     if(rv < 0.5) return [{t:"poly", pts}];
@@ -908,7 +1106,7 @@ EFEITOS.linhas = {
   icone:`<path d="M2 20L14 4M8 24L22 4M15 24L30 4M23 24L33 9" stroke="currentColor" stroke-width="1.7" fill="none"/>`,
   params:{
     angulo:     {tipo:"slider", rot:{pt:"Ângulo",       en:"Angle"},     min:0, max:180, passo:1, padrao:45, suf:"°"},
-    espacamento:{tipo:"slider", rot:{pt:"Espaçamento",  en:"Spacing"},   min:3, max:60,  passo:1, padrao:10, suf:"px"},
+    espacamento:{tipo:"slider", rot:{pt:"Espaçamento",  en:"Spacing"},   min:3, max:60,  passo:0.1, padrao:10, suf:"px", px:1, lpi:1},
     espessura:  {tipo:"slider", rot:{pt:"Espessura (% do espaç.)", en:"Thickness (% of spacing)"}, min:5, max:95, passo:1, padrao:35, suf:"%"}
   },
   gerar(p, W, H){
@@ -953,7 +1151,7 @@ EFEITOS.reticulaGrad = {
   aleatorio:false,
   icone:iconePontos((i,j) => 2.3 - i*0.32),
   params:{
-    espacamento:{tipo:"slider", rot:{pt:"Espaçamento",           en:"Spacing"},          min:3, max:60,  passo:1, padrao:9,  suf:"px"},
+    espacamento:{tipo:"slider", rot:{pt:"Espaçamento",           en:"Spacing"},          min:3, max:60,  passo:0.1, padrao:9,  suf:"px", px:1, lpi:1},
     angulo:     {tipo:"slider", rot:{pt:"Ângulo da trama",       en:"Screen angle"},     min:0, max:90,  passo:1, padrao:45, suf:"°"},
     forma:      {tipo:"opcoes", rot:{pt:"Forma do ponto",        en:"Dot shape"}, padrao:"circulo",
                  opcoes:[{v:"circulo", rot:{pt:"Círculo",en:"Circle"}},
@@ -1006,7 +1204,7 @@ EFEITOS.padroes = {
                       {v:"tijolos", rot:{pt:"Tijolos",          en:"Bricks"}},
                       {v:"cruzes",  rot:{pt:"Cruzes",           en:"Crosses"}},
                       {v:"losangos",rot:{pt:"Losangos (rede)",  en:"Diamond lattice"}}]},
-    tamanho: {tipo:"slider", rot:{pt:"Tamanho do módulo",  en:"Module size"},   min:8, max:160, passo:1, padrao:28, suf:"px"},
+    tamanho: {tipo:"slider", rot:{pt:"Tamanho do módulo",  en:"Module size"},   min:8, max:160, passo:1, padrao:28, suf:"px", px:1},
     espessura:{tipo:"slider",rot:{pt:"Espessura do traço (% do módulo)", en:"Stroke (% of module)"}, min:4, max:60, passo:1, padrao:14, suf:"%"},
     angulo:  {tipo:"slider", rot:{pt:"Ângulo",             en:"Angle"},         min:0, max:180, passo:1, padrao:0, suf:"°"}
   },
@@ -1116,12 +1314,12 @@ EFEITOS.pontilhado = {
   icone:(()=>{ const pos=[[6,5,1.6],[14,8,1.1],[22,4,1.9],[29,9,1.2],[9,14,1.2],[18,16,1.8],[26,15,1.1],[5,22,1.7],[14,23,1.2],[23,22,1.6],[30,21,1.1]];
     return `<g fill="currentColor">${pos.map(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}"/>`).join("")}</g>`; })(),
   params:{
-    espacamento:{tipo:"slider", rot:{pt:"Tamanho da célula", en:"Cell size"},   min:4, max:40, passo:1, padrao:9,  suf:"px"},
+    espacamento:{tipo:"slider", rot:{pt:"Tamanho da célula", en:"Cell size"},   min:4, max:40, passo:1, padrao:9,  suf:"px", px:1},
     densidade:  {tipo:"slider", rot:{pt:"Densidade",         en:"Density"},     min:1, max:100,passo:1, padrao:45, suf:"%"},
     tamanho:    {tipo:"slider", rot:{pt:"Tamanho do ponto",  en:"Dot size"},     min:10,max:90, passo:1, padrao:38, suf:"%"},
     variacao:   {tipo:"slider", rot:{pt:"Variação de tamanho",en:"Size variance"},min:0,max:100,passo:1, padrao:55, suf:"%"},
     degrade:    {tipo:"slider", rot:{pt:"Degradê",           en:"Fade"},        min:0, max:100,passo:1, padrao:0,  suf:"%"},
-    anguloGrad: {tipo:"slider", rot:{pt:"Direção do degradê",en:"Fade direction"},min:0,max:360,passo:1,padrao:0,  suf:"°"}
+    anguloGrad: {tipo:"slider", rot:{pt:"Direção do degradê",en:"Fade direction"},min:0,max:360,passo:1,padrao:0,  suf:"°", se:p => p.degrade > 0}
   },
   gerar(p, W, H, rng){
     const s = p.espacamento, dens = p.densidade/100, vari = p.variacao/100;
@@ -1153,12 +1351,12 @@ EFEITOS.granulado = {
       s+=`<circle cx="${cx}" cy="${cy}" r="${r2(r)}"/>`; }
     return `<g fill="currentColor">${s}</g>`; })(),
   params:{
-    densidade:  {tipo:"slider", rot:{pt:"Densidade (grãos / 1000 px²)", en:"Density (grains / 1000 px²)"}, min:1, max:100, passo:1, padrao:30},
-    tamanhoMin: {tipo:"slider", rot:{pt:"Tamanho mínimo", en:"Min size"}, min:0.4, max:4,  passo:0.1, padrao:0.7, suf:"px"},
-    tamanhoMax: {tipo:"slider", rot:{pt:"Tamanho máximo", en:"Max size"}, min:0.8, max:10, passo:0.1, padrao:2.4, suf:"px"},
+    densidade:  {tipo:"slider", rot:{pt:"Densidade (grãos / 1000 px²)", en:"Density (grains / 1000 px²)"}, min:1, max:100, passo:1, padrao:30, px:2},
+    tamanhoMin: {tipo:"slider", rot:{pt:"Tamanho mínimo", en:"Min size"}, min:0.4, max:4,  passo:0.1, padrao:0.7, suf:"px", px:1},
+    tamanhoMax: {tipo:"slider", rot:{pt:"Tamanho máximo", en:"Max size"}, min:0.8, max:10, passo:0.1, padrao:2.4, suf:"px", px:1},
     irregular:  {tipo:"slider", rot:{pt:"Irregularidade do grão", en:"Grain irregularity"}, min:0, max:100, passo:1, padrao:60, suf:"%"},
     degrade:    {tipo:"slider", rot:{pt:"Degradê",            en:"Fade"},           min:0, max:100, passo:1, padrao:0, suf:"%"},
-    anguloGrad: {tipo:"slider", rot:{pt:"Direção do degradê", en:"Fade direction"}, min:0, max:360, passo:1, padrao:0, suf:"°"}
+    anguloGrad: {tipo:"slider", rot:{pt:"Direção do degradê", en:"Fade direction"}, min:0, max:360, passo:1, padrao:0, suf:"°", se:p => p.degrade > 0}
   },
   gerar(p, W, H, rng){
     // Teto de segurança: acima disto o desenho levaria dezenas de segundos.
@@ -1220,7 +1418,7 @@ EFEITOS.curvas = {
     raioInterno: {tipo:"slider", rot:{pt:"Raio interno",         en:"Inner radius"},   min:0,  max:70,  passo:1, padrao:10, suf:"%"},
     comprimento: {tipo:"slider", rot:{pt:"Comprimento do traço", en:"Stroke length"},  min:5,  max:100, passo:1, padrao:45, suf:"%"},
     varComp:     {tipo:"slider", rot:{pt:"Variação do compr.",   en:"Length variance"},min:0,  max:100, passo:1, padrao:60, suf:"%"},
-    espessura:   {tipo:"slider", rot:{pt:"Espessura",            en:"Thickness"},      min:1,  max:40,  passo:1, padrao:6,  suf:"px"},
+    espessura:   {tipo:"slider", rot:{pt:"Espessura",            en:"Thickness"},      min:1,  max:40,  passo:1, padrao:6,  suf:"px", px:1},
     varEsp:      {tipo:"slider", rot:{pt:"Variação de espess.",  en:"Width variance"}, min:0,  max:100, passo:1, padrao:50, suf:"%"},
     afunilamento:{tipo:"slider", rot:{pt:"Afunilamento",         en:"Taper"},          min:0,  max:100, passo:1, padrao:85, suf:"%"},
     espiral:     {tipo:"slider", rot:{pt:"Espiral",              en:"Spiral"},         min:-100,max:100, passo:1, padrao:0,  suf:"%"},
@@ -1264,9 +1462,9 @@ EFEITOS.vento = {
     quantidade:  {tipo:"slider", rot:{pt:"Quantidade de traços", en:"Stroke count"},  min:5,  max:300, passo:1, padrao:55},
     comprimento: {tipo:"slider", rot:{pt:"Comprimento",          en:"Length"},        min:10, max:100, passo:1, padrao:60, suf:"%"},
     varComp:     {tipo:"slider", rot:{pt:"Variação do compr.",   en:"Length variance"},min:0, max:100, passo:1, padrao:55, suf:"%"},
-    espessura:   {tipo:"slider", rot:{pt:"Espessura",            en:"Thickness"},     min:1,  max:30,  passo:1, padrao:5,  suf:"px"},
+    espessura:   {tipo:"slider", rot:{pt:"Espessura",            en:"Thickness"},     min:1,  max:30,  passo:1, padrao:5,  suf:"px", px:1},
     afunilamento:{tipo:"slider", rot:{pt:"Afunilamento",         en:"Taper"},         min:0,  max:100, passo:1, padrao:85, suf:"%"},
-    amplitude:   {tipo:"slider", rot:{pt:"Amplitude da onda",    en:"Wave amplitude"},min:0,  max:200, passo:1, padrao:24, suf:"px"},
+    amplitude:   {tipo:"slider", rot:{pt:"Amplitude da onda",    en:"Wave amplitude"},min:0,  max:200, passo:1, padrao:24, suf:"px", px:1},
     ondas:       {tipo:"slider", rot:{pt:"Ondas por traço",      en:"Waves per stroke"},min:0.5,max:8, passo:0.1,padrao:1.8},
     irregular:   {tipo:"slider", rot:{pt:"Irregularidade",       en:"Jitter"},        min:0,  max:100, passo:1, padrao:45, suf:"%"}
   },
@@ -1308,7 +1506,7 @@ EFEITOS.verticais = {
     comprimento: {tipo:"slider", rot:{pt:"Comprimento",          en:"Length"},         min:5,  max:100, passo:1, padrao:55, suf:"%"},
     varComp:     {tipo:"slider", rot:{pt:"Variação do compr.",   en:"Length variance"},min:0,  max:100, passo:1, padrao:65, suf:"%"},
     foco:        {tipo:"slider", rot:{pt:"Foco no centro",       en:"Center focus"},   min:0,  max:100, passo:1, padrao:35, suf:"%"},
-    espessura:   {tipo:"slider", rot:{pt:"Espessura",            en:"Thickness"},      min:1,  max:30,  passo:1, padrao:5,  suf:"px"},
+    espessura:   {tipo:"slider", rot:{pt:"Espessura",            en:"Thickness"},      min:1,  max:30,  passo:1, padrao:5,  suf:"px", px:1},
     varEsp:      {tipo:"slider", rot:{pt:"Variação de espess.",  en:"Width variance"}, min:0,  max:100, passo:1, padrao:50, suf:"%"},
     afunilamento:{tipo:"slider", rot:{pt:"Afunilamento",         en:"Taper"},          min:0,  max:100, passo:1, padrao:70, suf:"%"},
     irregular:   {tipo:"slider", rot:{pt:"Irregularidade",       en:"Jitter"},         min:0,  max:100, passo:1, padrao:45, suf:"%"}
@@ -1343,12 +1541,12 @@ EFEITOS.chuva = {
   aleatorio:true,
   icone:`<path d="M7 3L4 11M15 2L11 12M24 3L20 13M31 4L28 12M11 15L8 23M20 16L17 24M29 17L26 25" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>`,
   params:{
-    densidade:   {tipo:"slider", rot:{pt:"Densidade (gotas / 100 mil px²)", en:"Density (drops / 100k px²)"}, min:1, max:300, passo:1, padrao:35},
+    densidade:   {tipo:"slider", rot:{pt:"Densidade (gotas / 100 mil px²)", en:"Density (drops / 100k px²)"}, min:1, max:300, passo:1, padrao:35, px:2},
     angulo:      {tipo:"slider", rot:{pt:"Ângulo de queda",      en:"Fall angle"},     min:0,  max:360, passo:1, padrao:72, suf:"°"},
     varAngulo:   {tipo:"slider", rot:{pt:"Variação do ângulo",   en:"Angle variance"}, min:0,  max:40,  passo:1, padrao:4,  suf:"°"},
-    comprimento: {tipo:"slider", rot:{pt:"Comprimento",          en:"Length"},         min:8,  max:300, passo:1, padrao:70, suf:"px"},
+    comprimento: {tipo:"slider", rot:{pt:"Comprimento",          en:"Length"},         min:8,  max:300, passo:1, padrao:70, suf:"px", px:1},
     varComp:     {tipo:"slider", rot:{pt:"Variação do compr.",   en:"Length variance"},min:0,  max:100, passo:1, padrao:45, suf:"%"},
-    espessura:   {tipo:"slider", rot:{pt:"Espessura",            en:"Thickness"},      min:0.5,max:10,  passo:0.5,padrao:2},
+    espessura:   {tipo:"slider", rot:{pt:"Espessura",            en:"Thickness"},      min:0.5,max:10,  passo:0.5,padrao:2, px:1},
     afunilamento:{tipo:"slider", rot:{pt:"Afunilamento",         en:"Taper"},          min:0,  max:100, passo:1, padrao:70, suf:"%"}
   },
   gerar(p, W, H, rng){
@@ -1437,6 +1635,25 @@ function figuraAtmosfera(tipo, x, y, R, ang, p, rng){
       }
       return formas;
     }
+    case "estrela": case "estrelaContorno": {
+      // Estrela de 5 pontas com uma ponta para cima (antes da rotação sorteada).
+      const estrela = esc => {
+        const q = [];
+        for(let k=0;k<10;k++){
+          const t = -Math.PI/2 + k*Math.PI/5, r = (k%2 ? 0.42 : 1)*R*esc;
+          q.push(rot(r*Math.cos(t), r*Math.sin(t)));
+        }
+        return q;
+      };
+      const ext = estrela(1);
+      if(tipo === "estrela") return [{t:"poly", pts:ext}];
+      // Contorno: a estrela menor vira furo (regra par-ímpar). Em figuras
+      // muito pequenas o furo sumiria, então elas saem cheias.
+      const f = 1 - Math.min(0.85, p.anel/100*1.8);
+      const dPath = q => `M${r2(q[0][0])} ${r2(q[0][1])}` + q.slice(1).map(z => ` L${r2(z[0])} ${r2(z[1])}`).join("") + " Z";
+      if(R*(1-f) < 0.6) return [{t:"poly", pts:ext}];
+      return [{t:"path", d: dPath(ext) + dPath(estrela(f)), evenodd:true}];
+    }
     case "neve": {
       if(R < 5) return [{t:"circle", cx:x, cy:y, r:Math.max(0.6, R*0.6)}];
       // Cristal de 6 braços, cada um com dois pares de ramos.
@@ -1473,19 +1690,60 @@ EFEITOS.atmosfera = {
                          {v:"flor",   rot:{pt:"Flor",    en:"Flower"}},
                          {v:"coracao",rot:{pt:"Coração", en:"Heart"}},
                          {v:"petala", rot:{pt:"Pétala",  en:"Petal"}},
+                         {v:"estrela",        rot:{pt:"Estrela preenchida", en:"Star (filled)"}},
+                         {v:"estrelaContorno",rot:{pt:"Estrela contorno",   en:"Star (outline)"}},
                          {v:"bolha",  rot:{pt:"Bolha",   en:"Bubble"}},
                          {v:"neve",   rot:{pt:"Neve",    en:"Snow"}}]},
-    densidade:  {tipo:"slider", rot:{pt:"Densidade (figuras / 100 mil px²)", en:"Density (shapes / 100k px²)"}, min:1, max:80, passo:1, padrao:8},
-    tamanhoMin: {tipo:"slider", rot:{pt:"Tamanho mínimo", en:"Min size"}, min:4, max:200, passo:1, padrao:18, suf:"px"},
-    tamanhoMax: {tipo:"slider", rot:{pt:"Tamanho máximo", en:"Max size"}, min:6, max:300, passo:1, padrao:60, suf:"px"},
-    afastamento:{tipo:"slider", rot:{pt:"Afastamento mínimo", en:"Min spacing"}, min:0, max:150, passo:1, padrao:70, suf:"%"},
-    rotacao:    {tipo:"slider", rot:{pt:"Rotação sorteada",   en:"Random rotation"}, min:0, max:100, passo:1, padrao:60, suf:"%"},
-    anel:       {tipo:"slider", rot:{pt:"Contorno da bolha",  en:"Bubble outline"},  min:3, max:40,  passo:1, padrao:14, suf:"%"},
+    disposicao: {tipo:"opcoes", rot:{pt:"Disposição", en:"Layout"}, padrao:"aleatoria",
+                 opcoes:[{v:"aleatoria", rot:{pt:"Aleatória",        en:"Random"}},
+                         {v:"grade",     rot:{pt:"Alinhada (grade)", en:"Aligned (grid)"}}]},
+    gradeEsp:   {tipo:"slider", rot:{pt:"Grade: espaçamento",          en:"Grid: spacing"},         min:10, max:300, passo:1, padrao:80,  suf:"px", se:p => p.disposicao === "grade", px:1},
+    gradeProp:  {tipo:"slider", rot:{pt:"Grade: proporção linha/coluna",en:"Grid: row/column ratio"}, min:25, max:300, passo:1, padrao:100, suf:"%", se:p => p.disposicao === "grade"},
+    gradeAng:   {tipo:"slider", rot:{pt:"Grade: ângulo (diagonal)",    en:"Grid: angle (diagonal)"}, min:0,  max:180, passo:1, padrao:0,   suf:"°", se:p => p.disposicao === "grade"},
+    gradeDesl:  {tipo:"slider", rot:{pt:"Grade: deslocar linhas alternadas", en:"Grid: offset alternate rows"}, min:0, max:100, passo:1, padrao:0, suf:"%", se:p => p.disposicao === "grade"},
+    gradeDesvio:{tipo:"slider", rot:{pt:"Grade: desvio de posição",    en:"Grid: position jitter"}, min:0,  max:100, passo:1, padrao:0,   suf:"%", se:p => p.disposicao === "grade"},
+    variacao:   {tipo:"slider", rot:{pt:"Variação de tamanho e forma (grade)", en:"Size & shape variance (grid)"}, min:0, max:100, passo:1, padrao:0, suf:"%", se:p => p.disposicao === "grade"},
+    rotBase:    {tipo:"slider", rot:{pt:"Rotação fixa das figuras",    en:"Fixed shape rotation"},  min:0,  max:360, passo:1, padrao:0,   suf:"°"},
+    densidade:  {tipo:"slider", rot:{pt:"Densidade (figuras / 100 mil px²)", en:"Density (shapes / 100k px²)"}, min:1, max:80, passo:1, padrao:8, se:p => p.disposicao !== "grade", px:2},
+    tamanhoMin: {tipo:"slider", rot:{pt:"Tamanho mínimo", en:"Min size"}, min:4, max:200, passo:1, padrao:18, suf:"px", px:1},
+    tamanhoMax: {tipo:"slider", rot:{pt:"Tamanho máximo", en:"Max size"}, min:6, max:300, passo:1, padrao:60, suf:"px", px:1},
+    afastamento:{tipo:"slider", rot:{pt:"Afastamento mínimo", en:"Min spacing"}, min:0, max:150, passo:1, padrao:70, suf:"%", se:p => p.disposicao !== "grade"},
+    rotacao:    {tipo:"slider", rot:{pt:"Rotação sorteada",   en:"Random rotation"}, min:0, max:100, passo:1, padrao:60, suf:"%", se:p => p.disposicao !== "grade" || p.variacao > 0},
+    anel:       {tipo:"slider", rot:{pt:"Espessura do contorno (bolha/estrela)", en:"Outline width (bubble/star)"},  min:3, max:40,  passo:1, padrao:14, suf:"%", se:p => p.figura === "bolha" || p.figura === "estrelaContorno"},
     degrade:    {tipo:"slider", rot:{pt:"Degradê",            en:"Fade"},            min:0, max:100, passo:1, padrao:0,  suf:"%"},
-    anguloGrad: {tipo:"slider", rot:{pt:"Direção do degradê", en:"Fade direction"},  min:0, max:360, passo:1, padrao:0,  suf:"°"}
+    anguloGrad: {tipo:"slider", rot:{pt:"Direção do degradê", en:"Fade direction"},  min:0, max:360, passo:1, padrao:0,  suf:"°", se:p => p.degrade > 0}
   },
   gerar(p, W, H, rng){
     const tmin = Math.min(p.tamanhoMin, p.tamanhoMax)/2, tmax = Math.max(p.tamanhoMin, p.tamanhoMax)/2;
+    const base = p.rotBase*Math.PI/180;
+    if(p.disposicao === "grade"){
+      // Grade em coordenadas giradas (u,v) em torno do centro do quadro, devolvidas
+      // ao mundo. Com variação 0 todas as figuras saem idênticas (mesmo tamanho,
+      // mesma forma); o degradê aqui encolhe as figuras em vez de removê-las, para
+      // não abrir buracos na grade.
+      const ca = Math.cos(p.gradeAng*Math.PI/180), sa = Math.sin(p.gradeAng*Math.PI/180);
+      let dx = p.gradeEsp, dy = p.gradeEsp*p.gradeProp/100;
+      const ext = Math.hypot(W,H)/2 + tmax*2;
+      const total = (2*ext/dx)*(2*ext/dy);                // máx. ~15 mil figuras
+      if(total > 25000){ const k = Math.sqrt(total/25000); dx *= k; dy *= k; }
+      const fatorG = gradienteLinear(p.anguloGrad, W, H, 0, 1, 1, 1 - p.degrade/100);
+      const vari = p.variacao/100, des = p.gradeDesl/100, dsv = p.gradeDesvio/100;
+      const rngFixo = () => 0.5, formas = [];
+      for(let j=-Math.ceil(ext/dy); j<=Math.ceil(ext/dy); j++){
+        for(let i=-Math.ceil(ext/dx); i<=Math.ceil(ext/dx); i++){
+          let u = i*dx + (((j%2)+2)%2)*des*dx, v = j*dy;
+          if(dsv > 0){ u += (rng()-0.5)*dx*dsv; v += (rng()-0.5)*dy*dsv; }
+          const x = W/2 + u*ca - v*sa, y = H/2 + u*sa + v*ca;
+          if(x < -tmax || y < -tmax || x > W+tmax || y > H+tmax) continue;
+          const f = fatorG(x,y);
+          const R = (tmax - (tmax-tmin)*vari*rng()) * f;
+          if(R < 1.5) continue;
+          const ang = base + (vari > 0 ? (rng()-0.5)*Math.PI*2*(p.rotacao/100)*vari : 0);   // na grade a rotação sorteada só vale junto com a variação
+          for(const fm of figuraAtmosfera(p.figura, x, y, R, ang, p, vari > 0 ? rng : rngFixo)) formas.push(fm);
+        }
+      }
+      return formas;
+    }
     const n = Math.min(20000, Math.round(W*H/1e5*p.densidade));
     const sep = p.afastamento/100, rotacao = p.rotacao/100;
     const cel = Math.max(8, 2*tmax*Math.max(1,sep) + 1);
@@ -1513,7 +1771,7 @@ EFEITOS.atmosfera = {
       if(!grade.has(chave)) grade.set(chave, []);
       grade.get(chave).push([x,y,R]);
       postos++;
-      const ang = (rng()-0.5)*Math.PI*2*rotacao;
+      const ang = base + (rng()-0.5)*Math.PI*2*rotacao;
       for(const f of figuraAtmosfera(p.figura, x, y, R, ang, p, rng)) formas.push(f);
     }
     return formas;
@@ -1521,6 +1779,189 @@ EFEITOS.atmosfera = {
 };
 
 const ORDEM = ["concentracao","flash","betaflash","uniflash","velocidade","curvas","vento","verticais","chuva","kakeami","kakeamiGrad","linhas","reticula","reticulaGrad","padroes","pontilhado","granulado","atmosfera"];
+
+</script>
+<script>
+"use strict";
+
+/* Versão da ferramenta. Mude a cada rodada de melhorias (1.5, 1.6…) e o
+   primeiro número numa mudança grande (2.0). Aparece ao lado do título e
+   no rodapé da ajuda, para saber qual cópia está aberta. */
+const VERSAO = "1.4", DATA_VERSAO = "2026-10-21";
+
+
+/* ============================================================
+   1. IDIOMAS
+   Um único dicionário. Para acrescentar um idioma novo, basta
+   duplicar o bloco e traduzir os valores.
+   ============================================================ */
+const I18N = {
+  pt:{
+    titulo:"Gerador de Efeitos e Tons", tipo:"Tipo de efeito", ajustes:"Ajustes",
+    camadas:"Camadas", doc:"Documento", tamanho:"Tamanho", fundo:"Fundo da prévia",
+    exportar:"Exportar", escala:"Escala", variar:"Outra forma", reset:"Restaurar",
+    add:"Adicionar camada", pngT:"PNG transparente", pngB:"PNG fundo branco",
+    copiarT:"Copiar transparente", copiarB:"Copiar fundo branco", xadrez:"Xadrez (transparente)", branco:"Branco", preto:"Preto",
+    arraste:"Arraste na prévia para mover o centro (ele pode ficar fora do quadro). Para mover a vista: dois dedos, espaço + arrastar ou botão do meio do mouse. Zoom: pinça ou Ctrl + roda.",
+    semAleatorio:"Este efeito é calculado, não sorteado — a forma não muda.",
+    copiado:"Imagem copiada para a área de transferência.",
+    erroCopia:"Não foi possível copiar. Use o botão de PNG.", erroSalvar:"Não foi possível salvar o arquivo.", dicaTipo:"Toque duas vezes no efeito escolhido para recolher ou mostrar os outros.", tiposRecolhidos:"Outros efeitos recolhidos. Toque duas vezes para mostrar de novo.", tiposExpandidos:"Todos os efeitos visíveis.",
+    salvo:"Arquivo salvo:", limite:"Máximo de 8 camadas.",
+    personalizado:"Personalizado", camada:"Camada",
+    pesado:"Ajuste pesado — a prévia é redesenhada ao soltar o controle.",
+    svgGrande:"SVG de {} MB. Para Halftone fino, o PNG costuma ser mais prático.",
+    opacidade:"Opacidade", desfazer:"Desfazer (Ctrl+Z)", refazer:"Refazer (Ctrl+Shift+Z)",
+    ajustar:"Ajustar", zoomMenos:"Diminuir zoom (Ctrl −)", zoomMais:"Aumentar zoom (Ctrl +)",
+    zoomAjustar:"Encaixar o quadro na tela (Ctrl+0)", zoom100:"Tamanho real, 1 pixel do arquivo por pixel da tela (Ctrl+1)",
+    avisoRet:"Prévia reduzida: retículas finas podem mostrar ondulações que não existem no arquivo.",
+    ver100:"Ver em 100%", gerando:"Gerando PNG… {}%",
+    erroGrande:"Imagem grande demais para este navegador. Use a escala 1× ou 0,5×.",
+    desfeito:"Desfeito.", refeito:"Refeito.",
+    area:"Área do efeito", areaTipo:"Onde o efeito aparece",
+    areaNenhuma:"Quadro inteiro", areaRet:"Retângulo", areaElipse:"Elipse", areaPoli:"Polígono (desenhado)",
+    areaInverter:"Inverter (efeito fora da área)", areaEditar:"Editar na prévia", areaEditando:"Editando…",
+    areaRedesenhar:"Desenhar de novo", areaConcluir:"Concluir",
+    areaDicaCaixa:"Na prévia: arraste os cantos para redimensionar, o meio para mover, ou arraste fora para traçar uma área nova.",
+    areaDicaPoli:"Na prévia: arraste um ponto para ajustá-lo, o meio para mover. Dois toques numa aresta criam um ponto; dois toques num ponto o apagam.",
+    areaDicaDesenho:"Toque para pôr os pontos. Para fechar: toque no primeiro ponto, em Concluir ou tecle Enter. Backspace apaga o último.",
+    areaFaltam:"O polígono precisa de pelo menos 3 pontos.", areaTag:"com área",
+    ref:"Imagem de referência", refCarregar:"Carregar…", refTrocar:"Trocar…", refRemover:"Remover",
+    refOpac:"Opacidade da referência", refPos:"Posição", refAbaixo:"Por baixo dos efeitos", refAcima:"Por cima (multiplicar)",
+    refEnc:"Encaixe", refCaber:"Caber no quadro", refPreencher:"Preencher o quadro", refEsticar:"Esticar",
+    refTamanho:"Usar o tamanho da imagem ({})", refVisivel:"Mostrar a referência",
+    refNota:"A referência só aparece na prévia. Ela fica guardada neste navegador e não entra na exportação.",
+    refErro:"Não foi possível abrir esta imagem.",
+    dpi:"Resolução (dpi)", medida:"= {} mm a {} dpi", manter:"Ajustar os efeitos quando o tamanho mudar",
+    lineatura:"Lineatura", linhasL:"{} L", personalizada:"Personalizada",
+    dicaValor:"Toque no número para digitar um valor exato. Dois toques no nome voltam ao padrão.",
+    presets:"Meus presets", pAplicar:"Aplicar", pApagar:"Apagar", pSalvar:"Salvar atual", pNome:"Nome do preset",
+    pExportar:"Exportar arquivo", pImportar:"Importar arquivo", pVazio:"Nenhum preset salvo",
+    pSalvo:"Preset \"{}\" salvo.", pAtualizado:"Preset \"{}\" atualizado.", pAplicado:"Preset \"{}\" aplicado.",
+    pApagado:"Preset \"{}\" apagado.", pSemNome:"Dê um nome ao preset.", pImportados:"{} preset(s) importado(s).",
+    pInvalido:"Arquivo de presets inválido.",
+    camOlho:"Mostrar ou ocultar a camada", camSobe:"Subir a camada", camDesce:"Descer a camada",
+    camDup:"Duplicar a camada", camApaga:"Apagar a camada", camCor:"Cor da camada", camRenomear:"Dois cliques para renomear",
+    zip:"ZIP — uma imagem por camada", gerandoZip:"Gerando ZIP… {} de {}", composicao:"composicao",
+    calc:"Calculando…", ajudaBotao:"Ajuda e atalhos", versao:"Versão {} · {}",
+    ajuda:`<h2 id="ajuda-titulo">Gerador de Efeitos e Tons</h2>
+<p>Linhas de efeito e tons de mangá, prontos para colar na sua página. Tudo roda no seu aparelho, sem internet.</p>
+<h3>Começo rápido</h3>
+<ol><li><b>Escolha um efeito</b> no painel (Focus Lines, Halftone, Mood…).</li>
+<li><b>Ajuste</b> os controles. "Outra forma" sorteia uma variação.</li>
+<li><b>Empilhe camadas</b> (até 8) e limite cada uma a uma <b>área</b>, se quiser.</li>
+<li><b>Exporte</b> em PNG (transparente ou branco), SVG, ZIP por camada, ou copie.</li></ol>
+<h3>Na prévia</h3>
+<ul><li><b>Centro</b> (efeitos radiais): arraste com um dedo ou com o mouse. Pode ficar fora do quadro.</li>
+<li><b>Mover a vista</b>: dois dedos, espaço + arrastar, ou o botão do meio do mouse.</li>
+<li><b>Zoom</b>: pinça, Ctrl + roda, ou os botões no canto. Use 100% para conferir retículas finas.</li>
+<li><b>Área do efeito</b>: com "Editar na prévia" ligado, arraste cantos e o meio; no polígono, toque para pôr pontos.</li></ul>
+<h3>Atalhos</h3>
+<div class="atalhos">
+<kbd>Ctrl Z</kbd><span>Desfazer</span>
+<kbd>Ctrl Shift Z</kbd><span>Refazer (também <kbd>Ctrl Y</kbd>)</span>
+<kbd>Ctrl 0</kbd><span>Encaixar o quadro na tela</span>
+<kbd>Ctrl 1</kbd><span>Zoom 100%</span>
+<kbd>Ctrl +</kbd> <span>Aproximar / afastar (<kbd>Ctrl −</kbd>)</span>
+<kbd>Espaço</kbd><span>Segurar e arrastar para mover a vista</span>
+<kbd>Enter</kbd><span>Fechar o polígono que está sendo desenhado</span>
+<kbd>Backspace</kbd><span>Apagar o último ponto do polígono</span>
+<kbd>Esc</kbd><span>Sair da edição da área; fechar esta ajuda</span></div>
+<h3>Truques</h3>
+<ul><li>Toque no <b>número</b> de um controle para digitar o valor exato. <b>Dois toques no nome</b> voltam ao padrão.</li>
+<li><b>Dois toques no efeito escolhido</b> recolhem a lista de efeitos (e mostram de novo).</li>
+<li><b>Dois cliques no nome da camada</b> renomeiam. O nome vai para o SVG e o ZIP.</li>
+<li>Com "Ajustar os efeitos quando o tamanho mudar" ligado, um efeito feito em 1080 px fica igual num B5.</li>
+<li>Retículas mostram a <b>lineatura</b> (60 L, 65 L…), calculada pelo dpi do documento.</li>
+<li><b>Presets</b> ficam neste navegador. Use "Exportar arquivo" para levar ao iPad e "Importar" lá.</li>
+<li>A <b>imagem de referência</b> só aparece na prévia; nunca é exportada.</li></ul>
+<div class="rodape"><small>Inspirado nas ferramentas gratuitas de <a href="https://x.com/sharp_maker" target="_blank" rel="noopener">@sharp_maker</a> (oyasumi-gamedev.com).</small>
+<button class="b pri" id="ajuda-ok">Entendi</button></div>`
+  },
+  en:{
+    titulo:"Effect Line & Tone Generator", tipo:"Effect type", ajustes:"Settings",
+    camadas:"Layers", doc:"Document", tamanho:"Size", fundo:"Preview background",
+    exportar:"Export", escala:"Scale", variar:"Reroll shape", reset:"Reset",
+    add:"Add layer", pngT:"PNG transparent", pngB:"PNG white background",
+    copiarT:"Copy transparent", copiarB:"Copy white background", xadrez:"Checker (transparent)", branco:"White", preto:"Black",
+    arraste:"Drag in the preview to move the center (it may sit outside the frame). To move the view: two fingers, space + drag or middle mouse button. Zoom: pinch or Ctrl + wheel.",
+    semAleatorio:"This effect is computed, not randomized — the shape won't change.",
+    copiado:"Image copied to clipboard.",
+    erroCopia:"Couldn't copy. Use the PNG button instead.", erroSalvar:"Couldn't save the file.", dicaTipo:"Double-tap the selected effect to collapse or show the others.", tiposRecolhidos:"Other effects collapsed. Double-tap to show them again.", tiposExpandidos:"All effects visible.",
+    salvo:"File saved:", limite:"Maximum of 8 layers.",
+    personalizado:"Custom", camada:"Layer",
+    pesado:"Heavy settings — the preview redraws when you release the slider.",
+    svgGrande:"{} MB SVG. For fine halftones, PNG is usually more practical.",
+    opacidade:"Opacity", desfazer:"Undo (Ctrl+Z)", refazer:"Redo (Ctrl+Shift+Z)",
+    ajustar:"Fit", zoomMenos:"Zoom out (Ctrl −)", zoomMais:"Zoom in (Ctrl +)",
+    zoomAjustar:"Fit the frame to the screen (Ctrl+0)", zoom100:"Actual size, 1 file pixel per screen pixel (Ctrl+1)",
+    avisoRet:"Reduced preview: fine halftones may show ripples that aren't in the file.",
+    ver100:"View at 100%", gerando:"Building PNG… {}%",
+    erroGrande:"Image too large for this browser. Use 1× or 0.5× scale.",
+    desfeito:"Undone.", refeito:"Redone.",
+    area:"Effect area", areaTipo:"Where the effect shows",
+    areaNenhuma:"Whole frame", areaRet:"Rectangle", areaElipse:"Ellipse", areaPoli:"Polygon (drawn)",
+    areaInverter:"Invert (effect outside the area)", areaEditar:"Edit in preview", areaEditando:"Editing…",
+    areaRedesenhar:"Draw again", areaConcluir:"Done",
+    areaDicaCaixa:"In the preview: drag the corners to resize, the middle to move, or drag outside to draw a new area.",
+    areaDicaPoli:"In the preview: drag a point to adjust it, the middle to move. Double-tap an edge to add a point; double-tap a point to delete it.",
+    areaDicaDesenho:"Tap to place points. To close: tap the first point, Done, or press Enter. Backspace removes the last one.",
+    areaFaltam:"The polygon needs at least 3 points.", areaTag:"with area",
+    ref:"Reference image", refCarregar:"Load…", refTrocar:"Replace…", refRemover:"Remove",
+    refOpac:"Reference opacity", refPos:"Position", refAbaixo:"Below the effects", refAcima:"On top (multiply)",
+    refEnc:"Fit", refCaber:"Fit inside the frame", refPreencher:"Fill the frame", refEsticar:"Stretch",
+    refTamanho:"Use the image size ({})", refVisivel:"Show the reference",
+    refNota:"The reference only shows in the preview. It is kept in this browser and is never exported.",
+    refErro:"Couldn't open this image.",
+    dpi:"Resolution (dpi)", medida:"= {} mm at {} dpi", manter:"Adjust the effects when the size changes",
+    lineatura:"Screen ruling", linhasL:"{} lpi", personalizada:"Custom",
+    dicaValor:"Tap the number to type an exact value. Double-tap the name to reset it.",
+    presets:"My presets", pAplicar:"Apply", pApagar:"Delete", pSalvar:"Save current", pNome:"Preset name",
+    pExportar:"Export file", pImportar:"Import file", pVazio:"No saved presets",
+    pSalvo:"Preset \"{}\" saved.", pAtualizado:"Preset \"{}\" updated.", pAplicado:"Preset \"{}\" applied.",
+    pApagado:"Preset \"{}\" deleted.", pSemNome:"Give the preset a name.", pImportados:"{} preset(s) imported.",
+    pInvalido:"Invalid presets file.",
+    camOlho:"Show or hide the layer", camSobe:"Move layer up", camDesce:"Move layer down",
+    camDup:"Duplicate the layer", camApaga:"Delete the layer", camCor:"Layer color", camRenomear:"Double-click to rename",
+    zip:"ZIP — one image per layer", gerandoZip:"Building ZIP… {} of {}", composicao:"composite",
+    calc:"Calculating…", ajudaBotao:"Help and shortcuts", versao:"Version {} · {}",
+    ajuda:`<h2 id="ajuda-titulo">Effect Line & Tone Generator</h2>
+<p>Manga effect lines and tones, ready to drop onto your page. Everything runs on your device, no internet needed.</p>
+<h3>Quick start</h3>
+<ol><li><b>Pick an effect</b> in the panel (Focus Lines, Halftone, Mood…).</li>
+<li><b>Adjust</b> the controls. "Reroll shape" draws a new variation.</li>
+<li><b>Stack layers</b> (up to 8) and limit each one to an <b>area</b> if you like.</li>
+<li><b>Export</b> as PNG (transparent or white), SVG, ZIP per layer, or copy.</li></ol>
+<h3>In the preview</h3>
+<ul><li><b>Center</b> (radial effects): drag with one finger or the mouse. It can sit outside the frame.</li>
+<li><b>Move the view</b>: two fingers, space + drag, or the middle mouse button.</li>
+<li><b>Zoom</b>: pinch, Ctrl + wheel, or the corner buttons. Use 100% to check fine halftones.</li>
+<li><b>Effect area</b>: with "Edit in preview" on, drag corners and the middle; for a polygon, tap to place points.</li></ul>
+<h3>Shortcuts</h3>
+<div class="atalhos">
+<kbd>Ctrl Z</kbd><span>Undo</span>
+<kbd>Ctrl Shift Z</kbd><span>Redo (also <kbd>Ctrl Y</kbd>)</span>
+<kbd>Ctrl 0</kbd><span>Fit the frame to the screen</span>
+<kbd>Ctrl 1</kbd><span>Zoom 100%</span>
+<kbd>Ctrl +</kbd> <span>Zoom in / out (<kbd>Ctrl −</kbd>)</span>
+<kbd>Space</kbd><span>Hold and drag to move the view</span>
+<kbd>Enter</kbd><span>Close the polygon being drawn</span>
+<kbd>Backspace</kbd><span>Remove the polygon's last point</span>
+<kbd>Esc</kbd><span>Leave area editing; close this help</span></div>
+<h3>Tips</h3>
+<ul><li>Tap a control's <b>number</b> to type an exact value. <b>Double-tap the name</b> to reset it.</li>
+<li><b>Double-tap the selected effect</b> to collapse the effect list (and show it again).</li>
+<li><b>Double-click a layer name</b> to rename it. The name goes into the SVG and the ZIP.</li>
+<li>With "Adjust the effects when the size changes" on, an effect made at 1080 px looks the same on B5.</li>
+<li>Halftones show the <b>screen ruling</b> (60 lpi, 65 lpi…), computed from the document dpi.</li>
+<li><b>Presets</b> live in this browser. Use "Export file" to take them to the iPad and "Import" there.</li>
+<li>The <b>reference image</b> only shows in the preview; it is never exported.</li></ul>
+<div class="rodape"><small>Inspired by the free tools of <a href="https://x.com/sharp_maker" target="_blank" rel="noopener">@sharp_maker</a> (oyasumi-gamedev.com).</small>
+<button class="b pri" id="ajuda-ok">Got it</button></div>`
+  }
+};
+let LANG = "pt";
+const T = k => I18N[LANG][k];
+const L = o => (o && o[LANG]) || (o && o.pt) || "";
 
 /* ============================================================
    5. ESTADO
@@ -1530,53 +1971,336 @@ const PRESETS = [
   {rot:{pt:"1080 × 1920 (vertical)", en:"1080 × 1920 (portrait)"},  w:1080, h:1920},
   {rot:{pt:"1080 × 1080 (quadrado)", en:"1080 × 1080 (square)"},    w:1080, h:1080},
   {rot:{pt:"1080 × 1350 (4:5)",      en:"1080 × 1350 (4:5)"},       w:1080, h:1350},
-  {rot:{pt:"B5 a 350 dpi",           en:"B5 at 350 dpi"},           w:2508, h:3541}
+  {rot:{pt:"B5 a 350 dpi",           en:"B5 at 350 dpi"},           w:2508, h:3541, dpi:350},
+  {rot:{pt:"B4 a 350 dpi",           en:"B4 at 350 dpi"},           w:3541, h:5016, dpi:350},
+  {rot:{pt:"A4 a 350 dpi",           en:"A4 at 350 dpi"},           w:2894, h:4093, dpi:350},
+  {rot:{pt:"A5 a 350 dpi",           en:"A5 at 350 dpi"},           w:2039, h:2894, dpi:350},
+  {rot:{pt:"B6 (tankōbon) a 350 dpi", en:"B6 (tankōbon) at 350 dpi"}, w:1764, h:2508, dpi:350},
+  {rot:{pt:"B5 a 600 dpi (traço)",   en:"B5 at 600 dpi (line art)"}, w:4299, h:6071, dpi:600}
 ];
 
+/* ---- Tamanho do documento e parâmetros em pixels ----------------
+   Os valores padrão foram pensados para um quadro de 1080 px no lado
+   menor. Parâmetros em pixels (px:1) crescem junto com o documento e as
+   densidades por área (px:2) diminuem na proporção do quadrado, para que
+   um efeito tenha a mesma cara em 1080 px e num B5 a 350 dpi. */
+const LADO_BASE = 1080;
+function fatorDoc(){ try{ return Math.min(S.W, S.H)/LADO_BASE; }catch(e){ return 1; } }
+const arred = v => Math.round(v*100)/100;
+function escalarParams(efeito, params, r){
+  if(Math.abs(r - 1) < 1e-9) return params;
+  for(const [k,d] of Object.entries(EFEITOS[efeito].params)){
+    if(d.px === 1) params[k] = arred(params[k]*r);
+    else if(d.px === 2) params[k] = arred(params[k]/(r*r));
+  }
+  return params;
+}
 function padroesDe(efeito){
   const o = {};
   for(const [k,d] of Object.entries(EFEITOS[efeito].params)){
     o[k] = Array.isArray(d.padrao) ? d.padrao.slice() : d.padrao;
   }
-  return o;
+  return escalarParams(efeito, o, fatorDoc());
 }
+function mascaraPadrao(){ return {tipo:"nenhuma", inverter:false, ret:[0.2,0.2,0.8,0.8], pts:[]}; }
 function novaCamada(efeito="concentracao", cor="#111111"){
   return {efeito, params:padroesDe(efeito), cor, opacidade:1, visivel:true,
-          semente:(Math.random()*1e9)|0, formas:null};
+          semente:(Math.random()*1e9)|0, formas:null, mascara:mascaraPadrao()};
+}
+
+/* ---- Área do efeito (máscara) ---------------------------------
+   Cada camada pode ficar restrita a um retângulo, uma elipse ou um
+   polígono desenhado, ou ao contrário (inverter: só fora da forma).
+   Coordenadas guardadas em fração do quadro (0–1), então a área
+   acompanha mudanças de tamanho do documento. A mesma descrição em
+   texto de caminho SVG serve ao Canvas (Path2D) e ao <clipPath>,
+   com a regra par-ímpar; assim a prévia, o PNG e o SVG cortam igual. */
+function mascaraAtiva(m){
+  return !!m && (m.tipo === "retangulo" || m.tipo === "elipse" || (m.tipo === "poligono" && m.pts.length >= 3));
+}
+function caminhoForma(m, W, H){
+  const n = v => r2(v);
+  if(m.tipo === "poligono"){
+    return "M" + m.pts.map(p => n(p[0]*W) + " " + n(p[1]*H)).join(" L") + " Z";
+  }
+  const x0 = Math.min(m.ret[0], m.ret[2])*W, x1 = Math.max(m.ret[0], m.ret[2])*W;
+  const y0 = Math.min(m.ret[1], m.ret[3])*H, y1 = Math.max(m.ret[1], m.ret[3])*H;
+  if(m.tipo === "retangulo") return `M${n(x0)} ${n(y0)} H${n(x1)} V${n(y1)} H${n(x0)} Z`;
+  const rx = (x1-x0)/2, ry = (y1-y0)/2, cx = x0+rx, cy = y0+ry;
+  return `M${n(cx-rx)} ${n(cy)} A${n(rx)} ${n(ry)} 0 1 0 ${n(cx+rx)} ${n(cy)} A${n(rx)} ${n(ry)} 0 1 0 ${n(cx-rx)} ${n(cy)} Z`;
+}
+function caminhoMascara(m, W, H){
+  if(!mascaraAtiva(m)) return null;
+  const forma = caminhoForma(m, W, H);
+  if(!m.inverter) return forma;
+  // um ponto além da borda, para nenhuma linha de antisserrilhado ficar de fora
+  return `M-2 -2 H${W+2} V${H+2} H-2 Z ` + forma;
+}
+/* Desenha uma camada (com a área, se houver) no contexto, que já deve estar
+   no sistema de coordenadas do documento. */
+function desenharCamada(x, cam, vis, previa){
+  const lote = previa ? formasPrevia(cam) : formasDa(cam);
+  if(!lote) return;
+  const d = caminhoMascara(cam.mascara, S.W, S.H);
+  if(d){ x.save(); x.clip(new Path2D(d), "evenodd"); }
+  desenharCanvas(x, lote, cam.cor, cam.opacidade, vis);
+  if(d) x.restore();
 }
 
 const S = {
-  W:1920, H:1080, fundo:"xadrez", escala:1,
+  W:1920, H:1080, dpi:350, manter:true, fundo:"xadrez", escala:1,
   camadas:[novaCamada()], atual:0
 };
 
 /* ============================================================
    6. RENDERIZAÇÃO
    ============================================================ */
+/* Guarda os últimos resultados gerados. Desfazer, refazer e alternar entre
+   valores já vistos ficam instantâneos mesmo em efeitos pesados. O limite
+   em número de formas evita encher a memória do iPad. */
+const CACHE = new Map(), CACHE_MAX_FORMAS = 1500000;
+let cacheFormas = 0;
+function chaveDe(cam){ return cam.efeito + "|" + cam.semente + "|" + S.W + "x" + S.H + "|" + JSON.stringify(cam.params); }
+function guardar(chave, lote, tempo){
+  if(CACHE.has(chave)) return;
+  CACHE.set(chave, {lote, tempo, n:lote.n});
+  cacheFormas += lote.n;
+  for(const [k,v] of CACHE){
+    if(cacheFormas <= CACHE_MAX_FORMAS && CACHE.size <= 24) break;
+    if(k === chave) continue;
+    CACHE.delete(k); cacheFormas -= v.n;
+  }
+}
+function doCache(cam){
+  const chave = chaveDe(cam), g = CACHE.get(chave);
+  if(!g) return null;
+  CACHE.delete(chave); CACHE.set(chave, g);                      // vira o mais recente
+  cam.formas = g.lote; cam.chave = chave; anotarTempo(cam, g.tempo);
+  return g.lote;
+}
+/* Gera na hora, na própria página. Usado pela exportação depois de esperar o
+   Worker (aí já está no cache), quando não há Worker, e nos efeitos leves. */
 function formasDa(cam){
   if(cam.formas) return cam.formas;
-  const ef = EFEITOS[cam.efeito];
+  const pronto = doCache(cam);
+  if(pronto) return pronto;
   const t0 = performance.now();
-  cam.formas = ef.gerar(cam.params, S.W, S.H, mulberry32(cam.semente));
-  // Combinações pesadas existem de verdade (retícula fina em B5 a 350 dpi
-  // passa de um milhão de pontos). Quando o desenho custa caro, os
-  // controles passam a redesenhar só ao soltar, em vez de a cada pixel.
-  cam.pesado = (performance.now() - t0) > 120;
-  return cam.formas;
+  const lote = empacotar(EFEITOS[cam.efeito].gerar(cam.params, S.W, S.H, mulberry32(cam.semente)));
+  const ms = performance.now() - t0;
+  anotarTempo(cam, ms);
+  cam.pesado = ms > 120;
+  cam.formas = lote; cam.chave = chaveDe(cam);
+  guardar(cam.chave, lote, ms);
+  return lote;
 }
-const invalidar = cam => { cam.formas = null; };
+const invalidar = cam => {
+  // a prévia mostra o resultado anterior enquanto o novo é calculado (só se for o mesmo efeito)
+  if(cam.formas){ cam.anterior = cam.formas; cam.anteriorEfeito = cam.efeito; }
+  cam.formas = null;
+};
+/* tempo da última geração, guardado por efeito: trocar de efeito não herda o tempo do outro */
+function tempoDe(cam){ return cam.tempos ? cam.tempos[cam.efeito] : undefined; }
+function anotarTempo(cam, ms){ (cam.tempos || (cam.tempos = {}))[cam.efeito] = ms; }
+
+/* ---- Cálculo em segundo plano (Web Worker) -------------------------
+   Efeitos pesados (retícula fina em B5, granulado denso, kakeami cheio)
+   levam segundos para gerar. Eles vão para um Worker, montado a partir do
+   próprio texto do <script id="nucleo">, então funciona offline, sem
+   arquivo separado. Enquanto calcula, a prévia mostra o resultado anterior
+   e os controles continuam respondendo. O Worker atende um pedido por vez;
+   se o controle mudou nesse meio-tempo, só o valor mais recente é pedido. */
+const TRABALHO = {w:null, ocupado:null, esperando:new Map(), espera:new Map()};
+(function criarWorker(){
+  try{
+    const codigo = document.getElementById("nucleo").textContent + `
+self.onmessage = e => {
+  const {chave, efeito, params, W, H, semente} = e.data;
+  try{
+    const t0 = performance.now();
+    const lote = empacotar(EFEITOS[efeito].gerar(params, W, H, mulberry32(semente)));
+    self.postMessage({chave, lote, tempo:performance.now() - t0}, transferiveis(lote));
+  }catch(err){ self.postMessage({chave, erro:String(err && err.message || err)}); }
+};`;
+    const url = URL.createObjectURL(new Blob([codigo], {type:"text/javascript"}));
+    const w = new Worker(url);
+    w.onmessage = e => {
+      const {chave, lote, tempo, erro} = e.data;
+      TRABALHO.ocupado = null;
+      if(lote) guardar(chave, lote, tempo);
+      const ok = TRABALHO.espera.get(chave);
+      if(ok){ TRABALHO.espera.delete(chave); ok.forEach(f => f(!erro)); }
+      for(const cam of S.camadas) if(!cam.formas && chaveDe(cam) === chave && lote){ cam.formas = lote; anotarTempo(cam, tempo); cam.chave = chave; }
+      proximoTrabalho();
+      indicarCalculo();
+      redesenhar();
+    };
+    // Se o Worker falhar (navegador que bloqueia Worker em arquivo local, por
+    // exemplo), tudo volta a ser calculado na página e quem esperava é liberado.
+    w.onerror = () => {
+      TRABALHO.w = null; TRABALHO.ocupado = null; TRABALHO.esperando.clear();
+      for(const fs of TRABALHO.espera.values()) fs.forEach(f => f(false));
+      TRABALHO.espera.clear();
+      indicarCalculo(); redesenhar();
+    };
+    TRABALHO.w = w;
+  }catch(e){ TRABALHO.w = null; }
+})();
+function proximoTrabalho(){
+  if(!TRABALHO.w || TRABALHO.ocupado) return;
+  // pedidos esperados pela exportação vêm primeiro; depois, as camadas visíveis
+  let job = null;
+  for(const [chave, j] of TRABALHO.esperando){ TRABALHO.esperando.delete(chave); if(!CACHE.has(chave)){ job = j; break; } }
+  if(!job){
+    for(const cam of S.camadas){
+      if(!cam.visivel || cam.formas) continue;
+      const chave = chaveDe(cam);
+      if(CACHE.has(chave)){ doCache(cam); continue; }
+      job = {chave, efeito:cam.efeito, params:cam.params, W:S.W, H:S.H, semente:cam.semente};
+      break;
+    }
+  }
+  if(!job) return;
+  TRABALHO.ocupado = job.chave;
+  TRABALHO.w.postMessage(job);
+  indicarCalculo();
+}
+/* Deve ir para o Worker? Sim se a última geração desta camada passou de
+   40 ms, ou, sem histórico, se o documento é grande. */
+function usarWorker(cam){
+  if(!TRABALHO.w) return false;
+  const t = tempoDe(cam);
+  return t === undefined ? S.W*S.H > 3000000 : t > 40;
+}
+/* Formas para a prévia: prontas, do cache, geradas na hora (leves) ou,
+   para as pesadas, o resultado anterior enquanto o Worker calcula. */
+function formasPrevia(cam){
+  if(cam.formas) return cam.formas;
+  if(doCache(cam)) return cam.formas;
+  if(!usarWorker(cam)) return formasDa(cam);
+  proximoTrabalho();
+  return cam.anteriorEfeito === cam.efeito ? cam.anterior : null;
+}
+/* Garante que as camadas estejam calculadas antes de exportar. */
+function garantir(lista){
+  const promessas = [];
+  for(const cam of lista){
+    if(!cam.visivel || cam.formas || doCache(cam)) continue;
+    if(!usarWorker(cam)){ formasDa(cam); continue; }
+    const chave = chaveDe(cam);
+    promessas.push(new Promise(ok => {
+      if(!TRABALHO.espera.has(chave)) TRABALHO.espera.set(chave, []);
+      TRABALHO.espera.get(chave).push(ok);
+      if(TRABALHO.ocupado !== chave)
+        TRABALHO.esperando.set(chave, {chave, efeito:cam.efeito, params:JSON.parse(JSON.stringify(cam.params)), W:S.W, H:S.H, semente:cam.semente});
+    }).then(deuCerto => { if(!deuCerto) formasDa(cam); }));
+  }
+  proximoTrabalho();
+  return Promise.all(promessas);
+}
+function calculando(){ return !!TRABALHO.ocupado || S.camadas.some(c => c.visivel && !c.formas && !CACHE.has(chaveDe(c)) && usarWorker(c)); }
+function indicarCalculo(){ const el = document.getElementById("calc"); if(el) el.hidden = !calculando(); }
 
 const cv = document.getElementById("cv");
 const ctx = cv.getContext("2d");
 
+/* ---- Vista da prévia ------------------------------------------
+   O canvas da prévia tem o tamanho do espaço na tela, não do documento.
+   Um B5 a 350 dpi (ou 6000 × 6000) não cabe no limite de memória de
+   imagem do Safari do iPad; a prévia nunca chega perto dele, e o arquivo
+   em tamanho real só é montado na exportação.
+   k = pixels de tela (CSS) por pixel do documento; ox, oy = posição do
+   canto do documento na tela. */
+const palco = document.getElementById("palco");
+const VISTA = {modo:"ajustar", k:1, ox:0, oy:0, cw:1, ch:1, dpr:1};
+const ZOOM_MAX = 16;
+function margemVista(){ return matchMedia("(pointer:coarse)").matches ? 16 : 24; }
+function kAjustado(){
+  const m = margemVista();
+  return Math.max(0.005, Math.min((VISTA.cw - 2*m)/S.W, (VISTA.ch - 2*m)/S.H));
+}
+function ajustarVista(){
+  VISTA.modo = "ajustar";
+  VISTA.k = kAjustado();
+  VISTA.ox = (VISTA.cw - S.W*VISTA.k)/2;
+  VISTA.oy = (VISTA.ch - S.H*VISTA.k)/2;
+}
+function limitarVista(){
+  // Sempre sobra um pedaço do quadro à vista, para ninguém se perder.
+  const b = 48, w = S.W*VISTA.k, h = S.H*VISTA.k;
+  VISTA.ox = Math.min(VISTA.cw - b, Math.max(b - w, VISTA.ox));
+  VISTA.oy = Math.min(VISTA.ch - b, Math.max(b - h, VISTA.oy));
+}
+function zoomEm(k, sx, sy){
+  const kMin = Math.min(kAjustado(), 0.05);
+  k = Math.max(kMin, Math.min(ZOOM_MAX, k));
+  if(sx === undefined){ sx = VISTA.cw/2; sy = VISTA.ch/2; }
+  VISTA.ox = sx - (sx - VISTA.ox)*k/VISTA.k;
+  VISTA.oy = sy - (sy - VISTA.oy)*k/VISTA.k;
+  VISTA.k = k; VISTA.modo = "livre";
+  limitarVista(); redesenhar();
+}
+const PASSOS_ZOOM = [0.05,0.1,0.15,0.25,0.33,0.5,0.67,1,1.5,2,3,4,6,8,12,16];
+function zoomPasso(dir){
+  const k = VISTA.k;
+  const prox = dir > 0 ? PASSOS_ZOOM.find(z => z > k*1.01) : [...PASSOS_ZOOM].reverse().find(z => z < k*0.99);
+  zoomEm(prox || (dir > 0 ? ZOOM_MAX : k/1.25));
+}
+function medirPalco(){
+  const r = palco.getBoundingClientRect();
+  VISTA.cw = Math.max(1, r.width); VISTA.ch = Math.max(1, r.height);
+  VISTA.dpr = Math.min(window.devicePixelRatio || 1, 3);
+  cv.width = Math.round(VISTA.cw*VISTA.dpr); cv.height = Math.round(VISTA.ch*VISTA.dpr);
+  if(VISTA.modo === "ajustar") ajustarVista(); else limitarVista();
+}
+let padraoXadrez = null;
+function xadrez(){
+  if(padraoXadrez) return padraoXadrez;
+  const p = document.createElement("canvas"), d = Math.round(8*VISTA.dpr);
+  p.width = p.height = d*2;
+  const x = p.getContext("2d");
+  x.fillStyle = "#eef0f3"; x.fillRect(0,0,d*2,d*2);
+  x.fillStyle = "#cfd2d8"; x.fillRect(0,0,d,d); x.fillRect(d,d,d,d);
+  return padraoXadrez = ctx.createPattern(p, "repeat");
+}
+const EFEITOS_TOM = new Set(["reticula","reticulaGrad","linhas","padroes","kakeami","kakeamiGrad","pontilhado","granulado"]);
+
 function desenhar(){
-  cv.width = S.W; cv.height = S.H;
-  ctx.clearRect(0,0,S.W,S.H);
+  const {k, ox, oy, dpr} = VISTA;
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  const x = ox, y = oy, w = S.W*k, h = S.H*k;
+  ctx.save();
+  ctx.shadowColor = "#0009"; ctx.shadowBlur = 30; ctx.shadowOffsetY = 8;
+  ctx.fillStyle = S.fundo === "preto" ? "#000" : "#fff";
+  ctx.fillRect(x, y, w, h);
+  ctx.restore();
+  if(S.fundo === "xadrez"){
+    ctx.save(); ctx.setTransform(1,0,0,1,0,0);
+    ctx.fillStyle = xadrez();
+    ctx.fillRect(Math.round(x*dpr), Math.round(y*dpr), Math.round(w*dpr), Math.round(h*dpr));
+    ctx.restore();
+  }
+  ctx.save();
+  ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+  ctx.setTransform(dpr*k, 0, 0, dpr*k, dpr*ox, dpr*oy);
+  if(REF.img && REF.visivel && REF.pos !== "acima") desenharReferencia(ctx);
+  // área do documento que está na tela (para pular formas invisíveis)
+  const vis = [-ox/k, -oy/k, (VISTA.cw-ox)/k, (VISTA.ch-oy)/k];
+  let temTom = false;
   for(const cam of S.camadas){
     if(!cam.visivel) continue;
-    desenharCanvas(ctx, formasDa(cam), cam.cor, cam.opacidade);
+    if(EFEITOS_TOM.has(cam.efeito)) temTom = true;
+    desenharCamada(ctx, cam, vis, true);
   }
+  if(REF.img && REF.visivel && REF.pos === "acima") desenharReferencia(ctx);
+  ctx.restore();
+  desenharSobreposicaoArea();
+  indicarCalculo();
   posicionarAlvo();
+  $("z-val").textContent = (k >= 0.1 ? Math.round(k*100) : (k*100).toFixed(1)) + "%";
+  // A ondulação aparece quando um pixel do arquivo fica menor que um pixel físico da tela.
+  $("aviso-ret").hidden = !(temTom && k*dpr < 0.98);
 }
 
 let pendente = false;
@@ -1586,26 +2310,126 @@ function redesenhar(){
   requestAnimationFrame(() => { pendente = false; desenhar(); });
 }
 
+/* ---- PNG em faixas -------------------------------------------
+   O Safari do iPad recusa imagens acima de ~16,7 milhões de pixels (B5 a
+   350 dpi em 2× tem 35 milhões). Acima desse limite, a imagem é desenhada
+   em faixas horizontais pequenas e montada direto em PNG: cada faixa vira
+   linhas de pixels que passam pelo compressor do próprio navegador
+   (CompressionStream), sem nunca existir uma imagem inteira na memória. */
+const LIMITE_CANVAS = 16000000;
+const CRC_TAB = (() => { const t = new Uint32Array(256);
+  for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c = c&1 ? 0xEDB88320^(c>>>1) : c>>>1; t[n]=c>>>0; }
+  return t; })();
+function crc32(partes){
+  let c = 0xFFFFFFFF;
+  for(const p of partes) for(let i=0;i<p.length;i++) c = CRC_TAB[(c ^ p[i]) & 255] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+function blocoPNG(tipo, dados){
+  const cab = new Uint8Array(8), t = new TextEncoder().encode(tipo);
+  new DataView(cab.buffer).setUint32(0, dados.length);
+  cab.set(t, 4);
+  const fim = new Uint8Array(4);
+  new DataView(fim.buffer).setUint32(0, crc32([t, dados]));
+  return [cab, dados, fim];
+}
+function nomeCamada(cam){ return cam.nome || L(EFEITOS[cam.efeito].nome); }
+function nomeArquivo(cam, i){
+  const base = nomeCamada(cam).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return `${String(i+1).padStart(2, "0")}-${base || "camada"}`;
+}
+/* Bloco pHYs: a resolução em pixels por metro. É o que faz o Clip Studio,
+   o Photoshop e a impressão abrirem o B5 já no tamanho físico certo. */
+function blocoPHYs(dpi){
+  const d = new Uint8Array(9), v = new DataView(d.buffer), ppm = Math.round(dpi/0.0254);
+  v.setUint32(0, ppm); v.setUint32(4, ppm); d[8] = 1;
+  return blocoPNG("pHYs", d);
+}
+async function comDpi(blob, dpi){
+  const b = new Uint8Array(await blob.arrayBuffer());
+  // assinatura (8) + IHDR (25): o pHYs entra logo depois
+  return new Blob([b.subarray(0, 33), ...blocoPHYs(dpi), b.subarray(33)], {type:"image/png"});
+}
+function desenharCamadas(x, vis, lista = S.camadas){
+  for(const cam of lista){
+    if(!cam.visivel) continue;
+    desenharCamada(x, cam, vis);
+  }
+}
+async function pngEmFaixas(escala, fundoBranco, progresso, lista){
+  const w = Math.round(S.W*escala), h = Math.round(S.H*escala);
+  const altFaixa = Math.max(1, Math.floor(4000000 / w));
+  const c = document.createElement("canvas");
+  c.width = w; c.height = Math.min(h, altFaixa);
+  const x = c.getContext("2d", {willReadFrequently:true});
+  const cs = new CompressionStream("deflate");          // "deflate" = formato zlib, o que o PNG usa
+  const escritor = cs.writable.getWriter(), partes = [];
+  const leitura = (async () => {
+    const r = cs.readable.getReader();
+    for(;;){ const {value, done} = await r.read(); if(done) break; partes.push(value); }
+  })();
+  for(let y0=0; y0<h; y0+=altFaixa){
+    const linhas = Math.min(altFaixa, h - y0);
+    x.setTransform(1,0,0,1,0,0);
+    x.clearRect(0,0,c.width,c.height);
+    if(fundoBranco){ x.fillStyle = "#fff"; x.fillRect(0,0,c.width,c.height); }
+    x.setTransform(escala,0,0,escala,0,-y0);
+    desenharCamadas(x, [0, y0/escala, S.W, (y0+linhas)/escala], lista);
+    const px = x.getImageData(0,0,w,linhas).data, lw = w*4;
+    const bruto = new Uint8Array(linhas*(lw+1));
+    for(let j=0;j<linhas;j++){ bruto[j*(lw+1)] = 0; bruto.set(px.subarray(j*lw,(j+1)*lw), j*(lw+1)+1); }
+    await escritor.write(bruto);
+    if(progresso) progresso(Math.min(99, Math.round((y0+linhas)/h*100)));
+    await new Promise(r => setTimeout(r, 0));              // deixa a tela respirar
+  }
+  await escritor.close(); await leitura;
+  const ihdr = new Uint8Array(13), dv = new DataView(ihdr.buffer);
+  dv.setUint32(0, w); dv.setUint32(4, h); ihdr[8] = 8; ihdr[9] = 6;     // 8 bits, RGBA
+  const blocos = [new Uint8Array([137,80,78,71,13,10,26,10]), ...blocoPNG("IHDR", ihdr), ...blocoPHYs(S.dpi*escala)];
+  for(const p of partes) blocos.push(...blocoPNG("IDAT", p));
+  blocos.push(...blocoPNG("IEND", new Uint8Array(0)));
+  return new Blob(blocos, {type:"image/png"});
+}
+/* Devolve uma promessa do PNG: canvas direto quando cabe, faixas quando não. */
+function gerarPNG(escala, fundoBranco, lista = S.camadas){
+  return garantir(lista).then(() => gerarPNGPronto(escala, fundoBranco, lista));
+}
+function gerarPNGPronto(escala, fundoBranco, lista){
+  const w = Math.round(S.W*escala), h = Math.round(S.H*escala);
+  if(w*h > (window.__LIMITE_CANVAS || LIMITE_CANVAS)){
+    if(typeof CompressionStream === "undefined") return Promise.reject(new Error("grande"));
+    return pngEmFaixas(escala, fundoBranco, p => statusFixo(T("gerando").replace("{}", p)), lista);
+  }
+  return new Promise((ok, falha) => {
+    paraCanvas(escala, fundoBranco, lista).toBlob(b => b ? comDpi(b, S.dpi*escala).then(ok, () => ok(b)) : falha(new Error("grande")), "image/png");
+  });
+}
+
 function construirSVG(fundoBranco){
   let s = `<svg xmlns="http://www.w3.org/2000/svg" width="${S.W}" height="${S.H}" viewBox="0 0 ${S.W} ${S.H}">`;
   if(fundoBranco) s += `<rect width="${S.W}" height="${S.H}" fill="#ffffff"/>`;
-  for(const cam of S.camadas){
-    if(!cam.visivel) continue;
-    s += formasParaSVG(formasDa(cam), cam.cor, cam.opacidade);
-  }
+  S.camadas.forEach((cam, i) => {
+    if(!cam.visivel) return;
+    // O id vira o nome da camada no Figma, no Illustrator e no Inkscape.
+    const nome = nomeArquivo(cam, i);
+    const d = caminhoMascara(cam.mascara, S.W, S.H);
+    let g = formasParaSVG(formasDa(cam), cam.cor, cam.opacidade).replace("<g ", `<g id="${nome}" `);
+    if(d){
+      s += `<clipPath id="area-${i+1}"><path d="${d}" clip-rule="evenodd"/></clipPath>`;
+      g = `<g id="${nome}-area" clip-path="url(#area-${i+1})">${g}</g>`;
+    }
+    s += g;
+  });
   return s + "</svg>";
 }
 
-function paraCanvas(escala, fundoBranco){
+function paraCanvas(escala, fundoBranco, lista = S.camadas){
   const c = document.createElement("canvas");
   c.width = Math.round(S.W*escala); c.height = Math.round(S.H*escala);
   const x = c.getContext("2d");
   if(fundoBranco){ x.fillStyle = "#fff"; x.fillRect(0,0,c.width,c.height); }
   x.scale(escala, escala);
-  for(const cam of S.camadas){
-    if(!cam.visivel) continue;
-    desenharCanvas(x, formasDa(cam), cam.cor, cam.opacidade);
-  }
+  desenharCamadas(x, null, lista);
   return c;
 }
 
@@ -1624,41 +2448,127 @@ function statusMsg(txt){
 /* --- Botões de tipo --- */
 function montarTipos(){
   const box = $("tipos"); box.innerHTML = "";
+  box.classList.toggle("recolhido", !!S.tiposRecolhidos);
   for(const id of ORDEM){
     const ef = EFEITOS[id];
     const b = document.createElement("button");
     b.className = "tipo" + (camAtual().efeito === id ? " on" : "");
     b.innerHTML = `<svg viewBox="0 0 34 26">${ef.icone}</svg><span>${L(ef.nome)}</span>`;
     b.onclick = () => {
-      const c = camAtual();
+      const c = camAtual(), agora = Date.now();
+      if(c.efeito === id){
+        // Clique no efeito já escolhido: dois seguidos recolhem/expandem a lista.
+        // O contador é manual porque os botões são recriados a cada clique.
+        if(montarTipos._ult && agora - montarTipos._ult < 450){
+          montarTipos._ult = 0;
+          recolherTipos(!box.classList.contains("recolhido"));
+        } else montarTipos._ult = agora;
+        return;
+      }
+      montarTipos._ult = 0;
       c.efeito = id; c.params = padroesDe(id); invalidar(c);
       montarTudo(); redesenhar(); salvar();
     };
+    b.title = T("dicaTipo");
     box.appendChild(b);
   }
 }
+function recolherTipos(sim){
+  S.tiposRecolhidos = sim;
+  $("tipos").classList.toggle("recolhido", sim);
+  statusMsg(T(sim ? "tiposRecolhidos" : "tiposExpandidos"));
+  salvar();
+}
 
 /* --- Sliders e seletores, gerados a partir de params --- */
+function fmtNum(v){
+  return Number(v).toLocaleString(LANG === "pt" ? "pt-BR" : "en-US", {maximumFractionDigits: Math.abs(v) < 10 ? 2 : 1});
+}
+function textoValor(d, v){
+  let t = fmtNum(v) + (d.suf || "");
+  if(d.lpi) t += " · " + T("linhasL").replace("{}", fmtNum(S.dpi / v));
+  return t;
+}
+/* Controles que só valem para certa escolha (ex.: os da grade do Mood) declaram
+   `se: p => ...` e ficam escondidos quando não se aplicam. O valor guardado não
+   muda; ele só volta a aparecer quando a opção volta. */
+function visiveis(ef, p){
+  return Object.entries(ef.params).filter(([k,d]) => !d.se || d.se(p)).map(([k]) => k).join(",");
+}
+function talvezRemontar(c){
+  const ef = EFEITOS[c.efeito];
+  if(montarCtls._vis !== visiveis(ef, c.params)) montarCtls();
+}
 function montarCtls(){
   const box = $("ctls"); box.innerHTML = "";
   const c = camAtual();
   const ef = EFEITOS[c.efeito];
+  montarCtls._vis = visiveis(ef, c.params);
   for(const [chave, d] of Object.entries(ef.params)){
+    if(d.se && !d.se(c.params)) continue;
     if(d.tipo === "slider"){
       const div = document.createElement("div"); div.className = "ctl";
-      div.innerHTML =
-        `<div class="top"><label>${L(d.rot)}</label><span class="val">${c.params[chave]}${d.suf||""}</span></div>`;
+      div.innerHTML = `<div class="top"><label class="reset">${L(d.rot)}</label><span class="val edit" tabindex="0" role="button"></span></div>`;
+      const val = div.querySelector(".val"), rot = div.querySelector("label");
+      const mostrar = () => { val.textContent = textoValor(d, c.params[chave]); };
+      mostrar();
       const inp = document.createElement("input");
-      inp.type = "range"; inp.min = d.min; inp.max = d.max; inp.step = d.passo;
+      // Valores vindos de um documento maior podem passar do limite original do controle.
+      inp.type = "range"; inp.min = Math.min(d.min, c.params[chave]); inp.max = Math.max(d.max, c.params[chave]); inp.step = d.passo;
       inp.value = c.params[chave];
+      inp.setAttribute("aria-label", L(d.rot));
       inp.oninput = () => {
         c.params[chave] = parseFloat(inp.value);
-        div.querySelector(".val").textContent = inp.value + (d.suf||"");
+        mostrar();
         invalidar(c);
-        if(c.pesado) statusMsg(T("pesado")); else redesenhar();
+        if(c.pesado && !TRABALHO.w) statusMsg(T("pesado")); else redesenhar();
       };
-      inp.onchange = () => { redesenhar(); salvar(); };
-      div.appendChild(inp); box.appendChild(div);
+      inp.onchange = () => { redesenhar(); salvar(); talvezRemontar(c); if(d.lpi) montarCtls(); };
+      const definir = v => {
+        c.params[chave] = v; invalidar(c);
+        montarCtls(); redesenhar(); salvar();
+      };
+      // tocar no número abre um campo para digitar o valor exato
+      const editar = () => {
+        if(val.querySelector("input")) return;
+        const ed = document.createElement("input");
+        ed.type = "number"; ed.step = "any"; ed.value = c.params[chave];
+        val.textContent = ""; val.appendChild(ed); ed.focus(); ed.select();
+        let feito = false;
+        const fim = ok => {
+          if(feito) return; feito = true;
+          const v = parseFloat(String(ed.value).replace(",", "."));
+          const hi = d.px ? d.max*8 : d.max;
+          if(ok && isFinite(v)) definir(Math.max(d.px === 2 ? 0.01 : d.min*(d.px ? 0.1 : 1), Math.min(hi, v)));
+          else mostrar();
+        };
+        ed.onkeydown = e => { if(e.key === "Enter") fim(true); if(e.key === "Escape") fim(false); e.stopPropagation(); };
+        ed.onblur = () => fim(true);
+      };
+      val.onclick = editar;
+      val.onkeydown = e => { if(e.key === "Enter" || e.key === " "){ e.preventDefault(); editar(); } };
+      // dois toques no nome do controle voltam ao padrão
+      rot.ondblclick = () => definir(padroesDe(c.efeito)[chave]);
+      rot.title = T("dicaValor");
+      div.appendChild(inp);
+      if(d.lpi){
+        // lineatura: como as retículas são vendidas (60 L = 60 linhas por polegada)
+        const lin = document.createElement("div"); lin.className = "linha c2 dpi"; lin.style.marginTop = "8px";
+        const lab = document.createElement("label"); lab.textContent = T("lineatura");
+        const sel = document.createElement("select");
+        const atualL = S.dpi / c.params[chave];
+        let achou = false;
+        const op0 = document.createElement("option"); op0.value = ""; op0.textContent = T("personalizada"); sel.appendChild(op0);
+        for(const Lv of [27.5, 32.5, 42.5, 50, 55, 60, 65, 70, 75, 85]){
+          const o = document.createElement("option"); o.value = Lv; o.textContent = T("linhasL").replace("{}", fmtNum(Lv));
+          if(Math.abs(atualL - Lv) < 0.25){ o.selected = true; achou = true; }
+          sel.appendChild(o);
+        }
+        if(!achou) op0.selected = true;
+        sel.onchange = () => { if(sel.value) definir(arred(S.dpi / parseFloat(sel.value))); };
+        lin.append(lab, sel); div.appendChild(lin);
+      }
+      box.appendChild(div);
     } else if(d.tipo === "opcoes"){
       const div = document.createElement("div"); div.className = "ctl";
       div.innerHTML = `<div class="top"><label>${L(d.rot)}</label></div>`;
@@ -1670,7 +2580,7 @@ function montarCtls(){
         if(c.params[chave] === o.v) op.selected = true;
         sel.appendChild(op);
       }
-      sel.onchange = () => { c.params[chave] = sel.value; invalidar(c); redesenhar(); salvar(); };
+      sel.onchange = () => { c.params[chave] = sel.value; invalidar(c); redesenhar(); salvar(); talvezRemontar(c); };
       div.appendChild(sel); box.appendChild(div);
     } else if(d.tipo === "ponto"){
       const dica = document.createElement("div");
@@ -1680,7 +2590,7 @@ function montarCtls(){
   }
   // Opacidade da camada
   const div = document.createElement("div"); div.className = "ctl";
-  div.innerHTML = `<div class="top"><label>${LANG==="pt"?"Opacidade":"Opacity"}</label>
+  div.innerHTML = `<div class="top"><label>${T("opacidade")}</label>
                    <span class="val">${Math.round(c.opacidade*100)}%</span></div>`;
   const inp = document.createElement("input");
   inp.type = "range"; inp.min = 5; inp.max = 100; inp.step = 1; inp.value = c.opacidade*100;
@@ -1693,78 +2603,556 @@ function montarCtls(){
   div.appendChild(inp); box.appendChild(div);
 }
 
+/* --- Imagem de referência ---
+   Fica por baixo (ou por cima, em multiplicar) só na prévia. A imagem vai
+   para o IndexedDB do navegador (o localStorage não comporta uma página
+   escaneada); as escolhas de opacidade e encaixe vão com o resto. */
+const REF = {img:null, blob:null, opac:50, pos:"abaixo", encaixe:"caber", visivel:true};
+function bancoRef(){
+  return new Promise((ok, falha) => {
+    const r = indexedDB.open("gerador-efeitos", 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("arquivos");
+    r.onsuccess = () => ok(r.result); r.onerror = () => falha(r.error);
+  });
+}
+async function guardarRef(blob){
+  try{
+    const db = await bancoRef();
+    await new Promise((ok, falha) => {
+      const t = db.transaction("arquivos", "readwrite");
+      if(blob) t.objectStore("arquivos").put(blob, "referencia"); else t.objectStore("arquivos").delete("referencia");
+      t.oncomplete = ok; t.onerror = () => falha(t.error);
+    });
+  }catch(e){}
+}
+async function lerRef(){
+  try{
+    const db = await bancoRef();
+    return await new Promise(ok => {
+      const r = db.transaction("arquivos").objectStore("arquivos").get("referencia");
+      r.onsuccess = () => ok(r.result || null); r.onerror = () => ok(null);
+    });
+  }catch(e){ return null; }
+}
+async function abrirRef(blob, guardar){
+  try{
+    const img = await createImageBitmap(blob);
+    REF.img = img; REF.blob = blob; REF.visivel = true;
+    if(guardar) await guardarRef(blob);
+    montarRef(); redesenhar(); gravar();
+  }catch(e){ statusMsg(T("refErro")); }
+}
+function desenharReferencia(x){
+  const im = REF.img, iw = im.width, ih = im.height;
+  let w = S.W, h = S.H, px = 0, py = 0;
+  if(REF.encaixe !== "esticar"){
+    const k = REF.encaixe === "preencher" ? Math.max(S.W/iw, S.H/ih) : Math.min(S.W/iw, S.H/ih);
+    w = iw*k; h = ih*k; px = (S.W-w)/2; py = (S.H-h)/2;
+  }
+  x.save();
+  x.globalAlpha = REF.opac/100;
+  if(REF.pos === "acima") x.globalCompositeOperation = "multiply";
+  x.imageSmoothingQuality = "high";
+  x.drawImage(im, px, py, w, h);
+  x.restore();
+}
+function montarRef(){
+  const box = $("ref-ctls"); box.innerHTML = "";
+  $("b-ref-carregar").textContent = T(REF.img ? "refTrocar" : "refCarregar");
+  $("b-ref-remover").disabled = !REF.img;
+  if(!REF.img) return;
+  const lab = document.createElement("label"); lab.className = "chk"; lab.style.marginTop = "12px";
+  const chk = document.createElement("input"); chk.type = "checkbox"; chk.checked = REF.visivel; chk.id = "ref-visivel";
+  chk.onchange = () => { REF.visivel = chk.checked; redesenhar(); gravar(); };
+  lab.append(chk, document.createTextNode(T("refVisivel"))); box.appendChild(lab);
+  const sl = document.createElement("div"); sl.className = "ctl";
+  sl.innerHTML = `<div class="top"><label>${T("refOpac")}</label><span class="val">${REF.opac}%</span></div>`;
+  const inp = document.createElement("input"); inp.type = "range"; inp.min = 5; inp.max = 100; inp.step = 1; inp.value = REF.opac; inp.id = "ref-opac";
+  inp.oninput = () => { REF.opac = +inp.value; sl.querySelector(".val").textContent = inp.value + "%"; redesenhar(); };
+  inp.onchange = gravar;
+  sl.appendChild(inp); box.appendChild(sl);
+  for(const [rot, chave, ops] of [["refPos","pos",[["abaixo","refAbaixo"],["acima","refAcima"]]],
+                                  ["refEnc","encaixe",[["caber","refCaber"],["preencher","refPreencher"],["esticar","refEsticar"]]]]){
+    const d = document.createElement("div"); d.className = "ctl";
+    d.innerHTML = `<div class="top"><label>${T(rot)}</label></div>`;
+    const sel = document.createElement("select"); sel.style.width = "100%"; sel.id = "ref-" + chave;
+    for(const [v,k] of ops){ const o = document.createElement("option"); o.value = v; o.textContent = T(k); sel.appendChild(o); }
+    sel.value = REF[chave];
+    sel.onchange = () => { REF[chave] = sel.value; redesenhar(); gravar(); };
+    d.appendChild(sel); box.appendChild(d);
+  }
+  const iw = REF.img.width, ih = REF.img.height;
+  if(iw !== S.W || ih !== S.H){
+    const b = document.createElement("button"); b.className = "b"; b.style.width = "100%"; b.id = "ref-tamanho";
+    b.textContent = T("refTamanho").replace("{}", `${iw} × ${ih}`);
+    b.onclick = () => {
+      const k = Math.min(1, 6000/Math.max(iw, ih));          // o documento vai até 6000 px
+      aplicarTamanho(iw*k, ih*k); montarRef();
+    };
+    box.appendChild(b);
+  }
+}
+$("b-ref-carregar").onclick = () => $("ref-arquivo").click();
+$("ref-arquivo").onchange = e => { const f = e.target.files[0]; if(f) abrirRef(f, true); e.target.value = ""; };
+$("b-ref-remover").onclick = () => { REF.img = null; REF.blob = null; guardarRef(null); montarRef(); redesenhar(); gravar(); };
+
+/* --- Meus presets ---
+   Um preset guarda as camadas (efeito, ajustes, cor, opacidade, área e
+   semente) e o tamanho em que foi salvo. Ao aplicar num documento de outro
+   tamanho, os valores em pixels são ajustados como numa troca de tamanho.
+   Exportar/importar leva os presets entre o computador e o iPad. */
+const CHAVE_PRESETS = "gerador-efeitos-presets-v1";
+function lerPresets(){ try{ const v = JSON.parse(localStorage.getItem(CHAVE_PRESETS) || "[]"); return Array.isArray(v) ? v : []; }catch(e){ return []; } }
+function gravarPresets(l){ try{ localStorage.setItem(CHAVE_PRESETS, JSON.stringify(l)); }catch(e){} }
+function camadaParaDados(c){
+  return JSON.parse(JSON.stringify({efeito:c.efeito, params:c.params, cor:c.cor, opacidade:c.opacidade,
+    visivel:c.visivel, semente:c.semente, mascara:c.mascara, nome:c.nome || ""}));
+}
+function dadosParaCamada(d){
+  const base = novaCamada(d.efeito);
+  return Object.assign(base, d, {params:Object.assign(base.params, d.params), formas:null, caixas:null,
+                                 mascara:Object.assign(mascaraPadrao(), d.mascara || {})});
+}
+function presetValido(p){
+  return p && typeof p.nome === "string" && Array.isArray(p.camadas) && p.camadas.length > 0 && p.camadas.length <= 8
+      && p.camadas.every(c => c && EFEITOS[c.efeito]) && p.W > 0 && p.H > 0;
+}
+function montarPresetsUsuario(){
+  const sel = $("p-lista"), l = lerPresets(), atual = sel.value;
+  sel.innerHTML = "";
+  if(!l.length){ const o = document.createElement("option"); o.value = ""; o.textContent = T("pVazio"); sel.appendChild(o); }
+  l.forEach((p, i) => { const o = document.createElement("option"); o.value = i; o.textContent = `${p.nome} (${p.camadas.length})`; sel.appendChild(o); });
+  if(atual && l[atual]) sel.value = atual;
+  $("p-aplicar").disabled = $("p-apagar").disabled = !l.length;
+  $("p-exportar").disabled = !l.length;
+}
+$("p-salvar").onclick = () => {
+  const nome = $("p-nome").value.trim();
+  if(!nome){ statusMsg(T("pSemNome")); $("p-nome").focus(); return; }
+  const l = lerPresets(), p = {nome, W:S.W, H:S.H, dpi:S.dpi, camadas:S.camadas.map(camadaParaDados)};
+  const i = l.findIndex(x => x.nome === nome);
+  if(i >= 0) l[i] = p; else l.push(p);
+  gravarPresets(l); montarPresetsUsuario();
+  $("p-lista").value = String(i >= 0 ? i : l.length-1);
+  statusMsg(T(i >= 0 ? "pAtualizado" : "pSalvo").replace("{}", nome));
+};
+$("p-aplicar").onclick = () => {
+  const p = lerPresets()[parseInt($("p-lista").value, 10)];
+  if(!p) return;
+  const r = Math.min(S.W, S.H)/Math.min(p.W, p.H);
+  S.camadas = p.camadas.map(d => { const c = dadosParaCamada(d); escalarParams(c.efeito, c.params, r); return c; });
+  S.atual = S.camadas.length - 1;
+  montarTudo(); redesenhar(); salvar();
+  statusMsg(T("pAplicado").replace("{}", p.nome));
+};
+$("p-apagar").onclick = () => {
+  const l = lerPresets(), i = parseInt($("p-lista").value, 10);
+  if(!l[i]) return;
+  const nome = l[i].nome; l.splice(i, 1);
+  gravarPresets(l); montarPresetsUsuario(); statusMsg(T("pApagado").replace("{}", nome));
+};
+$("p-exportar").onclick = () => {
+  const dados = {formato:"gerador-efeitos-presets", versao:1, presets:lerPresets()};
+  baixar(new Blob([JSON.stringify(dados, null, 1)], {type:"application/json"}), `presets-efeitos-${carimbo()}.json`);
+};
+$("p-importar").onclick = () => $("p-arquivo").click();
+$("p-arquivo").onchange = async e => {
+  const f = e.target.files[0]; e.target.value = "";
+  if(!f) return;
+  try{
+    const d = JSON.parse(await f.text());
+    const novos = (Array.isArray(d) ? d : d.presets || []).filter(presetValido);
+    if(!novos.length) throw new Error();
+    const l = lerPresets();
+    for(const p of novos){ const i = l.findIndex(x => x.nome === p.nome); if(i >= 0) l[i] = p; else l.push(p); }
+    gravarPresets(l); montarPresetsUsuario();
+    statusMsg(T("pImportados").replace("{}", novos.length));
+  }catch(err){ statusMsg(T("pInvalido")); }
+};
+
+/* --- Área do efeito (painel) --- */
+function montarArea(){
+  const box = $("area-ctls"); box.innerHTML = "";
+  const c = camAtual(), m = c.mascara;
+  const div = document.createElement("div"); div.className = "ctl";
+  div.innerHTML = `<div class="top"><label>${T("areaTipo")}</label></div>`;
+  const sel = document.createElement("select"); sel.style.width = "100%"; sel.id = "area-tipo";
+  for(const [v,k] of [["nenhuma","areaNenhuma"],["retangulo","areaRet"],["elipse","areaElipse"],["poligono","areaPoli"]]){
+    const o = document.createElement("option"); o.value = v; o.textContent = T(k); sel.appendChild(o);
+  }
+  sel.value = m.tipo;
+  sel.onchange = () => {
+    m.tipo = sel.value;
+    AREA.editando = m.tipo !== "nenhuma";
+    AREA.desenhando = m.tipo === "poligono" && m.pts.length < 3;
+    if(AREA.desenhando) m.pts = [];
+    montarArea(); montarCamadas(); redesenhar(); salvar();
+  };
+  div.appendChild(sel); box.appendChild(div);
+  if(m.tipo === "nenhuma") return;
+
+  const lab = document.createElement("label"); lab.className = "chk";
+  const chk = document.createElement("input"); chk.type = "checkbox"; chk.id = "area-inverter"; chk.checked = !!m.inverter;
+  chk.onchange = () => { m.inverter = chk.checked; redesenhar(); salvar(); };
+  lab.append(chk, document.createTextNode(T("areaInverter")));
+  box.appendChild(lab);
+
+  const linha = document.createElement("div"); linha.className = "linha c2";
+  const ed = document.createElement("button"); ed.className = "b" + (AREA.editando ? " on" : ""); ed.id = "area-editar";
+  ed.textContent = "✎ " + T(AREA.editando ? "areaEditando" : "areaEditar");
+  ed.onclick = () => {
+    AREA.editando = !AREA.editando;
+    if(!AREA.editando){ AREA.desenhando = false; AREA.hover = null; }
+    montarArea(); redesenhar();
+  };
+  linha.appendChild(ed);
+  if(m.tipo === "poligono"){
+    const b2 = document.createElement("button"); b2.className = "b" + (AREA.desenhando ? " pri" : ""); b2.id = "area-desenho";
+    b2.textContent = T(AREA.desenhando ? "areaConcluir" : "areaRedesenhar");
+    b2.onclick = () => {
+      if(AREA.desenhando){ concluirDesenho(); return; }
+      m.pts = []; AREA.editando = AREA.desenhando = true;
+      montarArea(); redesenhar(); salvar();
+    };
+    linha.appendChild(b2);
+  } else linha.className = "linha";
+  box.appendChild(linha);
+  const dica = document.createElement("div"); dica.className = "dica"; dica.style.marginTop = "10px"; dica.style.marginBottom = "0";
+  dica.textContent = T(AREA.desenhando ? "areaDicaDesenho" : m.tipo === "poligono" ? "areaDicaPoli" : "areaDicaCaixa");
+  box.appendChild(dica);
+}
+
 /* --- Lista de camadas --- */
+/* A lista mostra a camada de cima no topo, como no Photoshop e no Figma.
+   Na memória, S.camadas[0] é a de baixo (desenhada primeiro). */
 function montarCamadas(){
   const box = $("camadas"); box.innerHTML = "";
-  S.camadas.forEach((cam, i) => {
+  const n = S.camadas.length;
+  const botao = (txt, dica, fn, off) => {
+    const b = document.createElement("button");
+    b.className = "ic"; b.textContent = txt; b.disabled = !!off;
+    b.title = dica; b.setAttribute("aria-label", dica);
+    b.onclick = fn; return b;
+  };
+  for(let i=n-1; i>=0; i--){
+    const cam = S.camadas[i];
     const el = document.createElement("div");
     el.className = "cam" + (i === S.atual ? " on" : "") + (cam.visivel ? "" : " off");
     el.onclick = e => {
       if(e.target.closest("input,button")) return;
-      S.atual = i; montarTudo();
+      if(S.atual !== i){ S.atual = i; montarTudo(); redesenhar(); }
     };
     const cor = document.createElement("input");
-    cor.type = "color"; cor.value = cam.cor;
+    cor.type = "color"; cor.value = cam.cor; cor.setAttribute("aria-label", T("camCor")); cor.title = T("camCor");
     cor.oninput = () => { cam.cor = cor.value; redesenhar(); };
     cor.onchange = salvar;
 
     const nome = document.createElement("span");
-    nome.className = "nome";
-    nome.textContent = `${i+1}. ${L(EFEITOS[cam.efeito].nome)}`;
-
-    const olho = document.createElement("button");
-    olho.className = "ic"; olho.textContent = cam.visivel ? "👁" : "🚫";
-    olho.onclick = () => { cam.visivel = !cam.visivel; montarCamadas(); redesenhar(); salvar(); };
-
-    const sobe = document.createElement("button");
-    sobe.className = "ic"; sobe.textContent = "↑"; sobe.disabled = i === 0;
-    sobe.onclick = () => {
-      if(i === 0) return;
-      [S.camadas[i-1], S.camadas[i]] = [S.camadas[i], S.camadas[i-1]];
-      S.atual = i-1; montarTudo(); redesenhar(); salvar();
+    nome.className = "nome"; nome.title = T("camRenomear");
+    nome.textContent = `${i+1}. ${nomeCamada(cam)}`;
+    if(mascaraAtiva(cam.mascara)){
+      const tag = document.createElement("span"); tag.className = "tag"; tag.textContent = " ◩";
+      tag.title = T("areaTag"); tag.setAttribute("aria-label", T("areaTag")); nome.appendChild(tag);
+    }
+    nome.ondblclick = () => {
+      const ed = document.createElement("input");
+      ed.type = "text"; ed.className = "renomear"; ed.maxLength = 40; ed.value = nomeCamada(cam);
+      ed.setAttribute("aria-label", T("camRenomear"));
+      nome.replaceWith(ed); ed.focus(); ed.select();
+      let feito = false;
+      const fim = ok => {
+        if(feito) return; feito = true;
+        const v = ed.value.trim();
+        if(ok) cam.nome = (v && v !== L(EFEITOS[cam.efeito].nome)) ? v : "";
+        montarCamadas(); if(ok) salvar();
+      };
+      ed.onkeydown = e => { e.stopPropagation(); if(e.key === "Enter") fim(true); if(e.key === "Escape") fim(false); };
+      ed.onblur = () => fim(true);
     };
 
-    const apaga = document.createElement("button");
-    apaga.className = "ic"; apaga.textContent = "✕"; apaga.disabled = S.camadas.length === 1;
-    apaga.onclick = () => {
+    const olho = botao(cam.visivel ? "👁" : "🚫", T("camOlho"), () => { cam.visivel = !cam.visivel; montarCamadas(); redesenhar(); salvar(); });
+    olho.setAttribute("aria-pressed", String(cam.visivel));
+    const trocar = (a, b) => {
+      [S.camadas[a], S.camadas[b]] = [S.camadas[b], S.camadas[a]];
+      S.atual = b; montarTudo(); redesenhar(); salvar();
+    };
+    const sobe = botao("↑", T("camSobe"), () => { if(i < n-1) trocar(i, i+1); }, i === n-1);
+    const desce = botao("↓", T("camDesce"), () => { if(i > 0) trocar(i, i-1); }, i === 0);
+    const dup = botao("⧉", T("camDup"), () => {
+      if(S.camadas.length >= 8){ statusMsg(T("limite")); return; }
+      const copia = Object.assign(novaCamada(cam.efeito), JSON.parse(JSON.stringify({
+        params:cam.params, cor:cam.cor, opacidade:cam.opacidade, visivel:cam.visivel, semente:cam.semente,
+        mascara:cam.mascara, nome:cam.nome || ""})));
+      S.camadas.splice(i+1, 0, copia);
+      S.atual = i+1; montarTudo(); redesenhar(); salvar();
+    }, n >= 8);
+    const apaga = botao("✕", T("camApaga"), () => {
       if(S.camadas.length === 1) return;
       S.camadas.splice(i,1);
       S.atual = Math.min(S.atual, S.camadas.length-1);
       montarTudo(); redesenhar(); salvar();
-    };
+    }, n === 1);
 
-    el.append(cor, nome, olho, sobe, apaga);
+    el.append(cor, nome, olho, sobe, desce, dup, apaga);
     box.appendChild(el);
-  });
+  }
 }
 
-/* --- Centro arrastável --- */
+/* --- Centro arrastável, arraste da vista e zoom por gesto --- */
 function temCentro(){
   return "centro" in EFEITOS[camAtual().efeito].params;
 }
 function posicionarAlvo(){
   const a = $("alvo");
   if(!temCentro()){ a.style.display = "none"; return; }
-  const r = cv.getBoundingClientRect();
   const p = camAtual().params.centro;
   a.style.display = "block";
-  a.style.left = (p[0]*r.width) + "px";
-  a.style.top  = (p[1]*r.height) + "px";
+  a.style.left = (VISTA.ox + p[0]*S.W*VISTA.k) + "px";
+  a.style.top  = (VISTA.oy + p[1]*S.H*VISTA.k) + "px";
 }
-let arrastando = false;
-function mover(e){
-  const r = cv.getBoundingClientRect();
-  const c = camAtual();
-  c.params.centro = [(e.clientX-r.left)/r.width, (e.clientY-r.top)/r.height];
+const ponteiros = new Map();
+let gesto = null, espaco = false;
+
+/* ---- Edição da área na prévia ---- */
+const AREA = {editando:false, desenhando:false, hover:null, ultimoToque:null};
+function areaEditavel(){
+  const m = camAtual().mascara;
+  return AREA.editando && m && m.tipo !== "nenhuma";
+}
+function paraDoc(p){ return [(p[0]-VISTA.ox)/VISTA.k/S.W, (p[1]-VISTA.oy)/VISTA.k/S.H]; }
+function paraTela(n){ return [VISTA.ox + n[0]*S.W*VISTA.k, VISTA.oy + n[1]*S.H*VISTA.k]; }
+function raioToque(e){ return e && e.pointerType === "touch" ? 22 : 11; }
+function alcasDe(m){
+  if(m.tipo === "poligono") return m.pts.map(p => p.slice());
+  const [x0,y0,x1,y1] = m.ret;
+  return [[x0,y0],[x1,y0],[x1,y1],[x0,y1]];
+}
+function dentroDaArea(m, n){
+  const t = new Path2D(caminhoForma(m, 1, 1));
+  return ctx.isPointInPath(t, n[0], n[1], "evenodd");
+}
+function distSegmento(p, a, b){
+  const dx = b[0]-a[0], dy = b[1]-a[1], L2 = dx*dx + dy*dy || 1;
+  const t = Math.max(0, Math.min(1, ((p[0]-a[0])*dx + (p[1]-a[1])*dy)/L2));
+  return Math.hypot(p[0]-a[0]-t*dx, p[1]-a[1]-t*dy);
+}
+function iniciarGestoArea(e){
+  const c = camAtual(), m = c.mascara, p = pontoNoPalco(e), n = paraDoc(p), r = raioToque(e);
+  const copia = JSON.stringify(m);
+  if(AREA.desenhando) return {tipo:"areaPonto", p0:p, copia};
+  const alcas = alcasDe(m);
+  for(let i=0;i<alcas.length;i++){
+    const q = paraTela(alcas[i]);
+    if(Math.hypot(q[0]-p[0], q[1]-p[1]) <= r) return {tipo:"areaAlca", i, p0:p, copia};
+  }
+  if(m.tipo === "poligono"){
+    for(let i=0;i<m.pts.length;i++){
+      const a = paraTela(m.pts[i]), b = paraTela(m.pts[(i+1)%m.pts.length]);
+      if(distSegmento(p, a, b) <= r*0.8) return {tipo:"areaAresta", i, p0:p, n, copia};
+    }
+  }
+  if(mascaraAtiva(m) && dentroDaArea(m, n)) return {tipo:"areaMover", n0:n, copia};
+  if(m.tipo !== "poligono") return {tipo:"areaNova", n0:n, copia};
+  return null;
+}
+function limitarN(v){ return Math.max(-0.5, Math.min(1.5, v)); }
+function moverGestoArea(g, e){
+  const m = camAtual().mascara, p = pontoNoPalco(e), n = paraDoc(p).map(limitarN);
+  if(g.tipo === "areaAlca"){
+    if(m.tipo === "poligono") m.pts[g.i] = n;
+    else {
+      const i = g.i;
+      if(i === 0 || i === 3) m.ret[0] = n[0]; else m.ret[2] = n[0];
+      if(i === 0 || i === 1) m.ret[1] = n[1]; else m.ret[3] = n[1];
+    }
+  } else if(g.tipo === "areaMover"){
+    const o = JSON.parse(g.copia), dx = n[0]-g.n0[0], dy = n[1]-g.n0[1];
+    m.ret = [o.ret[0]+dx, o.ret[1]+dy, o.ret[2]+dx, o.ret[3]+dy];
+    m.pts = o.pts.map(q => [q[0]+dx, q[1]+dy]);
+  } else if(g.tipo === "areaNova"){
+    m.ret = [g.n0[0], g.n0[1], n[0], n[1]];
+  } else return;
+  redesenhar();
+}
+function soltarGestoArea(g, e){
+  const c = camAtual(), m = c.mascara, p = pontoNoPalco(e), n = paraDoc(p);
+  const andou = g.p0 ? Math.hypot(p[0]-g.p0[0], p[1]-g.p0[1]) : 99;
+  const agora = performance.now(), ult = AREA.ultimoToque;
+  const duplo = (alvo) => ult && agora - ult.t < 400 && ult.alvo === alvo && Math.hypot(p[0]-ult.p[0], p[1]-ult.p[1]) < 24;
+  if(g.tipo === "areaPonto"){
+    if(andou > 8) return;
+    if(m.pts.length >= 3){
+      const q = paraTela(m.pts[0]);
+      if(Math.hypot(q[0]-p[0], q[1]-p[1]) <= raioToque(e)){ concluirDesenho(); return; }
+    }
+    m.pts.push(n);
+    redesenhar(); montarArea(); salvar();
+    return;
+  }
+  if(g.tipo === "areaAlca" && m.tipo === "poligono" && andou < 6){
+    if(duplo("v" + g.i) && m.pts.length > 3){
+      m.pts.splice(g.i, 1); AREA.ultimoToque = null;
+      redesenhar(); salvar(); return;
+    }
+    AREA.ultimoToque = {t:agora, alvo:"v" + g.i, p};
+    return;
+  }
+  if(g.tipo === "areaAresta"){
+    if(andou < 6 && duplo("a" + g.i)){
+      m.pts.splice(g.i+1, 0, g.n); AREA.ultimoToque = null;
+      redesenhar(); salvar(); return;
+    }
+    AREA.ultimoToque = {t:agora, alvo:"a" + g.i, p};
+    return;
+  }
+  if(m.tipo !== "poligono"){
+    m.ret = [Math.min(m.ret[0],m.ret[2]), Math.min(m.ret[1],m.ret[3]), Math.max(m.ret[0],m.ret[2]), Math.max(m.ret[1],m.ret[3])];
+    // área minúscula (um toque fora, sem arrastar): volta ao que era
+    if((m.ret[2]-m.ret[0])*S.W < 6 || (m.ret[3]-m.ret[1])*S.H < 6) Object.assign(m, JSON.parse(g.copia));
+  }
+  redesenhar(); salvar();
+}
+function concluirDesenho(){
+  const m = camAtual().mascara;
+  if(m.pts.length < 3){ statusMsg(T("areaFaltam")); return; }
+  AREA.desenhando = false; AREA.hover = null;
+  montarArea(); redesenhar(); salvar();
+}
+/* Contorno da área da camada atual (não é exportado) e, na edição, as alças. */
+function desenharSobreposicaoArea(){
+  const m = camAtual().mascara;
+  if(!m || m.tipo === "nenhuma") return;
+  const {dpr} = VISTA;
+  ctx.save();
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  const tela = q => paraTela(q);
+  ctx.beginPath();
+  if(m.tipo === "poligono"){
+    m.pts.forEach((q,i) => { const t = tela(q); i ? ctx.lineTo(t[0],t[1]) : ctx.moveTo(t[0],t[1]); });
+    if(AREA.desenhando && AREA.hover && m.pts.length){ const h = AREA.hover; ctx.lineTo(h[0], h[1]); }
+    else if(m.pts.length >= 3) ctx.closePath();
+  } else {
+    const a = tela([Math.min(m.ret[0],m.ret[2]), Math.min(m.ret[1],m.ret[3])]);
+    const b = tela([Math.max(m.ret[0],m.ret[2]), Math.max(m.ret[1],m.ret[3])]);
+    if(m.tipo === "retangulo") ctx.rect(a[0], a[1], b[0]-a[0], b[1]-a[1]);
+    else ctx.ellipse((a[0]+b[0])/2, (a[1]+b[1])/2, Math.abs(b[0]-a[0])/2, Math.abs(b[1]-a[1])/2, 0, 0, Math.PI*2);
+  }
+  ctx.lineWidth = 3; ctx.strokeStyle = "#000a"; ctx.setLineDash([]); ctx.stroke();
+  ctx.lineWidth = 1.5; ctx.strokeStyle = "#ff7a45"; ctx.setLineDash([7,5]); ctx.stroke();
+  ctx.setLineDash([]);
+  if(areaEditavel()){
+    const toque = matchMedia("(pointer:coarse)").matches, lado = toque ? 14 : 9;
+    alcasDe(m).forEach((q,i) => {
+      const t = tela(q);
+      ctx.fillStyle = "#fff"; ctx.strokeStyle = "#ff7a45"; ctx.lineWidth = 2;
+      if(m.tipo === "poligono" && i === 0 && AREA.desenhando){
+        ctx.beginPath(); ctx.arc(t[0], t[1], lado*0.8, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+      } else {
+        ctx.fillRect(t[0]-lado/2, t[1]-lado/2, lado, lado); ctx.strokeRect(t[0]-lado/2, t[1]-lado/2, lado, lado);
+      }
+    });
+  }
+  ctx.restore();
+}
+function pontoNoPalco(e){ const r = palco.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+function moverCentro(e){
+  const [sx, sy] = pontoNoPalco(e), c = camAtual();
+  c.params.centro = [(sx - VISTA.ox)/VISTA.k/S.W, (sy - VISTA.oy)/VISTA.k/S.H];
   invalidar(c); redesenhar();
 }
+function iniciarPinca(){
+  // um gesto de área interrompido pelo segundo dedo é desfeito
+  if(gesto && gesto.copia && gesto.tipo.startsWith("area")) Object.assign(camAtual().mascara, JSON.parse(gesto.copia));
+  const [a, b] = [...ponteiros.values()];
+  gesto = {tipo:"pinca", d0:Math.hypot(b[0]-a[0], b[1]-a[1]) || 1,
+           m0:[(a[0]+b[0])/2, (a[1]+b[1])/2], k0:VISTA.k, ox0:VISTA.ox, oy0:VISTA.oy,
+           moveuCentro: gesto && gesto.tipo === "centro"};
+}
 cv.addEventListener("pointerdown", e => {
-  if(!temCentro()) return;
-  arrastando = true; cv.setPointerCapture(e.pointerId); mover(e);
+  if(e.pointerType === "mouse" && e.button === 2) return;
+  cv.setPointerCapture(e.pointerId);
+  ponteiros.set(e.pointerId, pontoNoPalco(e));
+  if(ponteiros.size === 2){ iniciarPinca(); return; }
+  if(ponteiros.size > 2) return;
+  if(e.button !== 1 && !espaco && areaEditavel()){
+    const g = iniciarGestoArea(e);
+    if(g){ gesto = g; return; }
+  }
+  const panear = e.button === 1 || espaco || !temCentro() || areaEditavel();
+  if(panear){
+    e.preventDefault();
+    gesto = {tipo:"pan", p0:pontoNoPalco(e), ox0:VISTA.ox, oy0:VISTA.oy};
+    cv.classList.add("puxando");
+  } else if(e.pointerType === "touch"){
+    // No toque, o centro só se move quando fica claro que é um dedo só:
+    // se o segundo dedo chegar logo (pinça), o centro não sai do lugar.
+    gesto = {tipo:"centroPendente", p0:pontoNoPalco(e), t0:performance.now()};
+  } else {
+    gesto = {tipo:"centro"};
+    moverCentro(e);
+  }
 });
-cv.addEventListener("pointermove", e => { if(arrastando) mover(e); });
-cv.addEventListener("pointerup", () => { if(arrastando){ arrastando = false; salvar(); } });
-window.addEventListener("resize", posicionarAlvo);
+cv.addEventListener("pointermove", e => {
+  if(AREA.desenhando && e.pointerType !== "touch"){ AREA.hover = pontoNoPalco(e); if(!ponteiros.size) redesenhar(); }
+  if(!ponteiros.has(e.pointerId)) return;
+  ponteiros.set(e.pointerId, pontoNoPalco(e));
+  if(!gesto) return;
+  if(gesto.tipo === "pinca" && ponteiros.size >= 2){
+    const [a, b] = [...ponteiros.values()];
+    const d = Math.hypot(b[0]-a[0], b[1]-a[1]) || 1, m = [(a[0]+b[0])/2, (a[1]+b[1])/2];
+    const k = Math.max(Math.min(kAjustado(), 0.05), Math.min(ZOOM_MAX, gesto.k0*d/gesto.d0));
+    VISTA.ox = m[0] - (gesto.m0[0] - gesto.ox0)*k/gesto.k0;
+    VISTA.oy = m[1] - (gesto.m0[1] - gesto.oy0)*k/gesto.k0;
+    VISTA.k = k; VISTA.modo = "livre"; limitarVista(); redesenhar();
+  } else if(gesto.tipo === "pan"){
+    const p = pontoNoPalco(e);
+    VISTA.ox = gesto.ox0 + p[0] - gesto.p0[0];
+    VISTA.oy = gesto.oy0 + p[1] - gesto.p0[1];
+    VISTA.modo = "livre"; limitarVista(); redesenhar();
+  } else if(gesto.tipo.startsWith("area")){
+    moverGestoArea(gesto, e);
+  } else if(gesto.tipo === "centro"){
+    moverCentro(e);
+  } else if(gesto.tipo === "centroPendente"){
+    const p = pontoNoPalco(e);
+    if(Math.hypot(p[0]-gesto.p0[0], p[1]-gesto.p0[1]) > 8 || performance.now() - gesto.t0 > 180){
+      gesto = {tipo:"centro"}; moverCentro(e);
+    }
+  }
+});
+function soltar(e){
+  if(!ponteiros.has(e.pointerId)) return;
+  ponteiros.delete(e.pointerId);
+  if(ponteiros.size > 0){ if(gesto && gesto.tipo === "pinca") gesto = {tipo:"fim", moveuCentro:gesto.moveuCentro}; return; }
+  const g = gesto; gesto = null;
+  cv.classList.remove("puxando");
+  if(g && g.tipo === "centroPendente" && e.type === "pointerup"){ moverCentro(e); salvar(); return; }   // toque rápido
+  if(g && g.tipo.startsWith("area") && e.type === "pointerup"){ soltarGestoArea(g, e); return; }
+  if(g && (g.tipo === "centro" || g.moveuCentro)) salvar();
+}
+cv.addEventListener("pointerup", soltar);
+cv.addEventListener("pointercancel", soltar);
+cv.addEventListener("contextmenu", e => e.preventDefault());
+cv.addEventListener("pointerleave", () => { if(AREA.hover){ AREA.hover = null; redesenhar(); } });
+palco.addEventListener("wheel", e => {
+  e.preventDefault();
+  const [sx, sy] = pontoNoPalco(e);
+  if(e.ctrlKey || e.metaKey){
+    // Ctrl + roda do mouse, ou pinça no trackpad (o navegador manda como Ctrl + roda).
+    const d = Math.max(-120, Math.min(120, e.deltaMode ? e.deltaY*33 : e.deltaY));
+    zoomEm(VISTA.k*Math.exp(-d*0.0035), sx, sy);
+  } else {
+    const f = e.deltaMode ? 30 : 1;
+    VISTA.ox -= (e.shiftKey ? e.deltaY : e.deltaX)*f;
+    VISTA.oy -= (e.shiftKey ? 0 : e.deltaY)*f;
+    VISTA.modo = "livre"; limitarVista(); redesenhar();
+  }
+}, {passive:false});
+new ResizeObserver(() => { medirPalco(); padraoXadrez = null; desenhar(); }).observe(palco);
+$("z-menos").onclick = () => zoomPasso(-1);
+$("z-mais").onclick = () => zoomPasso(1);
+$("z-ajustar").onclick = () => { ajustarVista(); redesenhar(); };
+$("z-100").onclick = $("b-ver100").onclick = () => zoomEm(1);
 
 /* --- Textos fixos da interface --- */
 function aplicarIdioma(){
@@ -1773,10 +3161,28 @@ function aplicarIdioma(){
     "t-titulo":"titulo","t-tipo":"tipo","t-ajustes":"ajustes","t-camadas":"camadas",
     "t-doc":"doc","t-tamanho":"tamanho","t-fundo":"fundo","t-exportar":"exportar",
     "t-escala":"escala","t-variar":"variar","t-reset":"reset","t-add":"add",
-    "t-png-t":"pngT","t-png-b":"pngB","t-copiar":"copiar"
+    "t-png-t":"pngT","t-png-b":"pngB","t-copiar-t":"copiarT","t-copiar-b":"copiarB"
   };
   for(const [id,k] of Object.entries(map)) $(id).textContent = T(k);
   document.title = T("titulo");
+  $("z-ajustar").textContent = T("ajustar");
+  $("t-area").textContent = T("area"); $("t-ref").textContent = T("ref"); $("t-refNota").textContent = T("refNota");
+  $("b-ref-remover").textContent = T("refRemover");
+  $("t-calc").textContent = T("calc");
+  $("versao").textContent = "v" + VERSAO; $("versao").title = textoVersao();
+  $("b-ajuda").title = T("ajudaBotao"); $("b-ajuda").setAttribute("aria-label", T("ajudaBotao"));
+  if(!$("ajuda").hidden) montarAjuda();
+  $("t-dpi").textContent = T("dpi"); $("t-manter").textContent = T("manter"); $("t-presets").textContent = T("presets");
+  for(const [id, k] of [["p-aplicar","pAplicar"],["p-apagar","pApagar"],["p-salvar","pSalvar"],["p-exportar","pExportar"],["p-importar","pImportar"],["b-zip","zip"]])
+    $(id).textContent = T(k);
+  $("p-nome").placeholder = T("pNome"); $("p-nome").setAttribute("aria-label", T("pNome"));
+  montarPresetsUsuario(); mostrarMedida();
+  montarRef();
+  $("t-avisoRet").textContent = T("avisoRet"); $("b-ver100").textContent = T("ver100");
+  for(const [id, k] of [["b-desfazer","desfazer"],["b-refazer","refazer"],["z-menos","zoomMenos"],
+                        ["z-mais","zoomMais"],["z-ajustar","zoomAjustar"],["z-100","zoom100"]]){
+    $(id).title = T(k); $(id).setAttribute("aria-label", T(k));
+  }
   const f = $("fundo");
   f.options[0].textContent = T("xadrez");
   f.options[1].textContent = T("branco");
@@ -1785,7 +3191,6 @@ function aplicarIdioma(){
 }
 function montarPresets(){
   const sel = $("preset");
-  const atual = sel.value;
   sel.innerHTML = "";
   PRESETS.forEach((p,i) => {
     const o = document.createElement("option");
@@ -1796,15 +3201,28 @@ function montarPresets(){
   o.value = "x"; o.textContent = T("personalizado");
   sel.appendChild(o);
   const achou = PRESETS.findIndex(p => p.w === S.W && p.h === S.H);
-  sel.value = achou >= 0 ? String(achou) : (atual || "x");
+  sel.value = achou >= 0 ? String(achou) : "x";
 }
 
-function montarTudo(){ montarTipos(); montarCtls(); montarCamadas(); }
+function montarTudo(){
+  if(montarTudo._cam !== camAtual()){ AREA.editando = AREA.desenhando = false; AREA.hover = null; montarTudo._cam = camAtual(); }
+  montarTipos(); montarCtls(); montarArea(); montarCamadas();
+}
 
 /* ============================================================
    8. EXPORTAÇÃO
    ============================================================ */
-function baixar(blob, nome){
+async function baixar(blob, nome){
+  // Quando a página roda como artefato publicado, o download direto é bloqueado;
+  // a capacidade "downloads" abre a confirmação (no iPad, a folha de compartilhar).
+  try{
+    const dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null;
+    if(dl){
+      try{ await dl.save({filename:nome, data:blob}); statusMsg(T("salvo") + " " + nome); }
+      catch(e){ if(!e || e.code !== "declined") statusMsg(T("erroSalvar")); }
+      return;
+    }
+  }catch(e){}
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url; a.download = nome; a.click();
@@ -1815,27 +3233,97 @@ function carimbo(){
   const d = new Date(), p = n => String(n).padStart(2,"0");
   return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
 }
+/* ---- ZIP com uma imagem por camada ----------------------------------
+   Formato ZIP mais simples ("store", sem recompressão: o PNG já vem
+   comprimido). Cada camada visível sai inteira, no tamanho do documento,
+   com a própria área, cor e opacidade, mais a composição de todas. */
+function montarZip(arquivos){
+  const enc = new TextEncoder(), partes = [], central = [];
+  let pos = 0;
+  for(const a of arquivos){
+    const nome = enc.encode(a.nome), crc = crc32([a.dados]), n = a.dados.length;
+    const loc = new Uint8Array(30 + nome.length), v = new DataView(loc.buffer);
+    v.setUint32(0, 0x04034b50, true); v.setUint16(4, 20, true); v.setUint16(6, 0x0800, true);   // UTF-8
+    v.setUint16(8, 0, true); v.setUint16(10, 0, true); v.setUint16(12, 0x21, true);              // 01/01/1980
+    v.setUint32(14, crc, true); v.setUint32(18, n, true); v.setUint32(22, n, true);
+    v.setUint16(26, nome.length, true); v.setUint16(28, 0, true); loc.set(nome, 30);
+    const cen = new Uint8Array(46 + nome.length), w = new DataView(cen.buffer);
+    w.setUint32(0, 0x02014b50, true); w.setUint16(4, 20, true); w.setUint16(6, 20, true); w.setUint16(8, 0x0800, true);
+    w.setUint16(10, 0, true); w.setUint16(12, 0, true); w.setUint16(14, 0x21, true);
+    w.setUint32(16, crc, true); w.setUint32(20, n, true); w.setUint32(24, n, true);
+    w.setUint16(28, nome.length, true); w.setUint32(42, pos, true); cen.set(nome, 46);
+    partes.push(loc, a.dados); central.push(cen);
+    pos += loc.length + n;
+  }
+  const tamCentral = central.reduce((t, c) => t + c.length, 0);
+  const fim = new Uint8Array(22), z = new DataView(fim.buffer);
+  z.setUint32(0, 0x06054b50, true); z.setUint16(8, arquivos.length, true); z.setUint16(10, arquivos.length, true);
+  z.setUint32(12, tamCentral, true); z.setUint32(16, pos, true);
+  return new Blob([...partes, ...central, fim], {type:"application/zip"});
+}
+async function exportarZip(){
+  if(exportando) return;
+  exportando = true;
+  try{
+    const vis = S.camadas.map((c, i) => [c, i]).filter(([c]) => c.visivel);
+    const tarefas = [...vis.map(([c, i]) => ({nome:nomeArquivo(c, i) + ".png", lista:[c]})),
+                     {nome:"00-" + T("composicao") + ".png", lista:S.camadas}];
+    const arquivos = [];
+    for(let k=0; k<tarefas.length; k++){
+      statusFixo(T("gerandoZip").replace("{}", k+1).replace("{}", tarefas.length));
+      const b = await gerarPNG(S.escala, false, tarefas[k].lista);
+      arquivos.push({nome:tarefas[k].nome, dados:new Uint8Array(await b.arrayBuffer())});
+      await new Promise(r => setTimeout(r, 0));
+    }
+    await baixar(montarZip(arquivos), `efeito-${carimbo()}.zip`);
+  }catch(e){ statusMsg(T("erroGrande")); }
+  finally{ exportando = false; }
+}
+
+let exportando = false;
+function statusFixo(txt){ clearTimeout(statusMsg._t); $("status").textContent = txt; }
 function exportarPNG(fundoBranco){
-  paraCanvas(S.escala, fundoBranco).toBlob(b => {
-    baixar(b, `efeito-${carimbo()}${fundoBranco?"-branco":""}.png`);
-  }, "image/png");
+  if(exportando) return;
+  exportando = true;
+  gerarPNG(S.escala, fundoBranco)
+    .then(b => baixar(b, `efeito-${carimbo()}${fundoBranco?"-branco":""}.png`))
+    .catch(() => statusMsg(T("erroGrande")))
+    .finally(() => { exportando = false; });
 }
 $("b-png-t").onclick = () => exportarPNG(false);
+$("b-zip").onclick = exportarZip;
 $("b-png-b").onclick = () => exportarPNG(true);
-$("b-svg").onclick = () => {
+$("b-svg").onclick = async () => {
+  if(exportando) return;
+  exportando = true;
+  try{ await garantir(S.camadas); }finally{ exportando = false; }
   const svg = construirSVG(false);
   const mb = svg.length/1048576;
   baixar(new Blob([svg], {type:"image/svg+xml;charset=utf-8"}), `efeito-${carimbo()}.svg`);
   if(mb > 12) setTimeout(() => statusMsg(T("svgGrande").replace("{}", mb.toFixed(0))), 120);
 };
-$("b-copiar").onclick = () => {
-  paraCanvas(S.escala, false).toBlob(async b => {
+/* O Safari só aceita copiar se a cópia começar no mesmo toque do botão.
+   Por isso a imagem entra no ClipboardItem como promessa, ainda sendo
+   gerada; o Chrome também aceita assim. Navegadores antigos que não
+   aceitam promessa recebem a imagem pronta numa segunda tentativa. */
+async function copiarPNG(fundoBranco){
+  if(exportando) return;
+  exportando = true;
+  const prom = gerarPNG(S.escala, fundoBranco);
+  try{
     try{
+      await navigator.clipboard.write([new ClipboardItem({"image/png": prom})]);
+    }catch(e){
+      const b = await prom;
       await navigator.clipboard.write([new ClipboardItem({"image/png": b})]);
-      statusMsg(T("copiado"));
-    }catch(e){ statusMsg(T("erroCopia")); }
-  }, "image/png");
-};
+    }
+    statusMsg(T("copiado"));
+  }catch(e){
+    statusMsg(T(e && e.message === "grande" ? "erroGrande" : "erroCopia"));
+  }finally{ exportando = false; }
+}
+$("b-copiar-t").onclick = () => copiarPNG(false);
+$("b-copiar-b").onclick = () => copiarPNG(true);
 
 /* ============================================================
    9. CONTROLES GERAIS
@@ -1860,21 +3348,41 @@ $("b-add").onclick = () => {
 $("idioma").onchange = e => { LANG = e.target.value; aplicarIdioma(); montarTudo(); salvar(); };
 $("fundo").onchange = e => {
   S.fundo = e.target.value;
-  $("wrap").className = S.fundo;
-  salvar();
+  redesenhar(); salvar();
 };
 $("escala").onchange = e => { S.escala = parseFloat(e.target.value); salvar(); };
 $("preset").onchange = e => {
   if(e.target.value === "x") return;
   const p = PRESETS[parseInt(e.target.value,10)];
+  if(p.dpi){ S.dpi = p.dpi; $("dpi").value = S.dpi; }
   aplicarTamanho(p.w, p.h);
 };
+function mostrarMedida(){
+  const mm = v => fmtNum(Math.round(v/S.dpi*25.4));
+  $("medida").textContent = T("medida").replace("{}", `${mm(S.W)} × ${mm(S.H)}`).replace("{}", S.dpi);
+}
+$("dpi").onchange = () => {
+  const v = parseInt($("dpi").value, 10);
+  if(isFinite(v)) S.dpi = Math.max(72, Math.min(1200, v));
+  $("dpi").value = S.dpi;
+  mostrarMedida(); montarCtls(); salvar();
+};
+$("manter").onchange = e => { S.manter = e.target.checked; gravar(); };
 function aplicarTamanho(w,h){
+  const antes = Math.min(S.W, S.H);
   S.W = Math.max(64, Math.min(6000, Math.round(w)));
   S.H = Math.max(64, Math.min(6000, Math.round(h)));
+  if(S.manter){
+    const r = Math.min(S.W, S.H)/antes;
+    for(const cam of S.camadas) escalarParams(cam.efeito, cam.params, r);
+    montarCtls();
+  }
+  mostrarMedida();
   $("larg").value = S.W; $("alt").value = S.H;
   S.camadas.forEach(invalidar);
+  ajustarVista();
   montarPresets(); redesenhar(); salvar();
+  if(REF.img) montarRef();
 }
 $("larg").onchange = () => aplicarTamanho(parseInt($("larg").value,10)||S.W, S.H);
 $("alt").onchange  = () => aplicarTamanho(S.W, parseInt($("alt").value,10)||S.H);
@@ -1882,15 +3390,133 @@ $("alt").onchange  = () => aplicarTamanho(S.W, parseInt($("alt").value,10)||S.H)
 /* ============================================================
    10. PERSISTÊNCIA (localStorage)
    ============================================================ */
+/* ---- Histórico (desfazer / refazer) ----------------------------
+   Cada vez que algo é salvo, guarda-se um retrato do documento (tamanho e
+   camadas). Idioma, fundo da prévia e escala de exportação ficam de fora:
+   são preferências da tela, não do desenho. */
+const HIST = {pilha:[], i:-1, max:100};
+function retrato(){
+  return JSON.stringify({W:S.W, H:S.H, dpi:S.dpi, atual:S.atual, camadas:S.camadas.map(c => ({
+    efeito:c.efeito, params:c.params, cor:c.cor, opacidade:c.opacidade, visivel:c.visivel, semente:c.semente, mascara:c.mascara, nome:c.nome || ""}))});
+}
+function registrar(){
+  const r = retrato();
+  if(HIST.pilha[HIST.i] === r) return;
+  HIST.pilha = HIST.pilha.slice(0, HIST.i+1);
+  HIST.pilha.push(r);
+  if(HIST.pilha.length > HIST.max) HIST.pilha.shift();
+  HIST.i = HIST.pilha.length - 1;
+  botoesHistorico();
+}
+function botoesHistorico(){
+  $("b-desfazer").disabled = HIST.i <= 0;
+  $("b-refazer").disabled = HIST.i >= HIST.pilha.length - 1;
+}
+function aplicarRetrato(r){
+  const d = JSON.parse(r), mudouTamanho = d.W !== S.W || d.H !== S.H;
+  S.W = d.W; S.H = d.H; S.dpi = d.dpi || S.dpi; $("dpi").value = S.dpi; mostrarMedida();
+  S.camadas = d.camadas.map(c => Object.assign(novaCamada(c.efeito), c, {formas:null, caixas:null}));
+  S.atual = Math.min(d.atual, S.camadas.length - 1);
+  $("larg").value = S.W; $("alt").value = S.H;
+  if(mudouTamanho) ajustarVista();
+  if(AREA.desenhando && camAtual().mascara.tipo !== "poligono") AREA.desenhando = false;
+  montarPresets(); montarTudo(); redesenhar();
+  gravar(); botoesHistorico();
+}
+function desfazer(){
+  if(HIST.i <= 0) return;
+  HIST.i--; aplicarRetrato(HIST.pilha[HIST.i]); statusMsg(T("desfeito"));
+}
+function refazer(){
+  if(HIST.i >= HIST.pilha.length - 1) return;
+  HIST.i++; aplicarRetrato(HIST.pilha[HIST.i]); statusMsg(T("refeito"));
+}
+/* ---- Ajuda ----
+   Abre sozinha no primeiro uso; depois, pelo botão "?". Enquanto aberta, o
+   foco fica preso dentro dela (Tab circula) e os atalhos da página param. */
+const CHAVE_AJUDA = "gerador-efeitos-ajuda-vista";
+function textoVersao(){
+  const [a, m, d] = DATA_VERSAO.split("-");
+  return T("versao").replace("{}", VERSAO).replace("{}", LANG === "pt" ? `${d}/${m}/${a}` : DATA_VERSAO);
+}
+let focoAntes = null;
+function montarAjuda(){
+  $("ajuda-conteudo").innerHTML = T("ajuda");
+  const v = document.createElement("small"); v.id = "ajuda-versao"; v.textContent = textoVersao();
+  v.style.cssText = "display:block; margin-top:6px";
+  $("ajuda-conteudo").querySelector(".rodape small").appendChild(v);
+  $("ajuda-ok").onclick = fecharAjuda;
+}
+function abrirAjuda(){
+  focoAntes = document.activeElement;
+  montarAjuda();
+  $("ajuda").hidden = false;
+  $("ajuda-ok").focus({preventScroll:true});     // o foco fica no botão, mas o texto começa do topo
+  $("ajuda-conteudo").scrollTop = 0;
+}
+function fecharAjuda(){
+  $("ajuda").hidden = true;
+  try{ localStorage.setItem(CHAVE_AJUDA, "1"); }catch(e){}
+  (focoAntes && focoAntes !== document.body && focoAntes.focus ? focoAntes : $("b-ajuda")).focus();
+}
+$("b-ajuda").onclick = abrirAjuda;
+$("ajuda").addEventListener("click", e => { if(e.target === $("ajuda")) fecharAjuda(); });
+$("ajuda").addEventListener("keydown", e => {
+  e.stopPropagation();
+  if(e.key === "Escape"){ e.preventDefault(); fecharAjuda(); return; }
+  if(e.key !== "Tab") return;
+  const f = [...$("ajuda").querySelectorAll("a[href],button")];
+  const i = f.indexOf(document.activeElement);
+  if(e.shiftKey && i <= 0){ e.preventDefault(); f[f.length-1].focus(); }
+  else if(!e.shiftKey && i === f.length-1){ e.preventDefault(); f[0].focus(); }
+});
+
+$("b-desfazer").onclick = desfazer;
+$("b-refazer").onclick = refazer;
+window.addEventListener("keydown", e => {
+  if(!$("ajuda").hidden) return;
+  // Espaço segurado = mão para mover a vista (como no Photoshop e no Figma).
+  // Vale com o foco na página ou na prévia; nos controles do painel, o
+  // espaço continua acionando o botão focado.
+  if(e.key === " " && (e.target === document.body || e.target.closest("#palco"))){
+    e.preventDefault();
+    if(!e.repeat){ espaco = true; cv.classList.add("mao"); }
+    return;
+  }
+  if(AREA.desenhando && !e.target.closest("input,select,textarea")){
+    if(e.key === "Enter"){ e.preventDefault(); concluirDesenho(); return; }
+    if(e.key === "Backspace"){ e.preventDefault(); camAtual().mascara.pts.pop(); redesenhar(); salvar(); return; }
+  }
+  if(e.key === "Escape" && AREA.editando){
+    AREA.editando = AREA.desenhando = false; AREA.hover = null; montarArea(); redesenhar(); return;
+  }
+  if(!(e.ctrlKey || e.metaKey)) return;
+  if(e.target.closest("input[type=number],input[type=text],textarea")) return;
+  const k = e.key.toLowerCase();
+  if(k === "z" && !e.shiftKey){ e.preventDefault(); desfazer(); }
+  else if((k === "z" && e.shiftKey) || k === "y"){ e.preventDefault(); refazer(); }
+  else if(k === "0"){ e.preventDefault(); ajustarVista(); redesenhar(); }
+  else if(k === "1"){ e.preventDefault(); zoomEm(1); }
+  else if(k === "=" || k === "+"){ e.preventDefault(); zoomPasso(1); }
+  else if(k === "-"){ e.preventDefault(); zoomPasso(-1); }
+});
+window.addEventListener("keyup", e => {
+  if(e.key !== " " || !espaco) return;
+  e.preventDefault();                 // não deixa o espaço "clicar" o botão de zoom focado
+  espaco = false; cv.classList.remove("mao", "puxando");
+});
+window.addEventListener("blur", () => { espaco = false; cv.classList.remove("mao", "puxando"); });
+
 const CHAVE = "gerador-efeitos-v1";
-function salvar(){
+function salvar(){ gravar(); registrar(); }
+function gravar(){
   try{
     localStorage.setItem(CHAVE, JSON.stringify({
-      lang:LANG, W:S.W, H:S.H, fundo:S.fundo, escala:S.escala, atual:S.atual,
+      lang:LANG, W:S.W, H:S.H, dpi:S.dpi, manter:S.manter, fundo:S.fundo, escala:S.escala, atual:S.atual, tiposRecolhidos:!!S.tiposRecolhidos,
       camadas:S.camadas.map(c => ({
         efeito:c.efeito, params:c.params, cor:c.cor,
-        opacidade:c.opacidade, visivel:c.visivel, semente:c.semente
-      }))
+        opacidade:c.opacidade, visivel:c.visivel, semente:c.semente, mascara:c.mascara, nome:c.nome || ""
+      })), ref:{opac:REF.opac, pos:REF.pos, encaixe:REF.encaixe, visivel:REF.visivel}
     }));
   }catch(e){}
 }
@@ -1899,16 +3525,20 @@ function carregar(){
     const d = JSON.parse(localStorage.getItem(CHAVE) || "null");
     if(!d) return;
     if(d.lang && I18N[d.lang]) LANG = d.lang;
-    S.W = d.W || S.W; S.H = d.H || S.H;
+    S.W = d.W || S.W; S.H = d.H || S.H; S.dpi = d.dpi || S.dpi;
+    if(typeof d.manter === "boolean") S.manter = d.manter;
     S.fundo = d.fundo || S.fundo; S.escala = d.escala || 1;
     if(Array.isArray(d.camadas) && d.camadas.length){
       S.camadas = d.camadas.filter(c => EFEITOS[c.efeito]).map(c => {
         const base = novaCamada(c.efeito);
-        return Object.assign(base, c, {params:Object.assign(base.params, c.params), formas:null});
+        return Object.assign(base, c, {params:Object.assign(base.params, c.params), formas:null,
+                                       mascara:Object.assign(mascaraPadrao(), c.mascara || {})});
       });
       if(!S.camadas.length) S.camadas = [novaCamada()];
     }
     S.atual = Math.min(d.atual || 0, S.camadas.length-1);
+    S.tiposRecolhidos = !!d.tiposRecolhidos;
+    if(d.ref) Object.assign(REF, d.ref);
   }catch(e){}
 }
 
@@ -1918,11 +3548,16 @@ function carregar(){
 carregar();
 $("idioma").value = LANG;
 $("larg").value = S.W; $("alt").value = S.H;
-$("fundo").value = S.fundo; $("wrap").className = S.fundo;
+$("dpi").value = S.dpi; $("manter").checked = S.manter;
+$("fundo").value = S.fundo;
 $("escala").value = String(S.escala);
 aplicarIdioma();
 montarTudo();
+medirPalco();
 desenhar();
+registrar();
+lerRef().then(b => { if(b) abrirRef(b, false); });
+try{ if(!localStorage.getItem(CHAVE_AJUDA)) abrirAjuda(); }catch(e){}
 </script>
 </body>
 </html>
