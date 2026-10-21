@@ -1,0 +1,1928 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gerador de Efeitos e Tons</title>
+<style>
+  :root{
+    --bg:#15161a; --panel:#1d1f25; --panel-2:#24272f; --line:#33373f;
+    --txt:#e8e9ec; --txt-dim:#9aa0ab; --accent:#ff7a45; --accent-dim:#5a3326;
+    --radius:10px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--txt);
+    font:14px/1.45 ui-sans-serif,system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  header{
+    display:flex; align-items:center; gap:12px;
+    padding:12px 18px; border-bottom:1px solid var(--line); background:var(--panel);
+  }
+  header h1{font-size:15px; font-weight:600; margin:0; letter-spacing:.2px}
+  header .sp{flex:1}
+  select,input[type=number],input[type=text]{
+    background:var(--panel-2); color:var(--txt); border:1px solid var(--line);
+    border-radius:7px; padding:6px 8px; font-size:13px; font-family:inherit;
+  }
+  main{display:grid; grid-template-columns:minmax(0,1fr) 380px; height:calc(100% - 50px)}
+  @media (max-width:900px){ main{grid-template-columns:1fr; height:auto} }
+
+  /* ---------- Prévia ---------- */
+  #palco{
+    display:flex; align-items:center; justify-content:center;
+    padding:24px; overflow:auto; background:
+      linear-gradient(45deg,#1a1b20 25%,transparent 25%,transparent 75%,#1a1b20 75%),
+      linear-gradient(45deg,#1a1b20 25%,#121317 25%,#121317 75%,#1a1b20 75%);
+    background-size:22px 22px; background-position:0 0,11px 11px;
+  }
+  #wrap{position:relative; box-shadow:0 10px 40px #0008; line-height:0}
+  #wrap.xadrez{
+    background:
+      linear-gradient(45deg,#cfd2d8 25%,transparent 25%,transparent 75%,#cfd2d8 75%),
+      linear-gradient(45deg,#cfd2d8 25%,#eef0f3 25%,#eef0f3 75%,#cfd2d8 75%);
+    background-size:16px 16px; background-position:0 0,8px 8px;
+  }
+  #wrap.branco{background:#fff}
+  #wrap.preto{background:#000}
+  canvas{display:block; max-width:100%; max-height:76vh; touch-action:none; cursor:crosshair}
+  #alvo{
+    position:absolute; width:26px; height:26px; margin:-13px 0 0 -13px;
+    border:2px solid var(--accent); border-radius:50%; pointer-events:none;
+    box-shadow:0 0 0 1px #0007, inset 0 0 0 1px #0007; display:none;
+  }
+  #alvo::after{content:""; position:absolute; inset:11px; background:var(--accent); border-radius:50%}
+
+  /* ---------- Painel ---------- */
+  #painel{border-left:1px solid var(--line); background:var(--panel); overflow-y:auto}
+  .sec{border-bottom:1px solid var(--line); padding:14px 16px}
+  .sec h2{
+    font-size:11px; text-transform:uppercase; letter-spacing:.09em;
+    color:var(--txt-dim); margin:0 0 11px; font-weight:600;
+  }
+  .tipos{display:grid; grid-template-columns:repeat(3,1fr); gap:7px}
+  .tipo{
+    background:var(--panel-2); border:1px solid var(--line); color:var(--txt-dim);
+    border-radius:var(--radius); padding:9px 4px; cursor:pointer; font-size:11px;
+    font-family:inherit; display:flex; flex-direction:column; align-items:center; gap:5px;
+    transition:.12s;
+  }
+  .tipo:hover{border-color:#4a4f5a; color:var(--txt)}
+  .tipo.on{border-color:var(--accent); background:var(--accent-dim); color:#fff}
+  .tipo svg{width:34px; height:26px; display:block}
+
+  .ctl{margin-bottom:12px}
+  .ctl .top{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px}
+  .ctl label{font-size:12.5px; color:var(--txt)}
+  .ctl .val{font-size:11.5px; color:var(--txt-dim); font-variant-numeric:tabular-nums}
+  input[type=range]{
+    -webkit-appearance:none; appearance:none; width:100%; height:4px;
+    background:var(--line); border-radius:3px; outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:15px; height:15px; border-radius:50%;
+    background:var(--accent); cursor:pointer; border:2px solid var(--panel);
+  }
+  input[type=range]::-moz-range-thumb{
+    width:13px; height:13px; border-radius:50%; background:var(--accent);
+    cursor:pointer; border:2px solid var(--panel);
+  }
+  .dica{font-size:11.5px; color:var(--txt-dim); background:var(--panel-2);
+        border:1px dashed var(--line); border-radius:8px; padding:8px 10px; margin-bottom:12px}
+
+  button.b{
+    background:var(--panel-2); border:1px solid var(--line); color:var(--txt);
+    border-radius:8px; padding:8px 10px; cursor:pointer; font-size:12.5px; font-family:inherit;
+    transition:.12s;
+  }
+  button.b:hover{border-color:#4a4f5a; background:#2a2e37}
+  button.b.pri{background:var(--accent); border-color:var(--accent); color:#1a0e08; font-weight:600}
+  button.b.pri:hover{filter:brightness(1.08)}
+  .linha{display:grid; gap:7px}
+  .linha.c2{grid-template-columns:1fr 1fr}
+  .linha.c3{grid-template-columns:1fr 1fr 1fr}
+
+  /* ---------- Camadas ---------- */
+  .cam{
+    display:flex; align-items:center; gap:8px; padding:7px 8px; margin-bottom:6px;
+    background:var(--panel-2); border:1px solid var(--line); border-radius:8px; cursor:pointer;
+  }
+  .cam.on{border-color:var(--accent)}
+  .cam .nome{flex:1; font-size:12.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .cam input[type=color]{
+    width:24px; height:24px; padding:0; border:1px solid var(--line);
+    border-radius:5px; background:none; cursor:pointer;
+  }
+  .cam .ic{
+    background:none; border:none; color:var(--txt-dim); cursor:pointer;
+    font-size:13px; padding:2px 4px; line-height:1;
+  }
+  .cam .ic:hover{color:var(--txt)}
+  .cam.off .nome{opacity:.4; text-decoration:line-through}
+  #status{font-size:11.5px; color:var(--txt-dim); padding:9px 16px; min-height:32px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1 id="t-titulo">Gerador de Efeitos e Tons</h1>
+  <span class="sp"></span>
+  <select id="idioma" title="Idioma / Language">
+    <option value="pt">Português</option>
+    <option value="en">English</option>
+  </select>
+</header>
+
+<main>
+  <div id="palco">
+    <div id="wrap" class="xadrez">
+      <canvas id="cv"></canvas>
+      <div id="alvo"></div>
+    </div>
+  </div>
+
+  <aside id="painel">
+    <div class="sec">
+      <h2 id="t-tipo">Tipo de efeito</h2>
+      <div class="tipos" id="tipos"></div>
+    </div>
+
+    <div class="sec">
+      <h2 id="t-ajustes">Ajustes</h2>
+      <div id="ctls"></div>
+      <div class="linha c2">
+        <button class="b" id="b-variar">🎲 <span id="t-variar">Outra forma</span></button>
+        <button class="b" id="b-reset"><span id="t-reset">Restaurar</span></button>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2 id="t-camadas">Camadas</h2>
+      <div id="camadas"></div>
+      <button class="b" id="b-add" style="width:100%">+ <span id="t-add">Adicionar camada</span></button>
+    </div>
+
+    <div class="sec">
+      <h2 id="t-doc">Documento</h2>
+      <div class="ctl">
+        <div class="top"><label id="t-tamanho">Tamanho</label></div>
+        <select id="preset" style="width:100%"></select>
+      </div>
+      <div class="linha c2">
+        <input type="number" id="larg" min="64" max="6000" step="1">
+        <input type="number" id="alt" min="64" max="6000" step="1">
+      </div>
+      <div class="ctl" style="margin-top:12px">
+        <div class="top"><label id="t-fundo">Fundo da prévia</label></div>
+        <select id="fundo" style="width:100%">
+          <option value="xadrez">—</option>
+          <option value="branco">—</option>
+          <option value="preto">—</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2 id="t-exportar">Exportar</h2>
+      <div class="ctl">
+        <div class="top"><label id="t-escala">Escala</label><span class="val" id="v-escala">1×</span></div>
+        <select id="escala" style="width:100%">
+          <option value="0.5">0,5×</option>
+          <option value="1" selected>1×</option>
+          <option value="2">2×</option>
+        </select>
+      </div>
+      <div class="linha c2" style="margin-bottom:7px">
+        <button class="b pri" id="b-png-t"><span id="t-png-t">PNG transparente</span></button>
+        <button class="b" id="b-png-b"><span id="t-png-b">PNG fundo branco</span></button>
+      </div>
+      <div class="linha c2">
+        <button class="b" id="b-svg">SVG</button>
+        <button class="b" id="b-copiar"><span id="t-copiar">Copiar imagem</span></button>
+      </div>
+    </div>
+
+    <div id="status"></div>
+  </aside>
+</main>
+
+<script>
+"use strict";
+
+/* ============================================================
+   1. IDIOMAS
+   Um único dicionário. Para acrescentar um idioma novo, basta
+   duplicar o bloco e traduzir os valores.
+   ============================================================ */
+const I18N = {
+  pt:{
+    titulo:"Gerador de Efeitos e Tons", tipo:"Tipo de efeito", ajustes:"Ajustes",
+    camadas:"Camadas", doc:"Documento", tamanho:"Tamanho", fundo:"Fundo da prévia",
+    exportar:"Exportar", escala:"Escala", variar:"Outra forma", reset:"Restaurar",
+    add:"Adicionar camada", pngT:"PNG transparente", pngB:"PNG fundo branco",
+    copiar:"Copiar imagem", xadrez:"Xadrez (transparente)", branco:"Branco", preto:"Preto",
+    arraste:"Arraste dentro da prévia para mover o centro. Ele pode ficar fora do quadro.",
+    semAleatorio:"Este efeito é calculado, não sorteado — a forma não muda.",
+    copiado:"Imagem copiada para a área de transferência.",
+    erroCopia:"Não foi possível copiar. Use o botão de PNG.",
+    salvo:"Arquivo salvo:", limite:"Máximo de 8 camadas.",
+    personalizado:"Personalizado", camada:"Camada",
+    pesado:"Ajuste pesado — a prévia é redesenhada ao soltar o controle.",
+    svgGrande:"SVG de {} MB. Para Halftone fino, o PNG costuma ser mais prático."
+  },
+  en:{
+    titulo:"Effect Line & Tone Generator", tipo:"Effect type", ajustes:"Settings",
+    camadas:"Layers", doc:"Document", tamanho:"Size", fundo:"Preview background",
+    exportar:"Export", escala:"Scale", variar:"Reroll shape", reset:"Reset",
+    add:"Add layer", pngT:"PNG transparent", pngB:"PNG white background",
+    copiar:"Copy image", xadrez:"Checker (transparent)", branco:"White", preto:"Black",
+    arraste:"Drag inside the preview to move the center. It may sit outside the frame.",
+    semAleatorio:"This effect is computed, not randomized — the shape won't change.",
+    copiado:"Image copied to clipboard.",
+    erroCopia:"Couldn't copy. Use the PNG button instead.",
+    salvo:"File saved:", limite:"Maximum of 8 layers.",
+    personalizado:"Custom", camada:"Layer",
+    pesado:"Heavy settings — the preview redraws when you release the slider.",
+    svgGrande:"{} MB SVG. For fine halftones, PNG is usually more practical."
+  }
+};
+let LANG = "pt";
+const T = k => I18N[LANG][k];
+const L = o => (o && o[LANG]) || (o && o.pt) || "";
+
+/* ============================================================
+   2. ALEATORIEDADE COM SEMENTE
+   A mesma semente devolve sempre a mesma forma — é o que permite
+   redesenhar a prévia e exportar sem que o desenho mude.
+   ============================================================ */
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+/* ============================================================
+   3. PRIMITIVAS GEOMÉTRICAS
+   Todo efeito devolve uma lista destes objetos. A mesma lista
+   alimenta o Canvas (prévia) e o SVG (exportação), o que garante
+   que os dois nunca divirjam.
+     {t:'poly',   pts:[[x,y],...]}
+     {t:'circle', cx, cy, r}
+     {t:'path',   d, evenodd:true}
+   ============================================================ */
+const r2 = n => Math.round(n * 100) / 100;
+
+function desenharCanvas(ctx, formas, cor, opacidade){
+  // No SVG a opacidade vale para o grupo inteiro. Se cada forma fosse
+  // desenhada com a opacidade própria, o Canvas escureceria onde formas
+  // se sobrepõem (kakeami, pontos fundidos) e a prévia deixaria de
+  // coincidir com o SVG. Com opacidade < 1, a camada vai primeiro para um
+  // canvas auxiliar, opaca, e só então é composta com a opacidade.
+  if(opacidade < 1){
+    const c = ctx.canvas, aux = document.createElement("canvas");
+    aux.width = c.width; aux.height = c.height;
+    const a = aux.getContext("2d");
+    a.setTransform(ctx.getTransform());
+    preencherFormas(a, formas, cor);
+    ctx.save();
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.globalAlpha = opacidade;
+    ctx.drawImage(aux, 0, 0);
+    ctx.restore();
+    return;
+  }
+  preencherFormas(ctx, formas, cor);
+}
+
+function preencherFormas(ctx, formas, cor){
+  ctx.save();
+  ctx.fillStyle = cor;
+  for(const f of formas){
+    if(f.t === "poly"){
+      ctx.beginPath();
+      ctx.moveTo(f.pts[0][0], f.pts[0][1]);
+      for(let i=1;i<f.pts.length;i++) ctx.lineTo(f.pts[i][0], f.pts[i][1]);
+      ctx.closePath(); ctx.fill();
+    } else if(f.t === "circle"){
+      ctx.beginPath(); ctx.arc(f.cx, f.cy, f.r, 0, Math.PI*2); ctx.fill();
+    } else if(f.t === "path"){
+      ctx.fill(new Path2D(f.d), f.evenodd ? "evenodd" : "nonzero");
+    }
+  }
+  ctx.restore();
+}
+
+function formasParaSVG(formas, cor, opacidade){
+  let s = `<g fill="${cor}" opacity="${r2(opacidade)}">`;
+  for(const f of formas){
+    if(f.t === "poly"){
+      s += `<polygon points="${f.pts.map(p=>r2(p[0])+","+r2(p[1])).join(" ")}"/>`;
+    } else if(f.t === "circle"){
+      s += `<circle cx="${r2(f.cx)}" cy="${r2(f.cy)}" r="${r2(f.r)}"/>`;
+    } else if(f.t === "path"){
+      s += `<path d="${f.d}"${f.evenodd?' fill-rule="evenodd"':""}/>`;
+    }
+  }
+  return s + "</g>";
+}
+
+/* ============================================================
+   4. REGISTRO DE EFEITOS
+   Cada efeito declara seus próprios parâmetros. A interface é
+   construída automaticamente a partir dessa declaração — para
+   criar um efeito novo não é preciso escrever HTML nenhum.
+   ============================================================ */
+const EFEITOS = {};
+
+/* ---- 4.1 Linhas de concentração ------------------------------
+   O comprimento de cada linha é calculado a partir da distância
+   do centro até o canto mais distante, então elas sempre
+   atravessam o quadro inteiro, mesmo com o centro fora dele. */
+EFEITOS.concentracao = {
+  id:"concentracao",
+  nome:{pt:"Focus Lines", en:"Focus Lines"},
+  aleatorio:true,
+  icone:`<g stroke="currentColor" stroke-width="1.1" fill="none">
+    <path d="M17 13 L1 3M17 13 L1 9M17 13 L1 17M17 13 L1 23M17 13 L33 3M17 13 L33 9M17 13 L33 17M17 13 L33 23M17 13 L9 1M17 13 L25 1M17 13 L9 25M17 13 L25 25"/>
+    <circle cx="17" cy="13" r="3.4" fill="currentColor" stroke="none" opacity=".35"/></g>`,
+  params:{
+    quantidade:  {tipo:"slider", rot:{pt:"Quantidade de linhas",en:"Line count"},      min:12, max:600, passo:1, padrao:150},
+    raioInterno: {tipo:"slider", rot:{pt:"Raio interno",         en:"Inner radius"},   min:0,  max:70,  passo:1, padrao:16, suf:"%"},
+    proporcao:   {tipo:"slider", rot:{pt:"Proporção do centro",  en:"Center aspect"},  min:20, max:300, passo:1, padrao:100, suf:"%"},
+    espessura:   {tipo:"slider", rot:{pt:"Espessura",            en:"Thickness"},      min:2,  max:100, passo:1, padrao:46, suf:"%"},
+    afunilamento:{tipo:"slider", rot:{pt:"Afunilamento",         en:"Taper"},          min:0,  max:100, passo:1, padrao:88, suf:"%"},
+    irregular:   {tipo:"slider", rot:{pt:"Irregularidade",       en:"Jitter"},         min:0,  max:100, passo:1, padrao:55, suf:"%"},
+    variacao:    {tipo:"slider", rot:{pt:"Variação de espessura",en:"Width variance"}, min:0,  max:100, passo:1, padrao:70, suf:"%"},
+    borda:       {tipo:"slider", rot:{pt:"Borda interna irregular",en:"Ragged inner edge"}, min:0, max:100, passo:1, padrao:60, suf:"%"},
+    curtas:      {tipo:"slider", rot:{pt:"Linhas curtas extras", en:"Extra short lines"}, min:0, max:100, passo:1, padrao:70, suf:"%"},
+    centro:      {tipo:"ponto",  rot:{pt:"Centro", en:"Center"}, padrao:[0.5,0.5]}
+  },
+  gerar(p, W, H, rng){
+    const cx = p.centro[0]*W, cy = p.centro[1]*H;
+    let maxD = 0;
+    for(const c of [[0,0],[W,0],[0,H],[W,H]]) maxD = Math.max(maxD, Math.hypot(c[0]-cx, c[1]-cy));
+    const fora   = maxD * 1.06;
+    const n      = Math.round(p.quantidade);
+    const vao    = Math.PI*2 / n;
+    const rIn    = p.raioInterno/100 * Math.min(W,H) * 0.5;
+    const rInY   = rIn * (p.proporcao/100);
+    const esp    = p.espessura/100;
+    const taper  = p.afunilamento/100;
+    const irr    = p.irregular/100;
+    const vari   = p.variacao/100;
+    const rag    = p.borda/100;
+    const formas = [];
+    // Linhas principais: cada uma começa num raio diferente (borda do miolo
+    // desfiada), com poucas entrando mais fundo e algumas começando mais longe.
+    for(let i=0;i<n;i++){
+      const a   = i*vao + (rng()-0.5)*vao*irr*1.6;
+      const mul = 1 - Math.pow(rng(),0.75)*vari*0.93;
+      const ao  = vao*0.5*esp*mul;
+      const ai  = ao * (1 - taper);
+      const r0  = 1 + rag*(Math.pow(rng(),2)*1.6 - 0.25*rng());
+      const xi  = rIn*r0, yi = rInY*r0;
+      formas.push({t:"poly", pts:[
+        [cx + xi*Math.cos(a-ai),   cy + yi*Math.sin(a-ai)],
+        [cx + fora*Math.cos(a-ao), cy + fora*Math.sin(a-ao)],
+        [cx + fora*Math.cos(a+ao), cy + fora*Math.sin(a+ao)],
+        [cx + xi*Math.cos(a+ai),   cy + yi*Math.sin(a+ai)]
+      ]});
+    }
+    // Linhas curtas: fusos finos que nascem entre as longas, como os traços
+    // de preenchimento do mangá. Pontas afinadas nos dois lados.
+    const nc = Math.round(n * p.curtas/100 * 0.8);
+    const base = Math.max(rIn, 1);
+    for(let i=0;i<nc;i++){
+      const a   = rng()*Math.PI*2;
+      const ini = base*(0.9 + rng()*1.4) + (fora-base)*Math.pow(rng(),1.8)*0.6;
+      const len = (fora-base)*(0.08 + rng()*0.4);
+      const fim = Math.min(fora, ini+len);
+      const w   = vao*0.5*esp*(0.25 + rng()*0.7);
+      const m   = ini + (fim-ini)*0.35;
+      const fs  = rIn>0 ? rInY/rIn : 1;
+      const P   = (r,da) => [cx + r*Math.cos(a+da), cy + r*fs*Math.sin(a+da)];
+      formas.push({t:"poly", pts:[P(ini,0), P(m,-w), P(fim,0), P(m,w)]});
+    }
+    return formas;
+  }
+};
+
+/* ---- 4.2 Linhas de velocidade --------------------------------
+   Construídas num sistema de coordenadas girado e depois
+   devolvidas ao quadro, para que o ângulo não deforme nada. */
+EFEITOS.velocidade = {
+  id:"velocidade",
+  nome:{pt:"Speedlines", en:"Speedlines"},
+  aleatorio:true,
+  icone:`<g stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round">
+    <path d="M2 4H24M6 8H32M2 12H19M9 16H30M3 20H26M11 24H33"/></g>`,
+  params:{
+    angulo:      {tipo:"slider", rot:{pt:"Ângulo",             en:"Angle"},        min:0,  max:360, passo:1, padrao:0,  suf:"°"},
+    quantidade:  {tipo:"slider", rot:{pt:"Quantidade",         en:"Line count"},   min:5,  max:400, passo:1, padrao:70},
+    espessura:   {tipo:"slider", rot:{pt:"Espessura",          en:"Thickness"},    min:1,  max:60,  passo:1, padrao:7,  suf:"px"},
+    comprimento: {tipo:"slider", rot:{pt:"Comprimento",        en:"Length"},       min:5,  max:100, passo:1, padrao:72, suf:"%"},
+    varComp:     {tipo:"slider", rot:{pt:"Variação do compr.", en:"Length var."},  min:0,  max:100, passo:1, padrao:55, suf:"%"},
+    afunilamento:{tipo:"slider", rot:{pt:"Afunilamento",       en:"Taper"},        min:0,  max:100, passo:1, padrao:75, suf:"%"},
+    irregular:   {tipo:"slider", rot:{pt:"Irregularidade",     en:"Jitter"},       min:0,  max:100, passo:1, padrao:45, suf:"%"},
+    varEsp:      {tipo:"slider", rot:{pt:"Variação de espess.",en:"Width var."},   min:0,  max:100, passo:1, padrao:50, suf:"%"}
+  },
+  gerar(p, W, H, rng){
+    const ang = p.angulo*Math.PI/180, ca = Math.cos(ang), sa = Math.sin(ang);
+    // Alcance real do quadro nos dois eixos do sistema girado. Usar a
+    // diagonal aqui faria metade das linhas cair fora da imagem, e o
+    // controle de quantidade deixaria de corresponder ao que se vê.
+    const extU = (Math.abs(W*ca) + Math.abs(H*sa)) * 1.02; // ao longo das linhas
+    const extV = (Math.abs(W*sa) + Math.abs(H*ca)) * 1.02; // perpendicular
+    const n   = Math.round(p.quantidade);
+    const passo = extV / n;
+    const irr   = p.irregular/100;
+    const vEsp  = p.varEsp/100;
+    const vCmp  = p.varComp/100;
+    const taper = p.afunilamento/100;
+    const mundo = (u,v) => [W/2 + u*ca - v*sa, H/2 + u*sa + v*ca];
+    const formas = [];
+    for(let i=0;i<n;i++){
+      const v  = -extV/2 + (i+0.5)*passo + (rng()-0.5)*passo*irr*1.8;
+      const C  = extU * (p.comprimento/100) * (1 - rng()*vCmp*0.9);
+      const uc = (rng()-0.5) * Math.max(0, extU - C);
+      const u0 = uc - C/2, u1 = uc + C/2;
+      const hw = (p.espessura/2) * (1 - rng()*vEsp*0.8);
+      const tt = C * taper * 0.45;
+      formas.push({t:"poly", pts:[
+        mundo(u0, v),
+        mundo(u0+tt, v-hw),
+        mundo(u1-tt, v-hw),
+        mundo(u1, v),
+        mundo(u1-tt, v+hw),
+        mundo(u0+tt, v+hw)
+      ]});
+    }
+    return formas;
+  }
+};
+
+/* ---- 4.3 Retícula (meio-tom) ---------------------------------
+   Único efeito sem sorteio: é inteiramente calculado. Acima de
+   50% de densidade a figura se inverte usando regra par-ímpar,
+   de modo que os pontos brancos ficam vazados de verdade — no
+   SVG também, sem retângulo branco por cima. */
+EFEITOS.reticula = {
+  id:"reticula",
+  nome:{pt:"Halftone", en:"Halftone"},
+  aleatorio:false,
+  icone:`<g fill="currentColor">
+    <circle cx="5" cy="5" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="5" r="2"/>
+    <circle cx="26" cy="5" r="2"/><circle cx="8.5" cy="11" r="2.4"/><circle cx="15.5" cy="11" r="2.4"/>
+    <circle cx="22.5" cy="11" r="2.4"/><circle cx="29.5" cy="11" r="2.4"/>
+    <circle cx="5" cy="17" r="2.8"/><circle cx="12" cy="17" r="2.8"/><circle cx="19" cy="17" r="2.8"/>
+    <circle cx="26" cy="17" r="2.8"/></g>`,
+  params:{
+    espacamento:{tipo:"slider", rot:{pt:"Espaçamento", en:"Spacing"},  min:3, max:60, passo:1, padrao:11, suf:"px"},
+    densidade:  {tipo:"slider", rot:{pt:"Densidade",   en:"Density"},  min:0, max:100, passo:1, padrao:70, suf:"%"},
+    angulo:     {tipo:"slider", rot:{pt:"Ângulo",      en:"Angle"},    min:0, max:90,  passo:1, padrao:45, suf:"°"},
+    forma:      {tipo:"opcoes", rot:{pt:"Forma do ponto", en:"Dot shape"}, padrao:"circulo",
+                 opcoes:[{v:"circulo", rot:{pt:"Círculo",en:"Circle"}},
+                         {v:"quadrado",rot:{pt:"Quadrado",en:"Square"}}]}
+  },
+  gerar(p, W, H){
+    const s   = Math.max(2, p.espacamento);
+    const d   = p.densidade;
+    if(d <= 0) return [];
+    if(d >= 100) return [{t:"poly", pts:[[0,0],[W,0],[W,H],[0,H]]}];
+    const inv = d > 50;
+    const f   = (inv ? (100-d) : d) / 100;
+    const ang = p.angulo*Math.PI/180, ca = Math.cos(ang), sa = Math.sin(ang);
+    // Mesma lógica das linhas de velocidade: percorrer só a faixa da grade
+    // que realmente cai dentro do quadro, não a diagonal inteira.
+    const NU  = Math.ceil((Math.abs(W*ca) + Math.abs(H*sa)) / s / 2) + 2;
+    const NV  = Math.ceil((Math.abs(W*sa) + Math.abs(H*ca)) / s / 2) + 2;
+    const r   = s * Math.sqrt(f/Math.PI);
+    const lado = s * Math.sqrt(f);
+    const pts = [];
+    for(let i=-NU;i<=NU;i++){
+      for(let j=-NV;j<=NV;j++){
+        const u = i*s, v = j*s;
+        const x = W/2 + u*ca - v*sa, y = H/2 + u*sa + v*ca;
+        if(x < -s || x > W+s || y < -s || y > H+s) continue;
+        pts.push([x,y]);
+      }
+    }
+    // Os quadrados giram junto com a trama, como numa retícula de verdade.
+    const h = lado/2;
+    const cantos = [[-h,-h],[h,-h],[h,h],[-h,h]];
+    const quadro = (x,y) => cantos.map(([a,b]) => [x + a*ca - b*sa, y + a*sa + b*ca]);
+
+    if(!inv){
+      if(p.forma === "quadrado"){
+        return pts.map(([x,y]) => ({t:"poly", pts:quadro(x,y)}));
+      }
+      return pts.map(([x,y]) => ({t:"circle", cx:x, cy:y, r}));
+    }
+    // Densidade acima de 50%: quadro cheio com os pontos vazados.
+    let d2 = `M0 0 H${r2(W)} V${r2(H)} H0 Z`;
+    for(const [x,y] of pts){
+      if(p.forma === "quadrado"){
+        const q = quadro(x,y);
+        d2 += `M${r2(q[0][0])} ${r2(q[0][1])}` + q.slice(1).map(c=>` L${r2(c[0])} ${r2(c[1])}`).join("") + " Z";
+      } else {
+        d2 += `M${r2(x-r)} ${r2(y)} a${r2(r)} ${r2(r)} 0 1 0 ${r2(r*2)} 0 a${r2(r)} ${r2(r)} 0 1 0 ${r2(-r*2)} 0 Z`;
+      }
+    }
+    return [{t:"path", d:d2, evenodd:true}];
+  }
+};
+
+/* ---- 4.4 Kakeami (hachura) -----------------------------------
+   Feixes de linhas paralelas curtas, dispostos em fileiras
+   alternadas ("tijolo") e girados entre si a cada camada. Cada
+   feixe ganha um leve desvio de posição e de ângulo, que é o que
+   dá o aspecto de traço à mão. A mesma função serve ao kakeami
+   simples/múltiplo e ao degradê: no degradê, `grad(x,y)` devolve a
+   espessura (fração do espaçamento) naquele ponto do quadro. */
+function gerarKakeami(p, W, H, rng, grad){
+  const camadas = Math.round(p.camadas);
+  const esp   = p.espacamento;
+  const nL    = Math.round(p.linhasFeixe);
+  const Lb    = p.comprimento;
+  const irr   = p.irregular/100;
+  const taper = p.afunilamento/100;
+  const cw    = nL * esp;                         // largura de um feixe
+  // Comprimento da ponta afunilada. Feixes vizinhos se sobrepõem
+  // exatamente por esse trecho: duas rampas lineares somam a espessura
+  // cheia, então a densidade fica uniforme e o traço ainda parece feito
+  // à mão. Sem isso sobram losangos brancos entre os feixes.
+  const ttNom = taper * Math.min(Lb*0.45, esp*6);
+  const margem = Math.hypot(Lb, cw)/2 + esp;
+  const formas = [];
+  for(let k=0;k<camadas;k++){
+    const ang = (p.angulo + k*p.passoAngulo) * Math.PI/180;
+    const ca = Math.cos(ang), sa = Math.sin(ang);
+    const extU = Math.abs(W*ca) + Math.abs(H*sa) + Lb*2;
+    const extV = Math.abs(W*sa) + Math.abs(H*ca) + cw*2;
+    const passoU = Math.max(esp*2, Lb - ttNom);   // avanço entre feixes
+    const nI = Math.ceil(extU/passoU) + 1;
+    const nJ = Math.ceil(extV/cw) + 1;
+    for(let j=0;j<nJ;j++){
+      const vb = -extV/2 + j*cw;
+      const desloc = (j % 2) * passoU * 0.5;
+      for(let i=0;i<nI;i++){
+        const ub = -extU/2 + i*passoU + desloc + (rng()-0.5)*ttNom*irr;
+        // Feixes vizinhos entram deslocados em meio espaçamento: na zona
+        // onde as pontas se sobrepõem, os traços ficam intercalados e a
+        // espessura soma de verdade. No mesmo eixo, duas formas cheias se
+        // unem pelo máximo e a densidade cairia pela metade na emenda.
+        const dv = (rng()-0.5)*esp*irr + (i % 2 ? esp*0.5 : 0);
+        const rot = (rng()-0.5)*irr*0.12;         // giro do feixe, em radianos
+        const uc = ub + Lb/2, vc = vb + dv + cw/2;
+        const cx = W/2 + uc*ca - vc*sa, cy = H/2 + uc*sa + vc*ca;
+        if(cx < -margem || cx > W+margem || cy < -margem || cy > H+margem) continue;
+        const cr = Math.cos(rot), sr = Math.sin(rot);
+        const mundo = (u,v) => {
+          const a = u-uc, b = v-vc;
+          const ur = uc + a*cr - b*sr, vr = vc + a*sr + b*cr;
+          return [W/2 + ur*ca - vr*sa, H/2 + ur*sa + vr*ca];
+        };
+        for(let m=0;m<nL;m++){
+          const v  = vb + dv + (m+0.5)*esp;
+          const u0 = ub + (rng()-0.5)*ttNom*irr*0.5;
+          const u1 = ub + Lb + (rng()-0.5)*ttNom*irr*0.5;
+          const c  = mundo((u0+u1)/2, v);
+          const frac = grad ? grad(c[0], c[1]) : p.espessura/100;
+          const hw = esp * frac * 0.5 * (1 - rng()*irr*0.2);
+          if(hw < 0.12) continue;
+          const tt = Math.min(ttNom, (u1-u0)*0.45);
+          formas.push({t:"poly", pts:[
+            mundo(u0, v), mundo(u0+tt, v-hw), mundo(u1-tt, v-hw),
+            mundo(u1, v), mundo(u1-tt, v+hw), mundo(u0+tt, v+hw)
+          ]});
+        }
+      }
+    }
+  }
+  return formas;
+}
+
+const PARAMS_KAKEAMI = {
+  angulo:      {tipo:"slider", rot:{pt:"Ângulo",              en:"Angle"},             min:0,  max:180, passo:1, padrao:30,  suf:"°"},
+  camadas:     {tipo:"slider", rot:{pt:"Camadas de traço",    en:"Hatch layers"},      min:1,  max:4,   passo:1, padrao:2},
+  passoAngulo: {tipo:"slider", rot:{pt:"Giro entre camadas",  en:"Layer rotation"},    min:10, max:90,  passo:1, padrao:45, suf:"°"},
+  espacamento: {tipo:"slider", rot:{pt:"Espaçamento",         en:"Line spacing"},      min:3,  max:30,  passo:1, padrao:8,  suf:"px"},
+  espessura:   {tipo:"slider", rot:{pt:"Espessura (% do espaç.)", en:"Thickness (% of spacing)"}, min:5, max:90, passo:1, padrao:35, suf:"%"},
+  linhasFeixe: {tipo:"slider", rot:{pt:"Linhas por feixe",    en:"Lines per bundle"},  min:3,  max:30,  passo:1, padrao:9},
+  comprimento: {tipo:"slider", rot:{pt:"Comprimento do feixe",en:"Bundle length"},     min:30, max:400, passo:1, padrao:110, suf:"px"},
+  afunilamento:{tipo:"slider", rot:{pt:"Afunilamento",        en:"Taper"},             min:0,  max:100, passo:1, padrao:70, suf:"%"},
+  irregular:   {tipo:"slider", rot:{pt:"Irregularidade",      en:"Jitter"},            min:0,  max:100, passo:1, padrao:35, suf:"%"}
+};
+
+EFEITOS.kakeami = {
+  id:"kakeami",
+  nome:{pt:"Cross-hatch", en:"Cross-hatch"},
+  aleatorio:true,
+  icone:`<g stroke="currentColor" stroke-width="1.1" fill="none" stroke-linecap="round">
+    <path d="M3 11L11 4M5 14L13 7M7 17L15 10"/>
+    <path d="M19 4L27 10M17 7L25 13M15 10L23 16"/>
+    <path d="M5 23L11 19M8 24L14 20"/></g>`,
+  params:PARAMS_KAKEAMI,
+  gerar(p, W, H, rng){ return gerarKakeami(p, W, H, rng, null); }
+};
+
+/* ---- 4.5 Kakeami degradê --------------------------------------
+   O mesmo kakeami, mas com a espessura variando ao longo de uma
+   direção: grosso (quase preto) no começo, fino até sumir no fim.
+   "Borda preta" acrescenta uma faixa totalmente preenchida no lado
+   escuro, para a hachura sair dela sem emenda. */
+const PARAMS_KAKEAMI_GRAD = Object.assign({}, PARAMS_KAKEAMI);
+delete PARAMS_KAKEAMI_GRAD.espessura;
+Object.assign(PARAMS_KAKEAMI_GRAD, {
+  anguloGrad:{tipo:"slider", rot:{pt:"Direção do degradê",   en:"Gradient direction"}, min:0,  max:360, passo:1, padrao:0,  suf:"°"},
+  espMax:    {tipo:"slider", rot:{pt:"Escuridão no início",   en:"Darkness at start"},  min:20, max:100, passo:1, padrao:90, suf:"%"},
+  espMin:    {tipo:"slider", rot:{pt:"Escuridão no fim",      en:"Darkness at end"},    min:0,  max:60,  passo:1, padrao:3,  suf:"%"},
+  ini:       {tipo:"slider", rot:{pt:"Início do degradê",     en:"Gradient start"},     min:0,  max:90,  passo:1, padrao:8,  suf:"%"},
+  fim:       {tipo:"slider", rot:{pt:"Fim do degradê",        en:"Gradient end"},       min:10, max:100, passo:1, padrao:100, suf:"%"},
+  preto:     {tipo:"slider", rot:{pt:"Borda preta",           en:"Solid edge"},         min:0,  max:60,  passo:1, padrao:0,  suf:"%"}
+});
+
+EFEITOS.kakeamiGrad = {
+  id:"kakeamiGrad",
+  nome:{pt:"Gradient Cross-hatch", en:"Gradient Cross-hatch"},
+  aleatorio:true,
+  icone:`<g stroke="currentColor" fill="none">
+    <path stroke-width="3.6" d="M4 23L9 3"/><path stroke-width="3" d="M9 23L14 3"/>
+    <path stroke-width="2.4" d="M14 23L19 3"/><path stroke-width="1.8" d="M19 23L24 3"/>
+    <path stroke-width="1.1" d="M24 23L29 3"/><path stroke-width=".6" d="M29 23L34 3"/></g>`,
+  params:PARAMS_KAKEAMI_GRAD,
+  gerar(p, W, H, rng){
+    const ag = p.anguloGrad*Math.PI/180, gx = Math.cos(ag), gy = Math.sin(ag);
+    const extG = Math.abs(W*gx) + Math.abs(H*gy);
+    const ini = p.ini/100, fim = Math.max(ini + 0.01, p.fim/100);
+    const dMax = p.espMax/100, dMin = p.espMin/100;
+    const k = Math.round(p.camadas);
+    // Os controles falam em tom (quanto do papel fica coberto). Com k
+    // camadas sobrepostas, cada uma precisa cobrir menos para que o total
+    // chegue ao tom pedido: cobertura = 1 - (1 - f)^k.
+    const paraEspessura = D => 1 - Math.pow(1 - Math.min(0.995, D), 1/k);
+    const pb = p.preto/100;                              // largura da borda preta
+    const grad = (x,y) => {
+      let t = ((x-W/2)*gx + (y-H/2)*gy)/extG + 0.5;     // 0 no lado escuro, 1 no claro
+      t = (t - pb)/(1 - pb);                             // o degradê nasce na borda da faixa preta
+      let s = Math.min(1, Math.max(0, (t-ini)/(fim-ini)));
+      s = s*s*(3-2*s);                                   // suaviza as pontas
+      return paraEspessura(dMax + (dMin-dMax)*s);
+    };
+    const formas = [];
+    if(p.preto > 0){
+      const a1 = -extG/2 - 2, a2 = -extG/2 + p.preto/100*extG, B = (W+H);
+      const pt = (a,b) => [W/2 + a*gx - b*gy, H/2 + a*gy + b*gx];
+      formas.push({t:"poly", pts:[pt(a1,-B), pt(a2,-B), pt(a2,B), pt(a1,B)]});
+    }
+    return formas.concat(gerarKakeami(p, W, H, rng, grad));
+  }
+};
+
+/* ---- Família do flash ------------------------------------------
+   Os três efeitos abaixo são radiais, como a concentração. Esta função
+   devolve o centro em pixels e a distância até o canto mais distante do
+   quadro, que é o alcance necessário para a figura cobrir tudo mesmo com
+   o centro arrastado para fora da imagem. */
+function centroEAlcance(p, W, H){
+  const cx = p.centro[0]*W, cy = p.centro[1]*H;
+  let maxD = 0;
+  for(const c of [[0,0],[W,0],[0,H],[W,H]]) maxD = Math.max(maxD, Math.hypot(c[0]-cx, c[1]-cy));
+  return {cx, cy, maxD};
+}
+
+/* ---- 4.6 Flash (閃光) -----------------------------------------
+   Agulhas pretas de comprimentos variados, saindo de um círculo
+   vazio no centro. Cada agulha começa em ponta, engrossa e termina
+   em ponta, ao contrário da concentração, em que todas as linhas
+   atravessam o quadro. */
+EFEITOS.flash = {
+  id:"flash",
+  nome:{pt:"Flash Rays", en:"Flash Rays"},
+  aleatorio:true,
+  icone:(()=>{
+    let d = "";
+    for(let i=0;i<16;i++){
+      const a = i/16*Math.PI*2, r0 = 4, r1 = 7 + ((i*5)%7)*1.7;
+      d += `M${r2(17+r0*Math.cos(a)*1.3)} ${r2(13+r0*Math.sin(a))}L${r2(17+r1*Math.cos(a)*1.55)} ${r2(13+r1*Math.sin(a)*1.05)}`;
+    }
+    return `<path d="${d}" stroke="currentColor" stroke-width="1.1" fill="none" stroke-linecap="round"/>`;
+  })(),
+  params:{
+    quantidade:  {tipo:"slider", rot:{pt:"Quantidade de agulhas", en:"Needle count"},    min:12, max:400, passo:1, padrao:90},
+    raioInterno: {tipo:"slider", rot:{pt:"Raio interno",         en:"Inner radius"},    min:0,  max:70,  passo:1, padrao:22, suf:"%"},
+    comprimento: {tipo:"slider", rot:{pt:"Comprimento máximo",   en:"Max length"},      min:10, max:100, passo:1, padrao:70, suf:"%"},
+    varComp:     {tipo:"slider", rot:{pt:"Variação do compr.",   en:"Length variance"}, min:0,  max:100, passo:1, padrao:60, suf:"%"},
+    espessura:   {tipo:"slider", rot:{pt:"Espessura",            en:"Thickness"},       min:2,  max:100, passo:1, padrao:40, suf:"%"},
+    irregular:   {tipo:"slider", rot:{pt:"Irregularidade",       en:"Jitter"},          min:0,  max:100, passo:1, padrao:45, suf:"%"},
+    centro:      {tipo:"ponto",  rot:{pt:"Centro", en:"Center"}, padrao:[0.5,0.5]}
+  },
+  gerar(p, W, H, rng){
+    const {cx, cy, maxD} = centroEAlcance(p, W, H);
+    const n = Math.round(p.quantidade), vao = Math.PI*2 / n;
+    const rIn = p.raioInterno/100 * Math.min(W,H) * 0.5;
+    const alcance = Math.max(8, maxD*1.06 - rIn);
+    const irr = p.irregular/100, vc = p.varComp/100, esp = p.espessura/100;
+    const pol = (r,a) => [cx + r*Math.cos(a), cy + r*Math.sin(a)];
+    const formas = [];
+    for(let i=0;i<n;i++){
+      const a  = i*vao + (rng()-0.5)*vao*irr*1.6;
+      const ao = vao*0.5*esp*(1 - rng()*irr*0.5);
+      const L  = Math.max(6, alcance * (p.comprimento/100) * (1 - rng()*vc*0.95));
+      const rS = rIn + L*0.2;                       // onde a agulha está mais larga
+      // Losango: ponta no círculo interno, ombros em rS, ponta no fim.
+      formas.push({t:"poly", pts:[pol(rIn,a), pol(rS,a-ao), pol(rIn+L,a), pol(rS,a+ao)]});
+    }
+    return formas;
+  }
+};
+
+/* ---- 4.7 Beta-flash (ベタフラ) --------------------------------
+   Fundo preto cheio cortado por raios brancos que partem do centro.
+   Os raios brancos NÃO são desenhados: o preto é montado em cunhas
+   entre um raio e o seguinte, então o "branco" é transparente de
+   verdade (PNG e SVG), sem retângulo branco por cima e sem depender
+   da regra par-ímpar, que inverteria onde dois raios se cruzassem. */
+EFEITOS.betaflash = {
+  id:"betaflash",
+  nome:{pt:"Beta Flash", en:"Beta Flash"},
+  aleatorio:true,
+  icone:(()=>{
+    let d = "";
+    for(let i=0;i<14;i++){
+      const a = i/14*Math.PI*2 + 0.2, dx = Math.cos(a), dy = Math.sin(a);
+      // distância até a borda do retângulo (1..33 × 1..25), para a linha parar nela
+      const t = Math.min(Math.abs(dx) > 1e-6 ? 16/Math.abs(dx) : 1e9,
+                         Math.abs(dy) > 1e-6 ? 12/Math.abs(dy) : 1e9);
+      d += `M17 13L${r2(17+t*dx)} ${r2(13+t*dy)}`;
+    }
+    return `<rect x="1" y="1" width="32" height="24" rx="2" fill="currentColor"/>`
+         + `<path d="${d}" stroke="#fff" stroke-width="1.3" fill="none"/>`;
+  })(),
+  params:{
+    quantidade:  {tipo:"slider", rot:{pt:"Quantidade de raios",   en:"Ray count"},      min:12, max:300, passo:1, padrao:70},
+    raioInterno: {tipo:"slider", rot:{pt:"Centro branco",         en:"White center"},   min:0,  max:70,  passo:1, padrao:14, suf:"%"},
+    espessura:   {tipo:"slider", rot:{pt:"Largura dos raios",     en:"Ray width"},      min:5,  max:90,  passo:1, padrao:38, suf:"%"},
+    afunilamento:{tipo:"slider", rot:{pt:"Afunilamento",          en:"Taper"},          min:0,  max:100, passo:1, padrao:85, suf:"%"},
+    variacao:    {tipo:"slider", rot:{pt:"Variação de largura",   en:"Width variance"}, min:0,  max:100, passo:1, padrao:55, suf:"%"},
+    irregular:   {tipo:"slider", rot:{pt:"Irregularidade",        en:"Jitter"},         min:0,  max:100, passo:1, padrao:45, suf:"%"},
+    centro:      {tipo:"ponto",  rot:{pt:"Centro", en:"Center"}, padrao:[0.5,0.5]}
+  },
+  gerar(p, W, H, rng){
+    const {cx, cy, maxD} = centroEAlcance(p, W, H);
+    const n = Math.round(p.quantidade), cel = Math.PI*2 / n;
+    const rIn = p.raioInterno/100 * Math.min(W,H) * 0.5;
+    const hwMax = cel * 0.5 * (p.espessura/100);
+    const afun = p.afunilamento/100, vari = p.variacao/100, irr = p.irregular/100;
+    // Raio externo: a corda entre dois pontos vizinhos fica por dentro do
+    // círculo, então ele precisa ser maior que o alcance para o quadro
+    // inteiro ficar coberto.
+    const Ro = maxD * 1.06 / Math.cos(cel/2);
+    const pol = (r,a) => [cx + r*Math.cos(a), cy + r*Math.sin(a)];
+    const sp = [];
+    for(let i=0;i<n;i++){
+      const ho = hwMax * (1 - rng()*vari*0.8);               // meia-largura externa
+      const folga = Math.max(0, cel/2 - ho);                  // cada raio fica na própria célula,
+      const a = (i+0.5)*cel + (rng()-0.5)*2*folga*irr;        // então nunca cruza o vizinho
+      sp.push({a, ho, hi: ho*(1-afun)});
+    }
+    const formas = [];
+    for(let i=0;i<n;i++){
+      const s = sp[i], t = sp[(i+1)%n];
+      const ta = t.a + (i === n-1 ? Math.PI*2 : 0);
+      formas.push({t:"poly", pts:[
+        pol(rIn, s.a + s.hi), pol(Ro, s.a + s.ho),
+        pol(Ro, ta - t.ho),   pol(rIn, ta - t.hi)
+      ]});
+    }
+    return formas;
+  }
+};
+
+/* ---- 4.8 Uni-flash (ウニフラ) ---------------------------------
+   Figura única em forma de ouriço: um núcleo redondo com espinhos de
+   comprimentos variados. Diferente dos outros, ela não cobre o quadro;
+   serve para destacar um impacto ou um objeto. "Vazio" abre um furo
+   transparente no núcleo (regra par-ímpar: um contorno só, sem cruzar). */
+EFEITOS.uniflash = {
+  id:"uniflash",
+  nome:{pt:"Uni Flash", en:"Uni Flash"},
+  aleatorio:true,
+  icone:(()=>{
+    const pts = [];
+    for(let i=0;i<18;i++){
+      const a = i/18*Math.PI*2, r = (i%2) ? 4.6 : 8.5 + ((i*7)%5)*0.9;
+      pts.push(`${r2(17+r*Math.cos(a)*1.45)},${r2(13+r*Math.sin(a)*1.3)}`);
+    }
+    return `<polygon points="${pts.join(" ")}" fill="currentColor"/>`;
+  })(),
+  params:{
+    quantidade:  {tipo:"slider", rot:{pt:"Quantidade de espinhos", en:"Spike count"},     min:12, max:200, passo:1, padrao:56},
+    nucleo:      {tipo:"slider", rot:{pt:"Tamanho do núcleo",      en:"Core size"},       min:3,  max:60,  passo:1, padrao:22, suf:"%"},
+    comprimento: {tipo:"slider", rot:{pt:"Comprimento dos espinhos", en:"Spike length"},  min:5,  max:100, passo:1, padrao:38, suf:"%"},
+    varComp:     {tipo:"slider", rot:{pt:"Variação do compr.",     en:"Length variance"}, min:0,  max:100, passo:1, padrao:55, suf:"%"},
+    base:        {tipo:"slider", rot:{pt:"Largura da base",        en:"Base width"},      min:20, max:100, passo:1, padrao:70, suf:"%"},
+    irregular:   {tipo:"slider", rot:{pt:"Irregularidade",         en:"Jitter"},          min:0,  max:100, passo:1, padrao:40, suf:"%"},
+    vazio:       {tipo:"slider", rot:{pt:"Vazio no centro",        en:"Hollow center"},   min:0,  max:90,  passo:1, padrao:0,  suf:"%"},
+    centro:      {tipo:"ponto",  rot:{pt:"Centro", en:"Center"}, padrao:[0.5,0.5]}
+  },
+  gerar(p, W, H, rng){
+    const cx = p.centro[0]*W, cy = p.centro[1]*H;
+    const unit = Math.min(W,H)/2;
+    const n = Math.round(p.quantidade), cel = Math.PI*2 / n;
+    const core = p.nucleo/100 * unit, comp = p.comprimento/100 * unit;
+    const irr = p.irregular/100, vc = p.varComp/100, base = p.base/100;
+    const pol = (r,a) => [cx + r*Math.cos(a), cy + r*Math.sin(a)];
+    const sp = [];
+    for(let i=0;i<n;i++){
+      const hw = cel * 0.5 * base * (1 - rng()*irr*0.3);
+      const a  = (i+0.5)*cel + (rng()-0.5)*2*Math.max(0, cel/2 - hw)*irr;
+      const R  = core + Math.max(2, comp * (1 - rng()*vc*0.9));
+      sp.push({a, hw, R});
+    }
+    const pts = [];
+    for(let i=0;i<n;i++){
+      const s = sp[i], t = sp[(i+1)%n];
+      const ta = t.a + (i === n-1 ? Math.PI*2 : 0);
+      pts.push(pol(core, s.a - s.hw), pol(s.R, s.a), pol(core, s.a + s.hw));
+      // ponto no meio do vão, sobre o núcleo, para o contorno seguir o círculo
+      pts.push(pol(core, ((s.a + s.hw) + (ta - t.hw)) / 2));
+    }
+    const rv = p.vazio/100 * core;
+    if(rv < 0.5) return [{t:"poly", pts}];
+    let d = `M${r2(pts[0][0])} ${r2(pts[0][1])}` + pts.slice(1).map(q => ` L${r2(q[0])} ${r2(q[1])}`).join("") + " Z";
+    d += ` M${r2(cx-rv)} ${r2(cy)} a${r2(rv)} ${r2(rv)} 0 1 0 ${r2(rv*2)} 0 a${r2(rv)} ${r2(rv)} 0 1 0 ${r2(-rv*2)} 0 Z`;
+    return [{t:"path", d, evenodd:true}];
+  }
+};
+
+/* ---- Ferramentas comuns aos tons -------------------------------
+   Estes efeitos trabalham num sistema de coordenadas girado (u ao longo
+   do padrão, v perpendicular) e devolvem o resultado ao quadro. */
+function geometriaGirada(W, H, angGraus, margem){
+  const ang = angGraus*Math.PI/180, ca = Math.cos(ang), sa = Math.sin(ang);
+  return {
+    ca, sa,
+    extU: Math.abs(W*ca) + Math.abs(H*sa) + margem*2,   // alcance do quadro em u
+    extV: Math.abs(W*sa) + Math.abs(H*ca) + margem*2,   // alcance do quadro em v
+    mundo: (u,v) => [W/2 + u*ca - v*sa, H/2 + u*sa + v*ca]
+  };
+}
+// Traço reto com espessura: retângulo de (u0,v0) a (u1,v1), meia-largura hw.
+function quadLinha(mundo, u0, v0, u1, v1, hw){
+  const dx = u1-u0, dy = v1-v0, L = Math.hypot(dx,dy) || 1;
+  const nx = -dy/L*hw, ny = dx/L*hw;
+  return {t:"poly", pts:[mundo(u0+nx,v0+ny), mundo(u1+nx,v1+ny), mundo(u1-nx,v1-ny), mundo(u0-nx,v0-ny)]};
+}
+// Valor que passa de `a` para `b` ao longo de uma direção, com pontas suavizadas.
+function gradienteLinear(anguloGrad, W, H, ini, fim, a, b){
+  const ag = anguloGrad*Math.PI/180, gx = Math.cos(ag), gy = Math.sin(ag);
+  const extG = Math.abs(W*gx) + Math.abs(H*gy);
+  const i0 = ini, i1 = Math.max(ini + 0.01, fim);
+  return (x,y) => {
+    const t = ((x-W/2)*gx + (y-H/2)*gy)/extG + 0.5;
+    let s = Math.min(1, Math.max(0, (t-i0)/(i1-i0)));
+    s = s*s*(3-2*s);
+    return a + (b-a)*s;
+  };
+}
+// Ícone feito de pontos em grade, para os botões.
+function iconePontos(fn){
+  let s = "";
+  for(let j=0;j<4;j++) for(let i=0;i<7;i++){
+    const r = fn(i,j); if(r > 0.15) s += `<circle cx="${r2(3+i*4.7)}" cy="${r2(3.5+j*6)}" r="${r2(r)}"/>`;
+  }
+  return `<g fill="currentColor">${s}</g>`;
+}
+
+/* ---- 4.9 Linhas (tom de linhas paralelas) --------------------- */
+EFEITOS.linhas = {
+  id:"linhas",
+  nome:{pt:"Line Tone", en:"Line Tone"},
+  aleatorio:false,
+  icone:`<path d="M2 20L14 4M8 24L22 4M15 24L30 4M23 24L33 9" stroke="currentColor" stroke-width="1.7" fill="none"/>`,
+  params:{
+    angulo:     {tipo:"slider", rot:{pt:"Ângulo",       en:"Angle"},     min:0, max:180, passo:1, padrao:45, suf:"°"},
+    espacamento:{tipo:"slider", rot:{pt:"Espaçamento",  en:"Spacing"},   min:3, max:60,  passo:1, padrao:10, suf:"px"},
+    espessura:  {tipo:"slider", rot:{pt:"Espessura (% do espaç.)", en:"Thickness (% of spacing)"}, min:5, max:95, passo:1, padrao:35, suf:"%"}
+  },
+  gerar(p, W, H){
+    const s = p.espacamento, hw = s*p.espessura/100/2;
+    const {extU, extV, mundo} = geometriaGirada(W, H, p.angulo, 2);
+    const n = Math.ceil(extV/s) + 1, formas = [];
+    for(let j=0;j<=n;j++){
+      const v = -extV/2 + j*s;
+      formas.push(quadLinha(mundo, -extU/2, v, extU/2, v, hw));
+    }
+    return formas;
+  }
+};
+
+/* ---- 4.10 Retícula degradê -----------------------------------
+   Pontos em grade cujo tamanho varia ao longo de uma direção. Os pontos
+   só crescem: depois de se tocarem passam a se sobrepor, e o branco que
+   sobra nos cantos encolhe até sumir. Não há troca de "ponto preto" para
+   "furo branco", que deixaria uma emenda visível no meio do degradê.
+   - Círculo: o raio vem de uma tabela que resolve, para cada tom, a área
+     coberta pela união dos círculos vizinhos (acima de π/4 eles se fundem).
+   - Losango: o ponto girado 45° em relação à grade. Aos 50% os pontos se
+     encostam num xadrez perfeito; depois disso o branco restante é um
+     losango de meia-diagonal s·√((1−f)/2), o que dá H = s·(1 − √((1−f)/2)). */
+const RAIO_CIRCULO = (() => {
+  const N = 256, t = [];
+  // área da união dos círculos de raio r (em unidades da grade) dentro de uma célula
+  const cobertura = r => Math.PI*r*r - 4*(r*r*Math.acos(0.5/r) - 0.5*Math.sqrt(r*r - 0.25));
+  for(let k=0;k<=N;k++){
+    const f = k/N;
+    if(f <= Math.PI/4){ t.push(Math.sqrt(f/Math.PI)); continue; }
+    let lo = 0.5, hi = Math.SQRT1_2;
+    for(let it=0; it<40; it++){ const m = (lo+hi)/2; if(cobertura(m) < f) lo = m; else hi = m; }
+    t.push((lo+hi)/2);
+  }
+  return f => { const x = Math.min(1, Math.max(0, f))*N, i = Math.min(N-1, Math.floor(x));
+                return t[i] + (t[i+1]-t[i])*(x-i); };
+})();
+EFEITOS.reticulaGrad = {
+  id:"reticulaGrad",
+  nome:{pt:"Gradient Halftone", en:"Gradient Halftone"},
+  aleatorio:false,
+  icone:iconePontos((i,j) => 2.3 - i*0.32),
+  params:{
+    espacamento:{tipo:"slider", rot:{pt:"Espaçamento",           en:"Spacing"},          min:3, max:60,  passo:1, padrao:9,  suf:"px"},
+    angulo:     {tipo:"slider", rot:{pt:"Ângulo da trama",       en:"Screen angle"},     min:0, max:90,  passo:1, padrao:45, suf:"°"},
+    forma:      {tipo:"opcoes", rot:{pt:"Forma do ponto",        en:"Dot shape"}, padrao:"circulo",
+                 opcoes:[{v:"circulo", rot:{pt:"Círculo",en:"Circle"}},
+                         {v:"losango", rot:{pt:"Losango",en:"Diamond"}}]},
+    anguloGrad: {tipo:"slider", rot:{pt:"Direção do degradê",    en:"Gradient direction"}, min:0, max:360, passo:1, padrao:0, suf:"°"},
+    escuroIni:  {tipo:"slider", rot:{pt:"Densidade no início",   en:"Density at start"},  min:0, max:100, passo:1, padrao:90, suf:"%"},
+    escuroFim:  {tipo:"slider", rot:{pt:"Densidade no fim",      en:"Density at end"},    min:0, max:100, passo:1, padrao:4,  suf:"%"},
+    ini:        {tipo:"slider", rot:{pt:"Início do degradê",     en:"Gradient start"},    min:0, max:90,  passo:1, padrao:0,  suf:"%"},
+    fim:        {tipo:"slider", rot:{pt:"Fim do degradê",        en:"Gradient end"},      min:10,max:100, passo:1, padrao:100,suf:"%"}
+  },
+  gerar(p, W, H){
+    const s = Math.max(2, p.espacamento);
+    const {ca, sa, extU, extV, mundo} = geometriaGirada(W, H, p.angulo, s*2);
+    const dens = gradienteLinear(p.anguloGrad, W, H, p.ini/100, p.fim/100, p.escuroIni/100, p.escuroFim/100);
+    const NU = Math.ceil(extU/s/2) + 1, NV = Math.ceil(extV/s/2) + 1;
+    const losango = p.forma === "losango";
+    const loc = (x,y,du,dv) => [x + du*ca - dv*sa, y + du*sa + dv*ca];
+    const formas = [];
+    for(let i=-NU;i<=NU;i++){
+      for(let j=-NV;j<=NV;j++){
+        const [x,y] = mundo(i*s, j*s);
+        if(x < -s*1.5 || x > W+s*1.5 || y < -s*1.5 || y > H+s*1.5) continue;
+        const f = Math.min(1, dens(x,y));
+        if(f < 0.005) continue;
+        if(losango){
+          const h = f <= 0.5 ? s*Math.sqrt(f/2) : s*(1 - Math.sqrt((1-f)/2));
+          formas.push({t:"poly", pts:[loc(x,y,h,0), loc(x,y,0,h), loc(x,y,-h,0), loc(x,y,0,-h)]});
+        } else {
+          formas.push({t:"circle", cx:x, cy:y, r:s*RAIO_CIRCULO(f)});
+        }
+      }
+    }
+    return formas;
+  }
+};
+
+/* ---- 4.11 Padrões --------------------------------------------- */
+EFEITOS.padroes = {
+  id:"padroes",
+  nome:{pt:"Pattern Tones", en:"Pattern Tones"},
+  aleatorio:false,
+  icone:`<g fill="currentColor"><rect x="3" y="3" width="7" height="7"/><rect x="17" y="3" width="7" height="7"/>
+    <rect x="10" y="10" width="7" height="7"/><rect x="24" y="10" width="7" height="7"/>
+    <rect x="3" y="17" width="7" height="7"/><rect x="17" y="17" width="7" height="7"/></g>`,
+  params:{
+    tipo:    {tipo:"opcoes", rot:{pt:"Padrão", en:"Pattern"}, padrao:"xadrez",
+              opcoes:[{v:"xadrez",  rot:{pt:"Xadrez",           en:"Checker"}},
+                      {v:"favo",    rot:{pt:"Favo (hexágonos)", en:"Honeycomb"}},
+                      {v:"ondas",   rot:{pt:"Ondas",            en:"Waves"}},
+                      {v:"tijolos", rot:{pt:"Tijolos",          en:"Bricks"}},
+                      {v:"cruzes",  rot:{pt:"Cruzes",           en:"Crosses"}},
+                      {v:"losangos",rot:{pt:"Losangos (rede)",  en:"Diamond lattice"}}]},
+    tamanho: {tipo:"slider", rot:{pt:"Tamanho do módulo",  en:"Module size"},   min:8, max:160, passo:1, padrao:28, suf:"px"},
+    espessura:{tipo:"slider",rot:{pt:"Espessura do traço (% do módulo)", en:"Stroke (% of module)"}, min:4, max:60, passo:1, padrao:14, suf:"%"},
+    angulo:  {tipo:"slider", rot:{pt:"Ângulo",             en:"Angle"},         min:0, max:180, passo:1, padrao:0, suf:"°"}
+  },
+  gerar(p, W, H){
+    const a = p.tamanho, hw = Math.max(0.2, a*p.espessura/100/2);
+    const {extU, extV, mundo} = geometriaGirada(W, H, p.angulo, a*2);
+    const u0 = -extU/2, u1 = extU/2, v0 = -extV/2, v1 = extV/2;
+    const formas = [];
+    // Com o padrão girado, a faixa varrida em (u,v) é maior que o quadro;
+    // módulos cujo centro cai bem fora da imagem não precisam existir.
+    const fora = (u,v) => { const q = mundo(u,v), m = a*1.6;
+      return q[0] < -m || q[0] > W+m || q[1] < -m || q[1] > H+m; };
+    switch(p.tipo){
+      case "xadrez": {
+        for(let i=Math.floor(u0/a); i<=Math.ceil(u1/a); i++){
+          for(let j=Math.floor(v0/a); j<=Math.ceil(v1/a); j++){
+            if((i+j) & 1) continue;
+            if(fora((i+0.5)*a, (j+0.5)*a)) continue;
+            formas.push({t:"poly", pts:[mundo(i*a,j*a), mundo((i+1)*a,j*a), mundo((i+1)*a,(j+1)*a), mundo(i*a,(j+1)*a)]});
+          }
+        }
+        break;
+      }
+      case "favo": {
+        // Hexágonos de ponta para cima. Cada hexágono desenha só 3 dos seus 6
+        // lados (os de normal 0°, 60° e 120°), então nenhum lado é repetido.
+        const R = a/Math.sqrt(3), linha = 1.5*R, ext = hw*0.58;
+        for(let j=Math.floor(v0/linha)-1; j<=Math.ceil(v1/linha)+1; j++){
+          for(let i=Math.floor(u0/a)-1; i<=Math.ceil(u1/a)+1; i++){
+            const cx = i*a + ((j & 1) ? a/2 : 0), cy = j*linha;
+            if(fora(cx, cy)) continue;
+            for(const k of [5,0,1]){
+              const A = (30+60*k)*Math.PI/180, B = (30+60*(k+1))*Math.PI/180;
+              let x0 = cx+R*Math.cos(A), y0 = cy+R*Math.sin(A), x1 = cx+R*Math.cos(B), y1 = cy+R*Math.sin(B);
+              const L = Math.hypot(x1-x0, y1-y0), ux = (x1-x0)/L, uy = (y1-y0)/L;
+              x0 -= ux*ext; y0 -= uy*ext; x1 += ux*ext; y1 += uy*ext;     // fecha as quinas
+              formas.push(quadLinha(mundo, x0, y0, x1, y1, hw));
+            }
+          }
+        }
+        break;
+      }
+      case "ondas": {
+        const lam = a*2, amp = a*0.3, passo = lam/14;
+        for(let j=Math.floor(v0/a)-1; j<=Math.ceil(v1/a)+1; j++){
+          const topo = [], base = [];
+          for(let k=Math.floor(u0/passo)-1; k<=Math.ceil(u1/passo)+1; k++){
+            const u = k*passo, fase = 2*Math.PI*u/lam;
+            const y = j*a + amp*Math.sin(fase);
+            const dy = amp*2*Math.PI/lam*Math.cos(fase), q = Math.sqrt(1 + dy*dy);
+            const nx = -dy/q*hw, ny = hw/q;                              // normal à curva
+            topo.push(mundo(u+nx, y+ny)); base.push(mundo(u-nx, y-ny));
+          }
+          formas.push({t:"poly", pts:topo.concat(base.reverse())});
+        }
+        break;
+      }
+      case "tijolos": {
+        const h = a/2;
+        for(let j=Math.floor(v0/h)-1; j<=Math.ceil(v1/h)+1; j++){
+          formas.push(quadLinha(mundo, u0, j*h, u1, j*h, hw));
+          const off = (j & 1) ? a/2 : 0;
+          for(let i=Math.floor((u0-off)/a); i<=Math.ceil((u1-off)/a); i++){
+            const u = i*a + off;
+            if(fora(u, (j+0.5)*h)) continue;
+            formas.push(quadLinha(mundo, u, j*h - hw, u, (j+1)*h + hw, hw));
+          }
+        }
+        break;
+      }
+      case "cruzes": {
+        const L = a*0.34, g = Math.min(hw, L*0.9);
+        for(let i=Math.floor(u0/a); i<=Math.ceil(u1/a); i++){
+          for(let j=Math.floor(v0/a); j<=Math.ceil(v1/a); j++){
+            const x = i*a, y = j*a;
+            if(fora(x, y)) continue;
+            const q = [[-g,-L],[g,-L],[g,-g],[L,-g],[L,g],[g,g],[g,L],[-g,L],[-g,g],[-L,g],[-L,-g],[-g,-g]];
+            formas.push({t:"poly", pts:q.map(([du,dv]) => mundo(x+du, y+dv))});
+          }
+        }
+        break;
+      }
+      case "losangos": {
+        // Duas famílias de linhas a ±45° do padrão formam a rede de losangos.
+        const E = Math.hypot(extU, extV)/2 + a, N = Math.ceil(E/a) + 1, k = Math.SQRT1_2;
+        for(let j=-N; j<=N; j++){
+          const cx1 = j*a*k, cy1 = -j*a*k;      // família que corre em (1,1)
+          formas.push(quadLinha(mundo, cx1-E*k, cy1-E*k, cx1+E*k, cy1+E*k, hw));
+          const cx2 = j*a*k, cy2 = j*a*k;       // família que corre em (1,-1)
+          formas.push(quadLinha(mundo, cx2-E*k, cy2+E*k, cx2+E*k, cy2-E*k, hw));
+        }
+        break;
+      }
+    }
+    return formas;
+  }
+};
+
+/* ---- 4.12 Pontilhado -------------------------------------------
+   Um ponto sorteado por célula da grade, em posição e tamanho variados.
+   "Degradê" faz a chance de aparecer um ponto cair ao longo de uma
+   direção, como num pontilhado de nanquim. */
+EFEITOS.pontilhado = {
+  id:"pontilhado",
+  nome:{pt:"Stipple", en:"Stipple"},
+  aleatorio:true,
+  icone:(()=>{ const pos=[[6,5,1.6],[14,8,1.1],[22,4,1.9],[29,9,1.2],[9,14,1.2],[18,16,1.8],[26,15,1.1],[5,22,1.7],[14,23,1.2],[23,22,1.6],[30,21,1.1]];
+    return `<g fill="currentColor">${pos.map(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}"/>`).join("")}</g>`; })(),
+  params:{
+    espacamento:{tipo:"slider", rot:{pt:"Tamanho da célula", en:"Cell size"},   min:4, max:40, passo:1, padrao:9,  suf:"px"},
+    densidade:  {tipo:"slider", rot:{pt:"Densidade",         en:"Density"},     min:1, max:100,passo:1, padrao:45, suf:"%"},
+    tamanho:    {tipo:"slider", rot:{pt:"Tamanho do ponto",  en:"Dot size"},     min:10,max:90, passo:1, padrao:38, suf:"%"},
+    variacao:   {tipo:"slider", rot:{pt:"Variação de tamanho",en:"Size variance"},min:0,max:100,passo:1, padrao:55, suf:"%"},
+    degrade:    {tipo:"slider", rot:{pt:"Degradê",           en:"Fade"},        min:0, max:100,passo:1, padrao:0,  suf:"%"},
+    anguloGrad: {tipo:"slider", rot:{pt:"Direção do degradê",en:"Fade direction"},min:0,max:360,passo:1,padrao:0,  suf:"°"}
+  },
+  gerar(p, W, H, rng){
+    const s = p.espacamento, dens = p.densidade/100, vari = p.variacao/100;
+    const fator = gradienteLinear(p.anguloGrad, W, H, 0, 1, 1, 1 - p.degrade/100);
+    const formas = [];
+    for(let j=0;j<Math.ceil(H/s);j++){
+      for(let i=0;i<Math.ceil(W/s);i++){
+        const x = (i+rng())*s, y = (j+rng())*s;
+        const r = Math.max(0.25, s*0.5*(p.tamanho/100)*(1 - rng()*vari*0.8));
+        const sorte = rng();
+        if(sorte > dens*fator(x,y)) continue;
+        formas.push({t:"circle", cx:x, cy:y, r});
+      }
+    }
+    return formas;
+  }
+};
+
+/* ---- 4.13 Granulado (砂目) -------------------------------------
+   Grãos minúsculos e irregulares espalhados ao acaso, muitos pequenos e
+   poucos maiores, como areia ou ruído de papel. Cada grão é um polígono
+   de 5 pontos com raio e ângulos levemente sorteados. */
+EFEITOS.granulado = {
+  id:"granulado",
+  nome:{pt:"Grain Tone", en:"Grain Tone"},
+  aleatorio:true,
+  icone:(()=>{ let s="",x=7;
+    for(let i=0;i<60;i++){ x=(x*73+19)%997; const cx=2+(x%32), cy=2+((x*7)%22), r=0.45+((x*3)%9)/14;
+      s+=`<circle cx="${cx}" cy="${cy}" r="${r2(r)}"/>`; }
+    return `<g fill="currentColor">${s}</g>`; })(),
+  params:{
+    densidade:  {tipo:"slider", rot:{pt:"Densidade (grãos / 1000 px²)", en:"Density (grains / 1000 px²)"}, min:1, max:100, passo:1, padrao:30},
+    tamanhoMin: {tipo:"slider", rot:{pt:"Tamanho mínimo", en:"Min size"}, min:0.4, max:4,  passo:0.1, padrao:0.7, suf:"px"},
+    tamanhoMax: {tipo:"slider", rot:{pt:"Tamanho máximo", en:"Max size"}, min:0.8, max:10, passo:0.1, padrao:2.4, suf:"px"},
+    irregular:  {tipo:"slider", rot:{pt:"Irregularidade do grão", en:"Grain irregularity"}, min:0, max:100, passo:1, padrao:60, suf:"%"},
+    degrade:    {tipo:"slider", rot:{pt:"Degradê",            en:"Fade"},           min:0, max:100, passo:1, padrao:0, suf:"%"},
+    anguloGrad: {tipo:"slider", rot:{pt:"Direção do degradê", en:"Fade direction"}, min:0, max:360, passo:1, padrao:0, suf:"°"}
+  },
+  gerar(p, W, H, rng){
+    // Teto de segurança: acima disto o desenho levaria dezenas de segundos.
+    const n = Math.min(500000, Math.round(W*H/1000*p.densidade));
+    const rMin = p.tamanhoMin/2, rMax = Math.max(rMin, p.tamanhoMax/2), irr = p.irregular/100;
+    const fator = gradienteLinear(p.anguloGrad, W, H, 0, 1, 1, 1 - p.degrade/100);
+    const formas = [];
+    for(let q=0;q<n;q++){
+      const x = rng()*W, y = rng()*H;
+      const r = rMin + (rMax - rMin)*Math.pow(rng(), 2.2);            // muitos pequenos, poucos grandes
+      const rot = rng()*Math.PI*2;
+      const sorte = rng();
+      if(sorte > fator(x,y)) continue;
+      const pts = [];
+      for(let k=0;k<5;k++){
+        const ang = rot + (k + (rng()-0.5)*irr*0.7)/5*Math.PI*2;
+        const rr = r*(1 + (rng()-0.5)*irr);
+        pts.push([x + rr*Math.cos(ang), y + rr*Math.sin(ang)]);
+      }
+      formas.push({t:"poly", pts});
+    }
+    return formas;
+  }
+};
+
+/* ---- Família da velocidade: ferramentas -------------------------
+   `faixa` transforma uma linha central (lista de pontos) e uma largura por
+   ponto num polígono único. A normal de cada ponto vem dos vizinhos, então
+   a espessura fica uniforme mesmo em curva fechada. `perfilPonta` dá a
+   largura relativa ao longo do traço (0 nas pontas, 1 no meio), com rampas
+   lineares de comprimento `tp` (fração do traço). */
+function faixa(mundo, pts, hws){
+  const n = pts.length, esq = [], dir = [];
+  for(let k=0;k<n;k++){
+    const a = pts[Math.max(0,k-1)], b = pts[Math.min(n-1,k+1)];
+    let tx = b[0]-a[0], ty = b[1]-a[1];
+    const L = Math.hypot(tx,ty) || 1; tx /= L; ty /= L;
+    const nx = -ty*hws[k], ny = tx*hws[k];
+    esq.push(mundo(pts[k][0]+nx, pts[k][1]+ny));
+    dir.push(mundo(pts[k][0]-nx, pts[k][1]-ny));
+  }
+  return {t:"poly", pts:esq.concat(dir.reverse())};
+}
+const perfilPonta = (t, tp) => Math.max(0, Math.min(1, t/tp, (1-t)/tp));
+const mundoIdentidade = (u,v) => [u,v];
+
+/* ---- 4.14 Curvas (曲線) ---------------------------------------
+   Arcos em torno de um centro, como a câmera girando em volta do
+   personagem. Cada traço é um trecho de círculo com pontas afiladas;
+   "espiral" faz o raio crescer (ou encolher, com valor negativo) ao longo
+   do traço, o que dá o aspecto de redemoinho. */
+EFEITOS.curvas = {
+  id:"curvas",
+  nome:{pt:"Curved Speedlines", en:"Curved Speedlines"},
+  aleatorio:true,
+  icone:`<path d="M3 21C6 11 14 5 25 4M7 24C10 16 18 10 32 9M13 24C16 19 23 15 33 15" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>`,
+  params:{
+    quantidade:  {tipo:"slider", rot:{pt:"Quantidade de traços", en:"Stroke count"},   min:10, max:400, passo:1, padrao:90},
+    raioInterno: {tipo:"slider", rot:{pt:"Raio interno",         en:"Inner radius"},   min:0,  max:70,  passo:1, padrao:10, suf:"%"},
+    comprimento: {tipo:"slider", rot:{pt:"Comprimento do traço", en:"Stroke length"},  min:5,  max:100, passo:1, padrao:45, suf:"%"},
+    varComp:     {tipo:"slider", rot:{pt:"Variação do compr.",   en:"Length variance"},min:0,  max:100, passo:1, padrao:60, suf:"%"},
+    espessura:   {tipo:"slider", rot:{pt:"Espessura",            en:"Thickness"},      min:1,  max:40,  passo:1, padrao:6,  suf:"px"},
+    varEsp:      {tipo:"slider", rot:{pt:"Variação de espess.",  en:"Width variance"}, min:0,  max:100, passo:1, padrao:50, suf:"%"},
+    afunilamento:{tipo:"slider", rot:{pt:"Afunilamento",         en:"Taper"},          min:0,  max:100, passo:1, padrao:85, suf:"%"},
+    espiral:     {tipo:"slider", rot:{pt:"Espiral",              en:"Spiral"},         min:-100,max:100, passo:1, padrao:0,  suf:"%"},
+    centro:      {tipo:"ponto",  rot:{pt:"Centro", en:"Center"}, padrao:[0.5,0.5]}
+  },
+  gerar(p, W, H, rng){
+    const {cx, cy, maxD} = centroEAlcance(p, W, H);
+    const n = Math.round(p.quantidade), unit = Math.min(W,H);
+    const rIn = p.raioInterno/100 * unit * 0.5, rOut = maxD*1.05;
+    const vc = p.varComp/100, ve = p.varEsp/100, esp = p.espiral/100;
+    const tp = Math.max(0.02, p.afunilamento/100*0.5);
+    const formas = [];
+    for(let i=0;i<n;i++){
+      const r = rIn + (rOut-rIn)*((i+rng())/n);                       // raios espalhados por igual
+      const Lpx = unit*(p.comprimento/100)*(1 - rng()*vc*0.9);
+      const span = Math.min(Math.PI*1.9, Math.max(0.04, Lpx/Math.max(r,8)));   // arco em radianos
+      const a0 = rng()*Math.PI*2, hw = p.espessura/2*(1 - rng()*ve*0.8);
+      const m = Math.max(8, Math.ceil(span/0.05)), pts = [], hws = [];
+      for(let k=0;k<=m;k++){
+        const t = k/m, ang = a0 + t*span, rad = Math.max(0, r*(1 + esp*(t-0.5)*span*0.35));
+        pts.push([cx + rad*Math.cos(ang), cy + rad*Math.sin(ang)]);
+        hws.push(Math.max(0.05, hw*perfilPonta(t,tp)));
+      }
+      formas.push(faixa(mundoIdentidade, pts, hws));
+    }
+    return formas;
+  }
+};
+
+/* ---- 4.15 Vento (風) ------------------------------------------
+   Traços compridos que ondulam, como cabelo ou tecido ao vento. A onda é
+   multiplicada por um envelope que vale 0 nas pontas, então cada traço
+   entra e sai reto do fluxo. */
+EFEITOS.vento = {
+  id:"vento",
+  nome:{pt:"Wind Lines", en:"Wind Lines"},
+  aleatorio:true,
+  icone:`<path d="M2 8C8 3 12 13 18 8S28 3 33 8M3 15C9 10 13 20 19 15S28 10 32 15M2 22C8 17 12 27 18 22S27 17 31 22" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/>`,
+  params:{
+    angulo:      {tipo:"slider", rot:{pt:"Direção",             en:"Direction"},      min:0,  max:360, passo:1, padrao:0,  suf:"°"},
+    quantidade:  {tipo:"slider", rot:{pt:"Quantidade de traços", en:"Stroke count"},  min:5,  max:300, passo:1, padrao:55},
+    comprimento: {tipo:"slider", rot:{pt:"Comprimento",          en:"Length"},        min:10, max:100, passo:1, padrao:60, suf:"%"},
+    varComp:     {tipo:"slider", rot:{pt:"Variação do compr.",   en:"Length variance"},min:0, max:100, passo:1, padrao:55, suf:"%"},
+    espessura:   {tipo:"slider", rot:{pt:"Espessura",            en:"Thickness"},     min:1,  max:30,  passo:1, padrao:5,  suf:"px"},
+    afunilamento:{tipo:"slider", rot:{pt:"Afunilamento",         en:"Taper"},         min:0,  max:100, passo:1, padrao:85, suf:"%"},
+    amplitude:   {tipo:"slider", rot:{pt:"Amplitude da onda",    en:"Wave amplitude"},min:0,  max:200, passo:1, padrao:24, suf:"px"},
+    ondas:       {tipo:"slider", rot:{pt:"Ondas por traço",      en:"Waves per stroke"},min:0.5,max:8, passo:0.1,padrao:1.8},
+    irregular:   {tipo:"slider", rot:{pt:"Irregularidade",       en:"Jitter"},        min:0,  max:100, passo:1, padrao:45, suf:"%"}
+  },
+  gerar(p, W, H, rng){
+    const {extU, extV, mundo} = geometriaGirada(W, H, p.angulo, 40);
+    const n = Math.round(p.quantidade), passo = extV/n;
+    const irr = p.irregular/100, vc = p.varComp/100, tp = Math.max(0.02, p.afunilamento/100*0.5);
+    const hw = p.espessura/2, formas = [];
+    for(let i=0;i<n;i++){
+      const v  = -extV/2 + (i+0.5)*passo + (rng()-0.5)*passo*irr*1.6;
+      const L  = extU*(p.comprimento/100)*(1 - rng()*vc*0.85);
+      const u0 = -extU/2 + rng()*Math.max(0, extU-L);
+      const amp = p.amplitude*(0.4 + 0.8*rng()), fase = rng()*Math.PI*2, ond = p.ondas*(0.7 + 0.6*rng());
+      const m = Math.max(12, Math.ceil(L/10)), pts = [], hws = [];
+      for(let k=0;k<=m;k++){
+        const t = k/m;
+        pts.push([u0 + L*t, v + amp*Math.sin(fase + Math.PI*2*ond*t)*Math.sin(Math.PI*t)]);
+        hws.push(Math.max(0.05, hw*perfilPonta(t,tp)));
+      }
+      formas.push(faixa(mundo, pts, hws));
+    }
+    return formas;
+  }
+};
+
+/* ---- 4.16 Verticais (縦線) ------------------------------------
+   Traços paralelos pendurados numa borda, de comprimentos desiguais: a
+   sombra de desânimo sobre o rosto. Diferente das linhas de velocidade,
+   todos nascem alinhados à borda e terminam em ponta no lado oposto.
+   "Foco no centro" deixa os traços do meio mais longos que os das pontas. */
+EFEITOS.verticais = {
+  id:"verticais",
+  nome:{pt:"Vertical Speedlines", en:"Vertical Speedlines"},
+  aleatorio:true,
+  icone:`<path d="M4 2V14M9 2V23M14 2V10M19 2V19M24 2V12M29 2V22" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>`,
+  params:{
+    angulo:      {tipo:"slider", rot:{pt:"Direção (90° = para baixo)", en:"Direction (90° = down)"}, min:0, max:360, passo:1, padrao:90, suf:"°"},
+    quantidade:  {tipo:"slider", rot:{pt:"Quantidade de traços", en:"Stroke count"},   min:10, max:300, passo:1, padrao:90},
+    comprimento: {tipo:"slider", rot:{pt:"Comprimento",          en:"Length"},         min:5,  max:100, passo:1, padrao:55, suf:"%"},
+    varComp:     {tipo:"slider", rot:{pt:"Variação do compr.",   en:"Length variance"},min:0,  max:100, passo:1, padrao:65, suf:"%"},
+    foco:        {tipo:"slider", rot:{pt:"Foco no centro",       en:"Center focus"},   min:0,  max:100, passo:1, padrao:35, suf:"%"},
+    espessura:   {tipo:"slider", rot:{pt:"Espessura",            en:"Thickness"},      min:1,  max:30,  passo:1, padrao:5,  suf:"px"},
+    varEsp:      {tipo:"slider", rot:{pt:"Variação de espess.",  en:"Width variance"}, min:0,  max:100, passo:1, padrao:50, suf:"%"},
+    afunilamento:{tipo:"slider", rot:{pt:"Afunilamento",         en:"Taper"},          min:0,  max:100, passo:1, padrao:70, suf:"%"},
+    irregular:   {tipo:"slider", rot:{pt:"Irregularidade",       en:"Jitter"},         min:0,  max:100, passo:1, padrao:45, suf:"%"}
+  },
+  gerar(p, W, H, rng){
+    const {extU, extV, mundo} = geometriaGirada(W, H, p.angulo, 40);
+    const n = Math.round(p.quantidade), passo = extV/n;
+    const irr = p.irregular/100, vc = p.varComp/100, ve = p.varEsp/100, foco = p.foco/100;
+    const ponta = Math.max(0.05, p.afunilamento/100*0.9);       // fração do traço que afunila
+    const formas = [];
+    for(let i=0;i<n;i++){
+      const frac = (i+0.5)/n;
+      const v = -extV/2 + (i+0.5)*passo + (rng()-0.5)*passo*irr*1.6;
+      const f = Math.max(0.08, 1 - foco*Math.abs(2*frac-1));
+      // O traço nasce 40 px fora da borda (margem de geometriaGirada); o
+      // percentual vale sobre o tamanho visível do quadro, não sobre a margem.
+      const L = 40 + Math.max(6, (extU-80)*(p.comprimento/100)*f*(1 - rng()*vc*0.9));
+      const u0 = -extU/2, hw = p.espessura/2*(1 - rng()*ve*0.8);
+      formas.push(faixa(mundo, [[u0,v],[u0 + L*(1-ponta),v],[u0+L,v]], [hw, hw, 0.05]));
+    }
+    return formas;
+  }
+};
+
+/* ---- 4.17 Chuva (雨) ------------------------------------------
+   Riscos curtos inclinados, espalhados ao acaso pelo quadro inteiro.
+   A quantidade é por área (gotas a cada 100 mil px²), então mudar o
+   tamanho do documento mantém a mesma densidade de chuva. */
+EFEITOS.chuva = {
+  id:"chuva",
+  nome:{pt:"Rain Lines", en:"Rain Lines"},
+  aleatorio:true,
+  icone:`<path d="M7 3L4 11M15 2L11 12M24 3L20 13M31 4L28 12M11 15L8 23M20 16L17 24M29 17L26 25" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>`,
+  params:{
+    densidade:   {tipo:"slider", rot:{pt:"Densidade (gotas / 100 mil px²)", en:"Density (drops / 100k px²)"}, min:1, max:300, passo:1, padrao:35},
+    angulo:      {tipo:"slider", rot:{pt:"Ângulo de queda",      en:"Fall angle"},     min:0,  max:360, passo:1, padrao:72, suf:"°"},
+    varAngulo:   {tipo:"slider", rot:{pt:"Variação do ângulo",   en:"Angle variance"}, min:0,  max:40,  passo:1, padrao:4,  suf:"°"},
+    comprimento: {tipo:"slider", rot:{pt:"Comprimento",          en:"Length"},         min:8,  max:300, passo:1, padrao:70, suf:"px"},
+    varComp:     {tipo:"slider", rot:{pt:"Variação do compr.",   en:"Length variance"},min:0,  max:100, passo:1, padrao:45, suf:"%"},
+    espessura:   {tipo:"slider", rot:{pt:"Espessura",            en:"Thickness"},      min:0.5,max:10,  passo:0.5,padrao:2},
+    afunilamento:{tipo:"slider", rot:{pt:"Afunilamento",         en:"Taper"},          min:0,  max:100, passo:1, padrao:70, suf:"%"}
+  },
+  gerar(p, W, H, rng){
+    // Teto de segurança para não travar com densidade máxima em documentos enormes.
+    const n = Math.min(80000, Math.round(W*H/1e5*p.densidade));
+    const m = p.comprimento, vc = p.varComp/100, afun = p.afunilamento/100;
+    const formas = [];
+    for(let i=0;i<n;i++){
+      const x = -m + rng()*(W + 2*m), y = -m + rng()*(H + 2*m);
+      const a = (p.angulo + (rng()-0.5)*2*p.varAngulo)*Math.PI/180;
+      const L = m*(1 - rng()*vc*0.8), hw = Math.max(0.2, p.espessura/2*(0.7 + 0.3*rng()));
+      const dx = Math.cos(a), dy = Math.sin(a);
+      // rabo fino, ombro cheio a 60% do caminho e cabeça curta e pontuda
+      formas.push(faixa(mundoIdentidade,
+        [[x-dx*L/2, y-dy*L/2], [x+dx*L*0.1, y+dy*L*0.1], [x+dx*L/2, y+dy*L/2]],
+        [Math.max(0.05, hw*(1-afun)), hw, hw*0.35]));
+    }
+    return formas;
+  }
+};
+
+/* ---- 4.18 Atmosfera (心情背景) ---------------------------------
+   Figuras decorativas espalhadas pelo quadro: brilho, flor, coração,
+   pétala, bolha e neve. Todas partem de curvas simples amostradas em
+   polígonos, então saem idênticas na prévia, no PNG e no SVG.
+   A colocação sorteia posições e descarta as que ficam perto demais de
+   uma figura já posta (grade espacial, para não comparar com todas),
+   de modo que "Afastamento" controla o quanto elas podem se tocar. */
+function figuraAtmosfera(tipo, x, y, R, ang, p, rng){
+  const ca = Math.cos(ang), sa = Math.sin(ang);
+  const rot = (px,py) => [x + px*ca - py*sa, y + px*sa + py*ca];
+  const circulo = (cx,cy,r) => `M${r2(cx-r)} ${r2(cy)} a${r2(r)} ${r2(r)} 0 1 0 ${r2(r*2)} 0 a${r2(r)} ${r2(r)} 0 1 0 ${r2(-r*2)} 0 Z`;
+  switch(tipo){
+    case "brilho": {
+      // Astroide: 4 pontas com lados côncavos. O achatamento sorteado evita brilhos todos iguais.
+      const asp = 0.8 + 0.2*rng(), pts = [];
+      for(let k=0;k<40;k++){
+        const t = k/40*Math.PI*2;
+        pts.push(rot(R*Math.pow(Math.cos(t),3), R*asp*Math.pow(Math.sin(t),3)));
+      }
+      return [{t:"poly", pts}];
+    }
+    case "flor": {
+      // Rosa polar de 5 pétalas arredondadas, com um furo transparente no miolo.
+      const fase = rng()*Math.PI*2, pts = [];
+      for(let k=0;k<80;k++){
+        const t = k/80*Math.PI*2, r = R*(0.6 + 0.4*Math.cos(5*t + fase));
+        pts.push([x + r*Math.cos(t+ang), y + r*Math.sin(t+ang)]);
+      }
+      let d = `M${r2(pts[0][0])} ${r2(pts[0][1])}` + pts.slice(1).map(q => ` L${r2(q[0])} ${r2(q[1])}`).join("") + " Z";
+      if(R >= 6) d += circulo(x, y, R*0.15);
+      return [{t:"path", d, evenodd:true}];
+    }
+    case "coracao": {
+      const pts = [];
+      for(let k=0;k<48;k++){
+        const t = k/48*Math.PI*2;
+        const hx = 16*Math.pow(Math.sin(t),3);
+        const hy = -(13*Math.cos(t) - 5*Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t));
+        pts.push(rot(hx/16*R, (hy-2.5)/16*R));
+      }
+      return [{t:"poly", pts}];
+    }
+    case "petala": {
+      // Gota alongada: ponta fina de um lado, lado largo e redondo do outro, com leve curvatura.
+      const bend = (rng()-0.5)*0.5, N = 14, esq = [], dir = [];
+      for(let i=0;i<=N;i++){
+        const s = i/N, h = R*0.375*(Math.pow(s,0.6)*Math.pow(1-s,0.9))/0.364;
+        const cy = (s-0.5)*2*R, dx = bend*R*Math.pow(2*(s-0.5),2);
+        esq.push(rot(-h+dx, cy)); dir.push(rot(h+dx, cy));
+      }
+      return [{t:"poly", pts:esq.concat(dir.reverse())}];
+    }
+    case "bolha": {
+      const ri = R*(1 - p.anel/100);
+      let d = circulo(x, y, R) + circulo(x, y, Math.max(0.3, ri));
+      const formas = [{t:"path", d, evenodd:true}];
+      if(ri >= 4){
+        // reflexo fixo no alto à esquerda, como se a luz viesse sempre do mesmo lado
+        const hx = x - ri*0.42, hy = y - ri*0.42, a = ri*0.36, b = ri*0.13, c = Math.cos(Math.PI/4), s = Math.sin(Math.PI/4), pts = [];
+        for(let k=0;k<18;k++){
+          const t = k/18*Math.PI*2, ex = a*Math.cos(t), ey = b*Math.sin(t);
+          pts.push([hx + ex*c + ey*s, hy - ex*s + ey*c]);
+        }
+        formas.push({t:"poly", pts});
+      }
+      return formas;
+    }
+    case "neve": {
+      if(R < 5) return [{t:"circle", cx:x, cy:y, r:Math.max(0.6, R*0.6)}];
+      // Cristal de 6 braços, cada um com dois pares de ramos.
+      const w = Math.max(0.35, R*0.07), formas = [];
+      for(let a=0;a<6;a++){
+        const b = ang + a*Math.PI/3, dx = Math.cos(b), dy = Math.sin(b);
+        formas.push(quadLinha(mundoIdentidade, x, y, x+dx*R, y+dy*R, w));
+        for(const [pos, comp] of [[0.5,0.38],[0.78,0.22]]){
+          const bx = x+dx*R*pos, by = y+dy*R*pos;
+          for(const sg of [-1,1]){
+            const bb = b + sg*Math.PI*50/180;
+            formas.push(quadLinha(mundoIdentidade, bx, by, bx+Math.cos(bb)*R*comp, by+Math.sin(bb)*R*comp, w*0.8));
+          }
+        }
+      }
+      return formas;
+    }
+  }
+  return [];
+}
+
+EFEITOS.atmosfera = {
+  id:"atmosfera",
+  nome:{pt:"Mood", en:"Mood"},
+  aleatorio:true,
+  icone:(()=>{
+    const astro = (cx,cy,R) => { const q=[]; for(let k=0;k<24;k++){ const t=k/24*Math.PI*2; q.push(`${r2(cx+R*Math.pow(Math.cos(t),3))},${r2(cy+R*Math.pow(Math.sin(t),3))}`); } return `<polygon points="${q.join(" ")}"/>`; };
+    return `<g fill="currentColor">${astro(11,13,9)}${astro(27,6,4.5)}</g>`
+         + `<circle cx="26.5" cy="19" r="4.6" fill="none" stroke="currentColor" stroke-width="1.3"/>`;
+  })(),
+  params:{
+    figura:     {tipo:"opcoes", rot:{pt:"Figura", en:"Shape"}, padrao:"brilho",
+                 opcoes:[{v:"brilho", rot:{pt:"Brilho",  en:"Sparkle"}},
+                         {v:"flor",   rot:{pt:"Flor",    en:"Flower"}},
+                         {v:"coracao",rot:{pt:"Coração", en:"Heart"}},
+                         {v:"petala", rot:{pt:"Pétala",  en:"Petal"}},
+                         {v:"bolha",  rot:{pt:"Bolha",   en:"Bubble"}},
+                         {v:"neve",   rot:{pt:"Neve",    en:"Snow"}}]},
+    densidade:  {tipo:"slider", rot:{pt:"Densidade (figuras / 100 mil px²)", en:"Density (shapes / 100k px²)"}, min:1, max:80, passo:1, padrao:8},
+    tamanhoMin: {tipo:"slider", rot:{pt:"Tamanho mínimo", en:"Min size"}, min:4, max:200, passo:1, padrao:18, suf:"px"},
+    tamanhoMax: {tipo:"slider", rot:{pt:"Tamanho máximo", en:"Max size"}, min:6, max:300, passo:1, padrao:60, suf:"px"},
+    afastamento:{tipo:"slider", rot:{pt:"Afastamento mínimo", en:"Min spacing"}, min:0, max:150, passo:1, padrao:70, suf:"%"},
+    rotacao:    {tipo:"slider", rot:{pt:"Rotação sorteada",   en:"Random rotation"}, min:0, max:100, passo:1, padrao:60, suf:"%"},
+    anel:       {tipo:"slider", rot:{pt:"Contorno da bolha",  en:"Bubble outline"},  min:3, max:40,  passo:1, padrao:14, suf:"%"},
+    degrade:    {tipo:"slider", rot:{pt:"Degradê",            en:"Fade"},            min:0, max:100, passo:1, padrao:0,  suf:"%"},
+    anguloGrad: {tipo:"slider", rot:{pt:"Direção do degradê", en:"Fade direction"},  min:0, max:360, passo:1, padrao:0,  suf:"°"}
+  },
+  gerar(p, W, H, rng){
+    const tmin = Math.min(p.tamanhoMin, p.tamanhoMax)/2, tmax = Math.max(p.tamanhoMin, p.tamanhoMax)/2;
+    const n = Math.min(20000, Math.round(W*H/1e5*p.densidade));
+    const sep = p.afastamento/100, rotacao = p.rotacao/100;
+    const cel = Math.max(8, 2*tmax*Math.max(1,sep) + 1);
+    const fator = gradienteLinear(p.anguloGrad, W, H, 0, 1, 1, 1 - p.degrade/100);
+    const grade = new Map(), formas = [];
+    let postos = 0, tentativas = 0;
+    // Em densidade alta o quadro enche antes de chegar a n; o limite de tentativas
+    // faz o efeito simplesmente saturar, em vez de ficar procurando lugar para sempre.
+    while(postos < n && tentativas < n*40){
+      tentativas++;
+      const R = tmin + (tmax-tmin)*Math.pow(rng(), 1.6);          // mais pequenas que grandes
+      const x = -tmax + rng()*(W + 2*tmax), y = -tmax + rng()*(H + 2*tmax);
+      if(rng() > fator(x,y)) continue;
+      const gi = Math.floor((x+tmax)/cel), gj = Math.floor((y+tmax)/cel);
+      let livre = true;
+      for(let di=-1; di<=1 && livre; di++){
+        for(let dj=-1; dj<=1 && livre; dj++){
+          const lista = grade.get((gi+di)*100003 + (gj+dj));
+          if(!lista) continue;
+          for(const q of lista){ if(Math.hypot(x-q[0], y-q[1]) < (R+q[2])*sep){ livre = false; break; } }
+        }
+      }
+      if(!livre) continue;
+      const chave = gi*100003 + gj;
+      if(!grade.has(chave)) grade.set(chave, []);
+      grade.get(chave).push([x,y,R]);
+      postos++;
+      const ang = (rng()-0.5)*Math.PI*2*rotacao;
+      for(const f of figuraAtmosfera(p.figura, x, y, R, ang, p, rng)) formas.push(f);
+    }
+    return formas;
+  }
+};
+
+const ORDEM = ["concentracao","flash","betaflash","uniflash","velocidade","curvas","vento","verticais","chuva","kakeami","kakeamiGrad","linhas","reticula","reticulaGrad","padroes","pontilhado","granulado","atmosfera"];
+
+/* ============================================================
+   5. ESTADO
+   ============================================================ */
+const PRESETS = [
+  {rot:{pt:"1920 × 1080 (paisagem)", en:"1920 × 1080 (landscape)"}, w:1920, h:1080},
+  {rot:{pt:"1080 × 1920 (vertical)", en:"1080 × 1920 (portrait)"},  w:1080, h:1920},
+  {rot:{pt:"1080 × 1080 (quadrado)", en:"1080 × 1080 (square)"},    w:1080, h:1080},
+  {rot:{pt:"1080 × 1350 (4:5)",      en:"1080 × 1350 (4:5)"},       w:1080, h:1350},
+  {rot:{pt:"B5 a 350 dpi",           en:"B5 at 350 dpi"},           w:2508, h:3541}
+];
+
+function padroesDe(efeito){
+  const o = {};
+  for(const [k,d] of Object.entries(EFEITOS[efeito].params)){
+    o[k] = Array.isArray(d.padrao) ? d.padrao.slice() : d.padrao;
+  }
+  return o;
+}
+function novaCamada(efeito="concentracao", cor="#111111"){
+  return {efeito, params:padroesDe(efeito), cor, opacidade:1, visivel:true,
+          semente:(Math.random()*1e9)|0, formas:null};
+}
+
+const S = {
+  W:1920, H:1080, fundo:"xadrez", escala:1,
+  camadas:[novaCamada()], atual:0
+};
+
+/* ============================================================
+   6. RENDERIZAÇÃO
+   ============================================================ */
+function formasDa(cam){
+  if(cam.formas) return cam.formas;
+  const ef = EFEITOS[cam.efeito];
+  const t0 = performance.now();
+  cam.formas = ef.gerar(cam.params, S.W, S.H, mulberry32(cam.semente));
+  // Combinações pesadas existem de verdade (retícula fina em B5 a 350 dpi
+  // passa de um milhão de pontos). Quando o desenho custa caro, os
+  // controles passam a redesenhar só ao soltar, em vez de a cada pixel.
+  cam.pesado = (performance.now() - t0) > 120;
+  return cam.formas;
+}
+const invalidar = cam => { cam.formas = null; };
+
+const cv = document.getElementById("cv");
+const ctx = cv.getContext("2d");
+
+function desenhar(){
+  cv.width = S.W; cv.height = S.H;
+  ctx.clearRect(0,0,S.W,S.H);
+  for(const cam of S.camadas){
+    if(!cam.visivel) continue;
+    desenharCanvas(ctx, formasDa(cam), cam.cor, cam.opacidade);
+  }
+  posicionarAlvo();
+}
+
+let pendente = false;
+function redesenhar(){
+  if(pendente) return;
+  pendente = true;
+  requestAnimationFrame(() => { pendente = false; desenhar(); });
+}
+
+function construirSVG(fundoBranco){
+  let s = `<svg xmlns="http://www.w3.org/2000/svg" width="${S.W}" height="${S.H}" viewBox="0 0 ${S.W} ${S.H}">`;
+  if(fundoBranco) s += `<rect width="${S.W}" height="${S.H}" fill="#ffffff"/>`;
+  for(const cam of S.camadas){
+    if(!cam.visivel) continue;
+    s += formasParaSVG(formasDa(cam), cam.cor, cam.opacidade);
+  }
+  return s + "</svg>";
+}
+
+function paraCanvas(escala, fundoBranco){
+  const c = document.createElement("canvas");
+  c.width = Math.round(S.W*escala); c.height = Math.round(S.H*escala);
+  const x = c.getContext("2d");
+  if(fundoBranco){ x.fillStyle = "#fff"; x.fillRect(0,0,c.width,c.height); }
+  x.scale(escala, escala);
+  for(const cam of S.camadas){
+    if(!cam.visivel) continue;
+    desenharCanvas(x, formasDa(cam), cam.cor, cam.opacidade);
+  }
+  return c;
+}
+
+/* ============================================================
+   7. INTERFACE
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const camAtual = () => S.camadas[S.atual];
+
+function statusMsg(txt){
+  $("status").textContent = txt;
+  clearTimeout(statusMsg._t);
+  statusMsg._t = setTimeout(() => { $("status").textContent = ""; }, 4000);
+}
+
+/* --- Botões de tipo --- */
+function montarTipos(){
+  const box = $("tipos"); box.innerHTML = "";
+  for(const id of ORDEM){
+    const ef = EFEITOS[id];
+    const b = document.createElement("button");
+    b.className = "tipo" + (camAtual().efeito === id ? " on" : "");
+    b.innerHTML = `<svg viewBox="0 0 34 26">${ef.icone}</svg><span>${L(ef.nome)}</span>`;
+    b.onclick = () => {
+      const c = camAtual();
+      c.efeito = id; c.params = padroesDe(id); invalidar(c);
+      montarTudo(); redesenhar(); salvar();
+    };
+    box.appendChild(b);
+  }
+}
+
+/* --- Sliders e seletores, gerados a partir de params --- */
+function montarCtls(){
+  const box = $("ctls"); box.innerHTML = "";
+  const c = camAtual();
+  const ef = EFEITOS[c.efeito];
+  for(const [chave, d] of Object.entries(ef.params)){
+    if(d.tipo === "slider"){
+      const div = document.createElement("div"); div.className = "ctl";
+      div.innerHTML =
+        `<div class="top"><label>${L(d.rot)}</label><span class="val">${c.params[chave]}${d.suf||""}</span></div>`;
+      const inp = document.createElement("input");
+      inp.type = "range"; inp.min = d.min; inp.max = d.max; inp.step = d.passo;
+      inp.value = c.params[chave];
+      inp.oninput = () => {
+        c.params[chave] = parseFloat(inp.value);
+        div.querySelector(".val").textContent = inp.value + (d.suf||"");
+        invalidar(c);
+        if(c.pesado) statusMsg(T("pesado")); else redesenhar();
+      };
+      inp.onchange = () => { redesenhar(); salvar(); };
+      div.appendChild(inp); box.appendChild(div);
+    } else if(d.tipo === "opcoes"){
+      const div = document.createElement("div"); div.className = "ctl";
+      div.innerHTML = `<div class="top"><label>${L(d.rot)}</label></div>`;
+      const sel = document.createElement("select");
+      sel.style.width = "100%";
+      for(const o of d.opcoes){
+        const op = document.createElement("option");
+        op.value = o.v; op.textContent = L(o.rot);
+        if(c.params[chave] === o.v) op.selected = true;
+        sel.appendChild(op);
+      }
+      sel.onchange = () => { c.params[chave] = sel.value; invalidar(c); redesenhar(); salvar(); };
+      div.appendChild(sel); box.appendChild(div);
+    } else if(d.tipo === "ponto"){
+      const dica = document.createElement("div");
+      dica.className = "dica"; dica.textContent = T("arraste");
+      box.appendChild(dica);
+    }
+  }
+  // Opacidade da camada
+  const div = document.createElement("div"); div.className = "ctl";
+  div.innerHTML = `<div class="top"><label>${LANG==="pt"?"Opacidade":"Opacity"}</label>
+                   <span class="val">${Math.round(c.opacidade*100)}%</span></div>`;
+  const inp = document.createElement("input");
+  inp.type = "range"; inp.min = 5; inp.max = 100; inp.step = 1; inp.value = c.opacidade*100;
+  inp.oninput = () => {
+    c.opacidade = parseFloat(inp.value)/100;
+    div.querySelector(".val").textContent = inp.value + "%";
+    redesenhar();
+  };
+  inp.onchange = salvar;
+  div.appendChild(inp); box.appendChild(div);
+}
+
+/* --- Lista de camadas --- */
+function montarCamadas(){
+  const box = $("camadas"); box.innerHTML = "";
+  S.camadas.forEach((cam, i) => {
+    const el = document.createElement("div");
+    el.className = "cam" + (i === S.atual ? " on" : "") + (cam.visivel ? "" : " off");
+    el.onclick = e => {
+      if(e.target.closest("input,button")) return;
+      S.atual = i; montarTudo();
+    };
+    const cor = document.createElement("input");
+    cor.type = "color"; cor.value = cam.cor;
+    cor.oninput = () => { cam.cor = cor.value; redesenhar(); };
+    cor.onchange = salvar;
+
+    const nome = document.createElement("span");
+    nome.className = "nome";
+    nome.textContent = `${i+1}. ${L(EFEITOS[cam.efeito].nome)}`;
+
+    const olho = document.createElement("button");
+    olho.className = "ic"; olho.textContent = cam.visivel ? "👁" : "🚫";
+    olho.onclick = () => { cam.visivel = !cam.visivel; montarCamadas(); redesenhar(); salvar(); };
+
+    const sobe = document.createElement("button");
+    sobe.className = "ic"; sobe.textContent = "↑"; sobe.disabled = i === 0;
+    sobe.onclick = () => {
+      if(i === 0) return;
+      [S.camadas[i-1], S.camadas[i]] = [S.camadas[i], S.camadas[i-1]];
+      S.atual = i-1; montarTudo(); redesenhar(); salvar();
+    };
+
+    const apaga = document.createElement("button");
+    apaga.className = "ic"; apaga.textContent = "✕"; apaga.disabled = S.camadas.length === 1;
+    apaga.onclick = () => {
+      if(S.camadas.length === 1) return;
+      S.camadas.splice(i,1);
+      S.atual = Math.min(S.atual, S.camadas.length-1);
+      montarTudo(); redesenhar(); salvar();
+    };
+
+    el.append(cor, nome, olho, sobe, apaga);
+    box.appendChild(el);
+  });
+}
+
+/* --- Centro arrastável --- */
+function temCentro(){
+  return "centro" in EFEITOS[camAtual().efeito].params;
+}
+function posicionarAlvo(){
+  const a = $("alvo");
+  if(!temCentro()){ a.style.display = "none"; return; }
+  const r = cv.getBoundingClientRect();
+  const p = camAtual().params.centro;
+  a.style.display = "block";
+  a.style.left = (p[0]*r.width) + "px";
+  a.style.top  = (p[1]*r.height) + "px";
+}
+let arrastando = false;
+function mover(e){
+  const r = cv.getBoundingClientRect();
+  const c = camAtual();
+  c.params.centro = [(e.clientX-r.left)/r.width, (e.clientY-r.top)/r.height];
+  invalidar(c); redesenhar();
+}
+cv.addEventListener("pointerdown", e => {
+  if(!temCentro()) return;
+  arrastando = true; cv.setPointerCapture(e.pointerId); mover(e);
+});
+cv.addEventListener("pointermove", e => { if(arrastando) mover(e); });
+cv.addEventListener("pointerup", () => { if(arrastando){ arrastando = false; salvar(); } });
+window.addEventListener("resize", posicionarAlvo);
+
+/* --- Textos fixos da interface --- */
+function aplicarIdioma(){
+  document.documentElement.lang = LANG === "pt" ? "pt-BR" : "en";
+  const map = {
+    "t-titulo":"titulo","t-tipo":"tipo","t-ajustes":"ajustes","t-camadas":"camadas",
+    "t-doc":"doc","t-tamanho":"tamanho","t-fundo":"fundo","t-exportar":"exportar",
+    "t-escala":"escala","t-variar":"variar","t-reset":"reset","t-add":"add",
+    "t-png-t":"pngT","t-png-b":"pngB","t-copiar":"copiar"
+  };
+  for(const [id,k] of Object.entries(map)) $(id).textContent = T(k);
+  document.title = T("titulo");
+  const f = $("fundo");
+  f.options[0].textContent = T("xadrez");
+  f.options[1].textContent = T("branco");
+  f.options[2].textContent = T("preto");
+  montarPresets();
+}
+function montarPresets(){
+  const sel = $("preset");
+  const atual = sel.value;
+  sel.innerHTML = "";
+  PRESETS.forEach((p,i) => {
+    const o = document.createElement("option");
+    o.value = i; o.textContent = L(p.rot);
+    sel.appendChild(o);
+  });
+  const o = document.createElement("option");
+  o.value = "x"; o.textContent = T("personalizado");
+  sel.appendChild(o);
+  const achou = PRESETS.findIndex(p => p.w === S.W && p.h === S.H);
+  sel.value = achou >= 0 ? String(achou) : (atual || "x");
+}
+
+function montarTudo(){ montarTipos(); montarCtls(); montarCamadas(); }
+
+/* ============================================================
+   8. EXPORTAÇÃO
+   ============================================================ */
+function baixar(blob, nome){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = nome; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  statusMsg(T("salvo") + " " + nome);
+}
+function carimbo(){
+  const d = new Date(), p = n => String(n).padStart(2,"0");
+  return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+}
+function exportarPNG(fundoBranco){
+  paraCanvas(S.escala, fundoBranco).toBlob(b => {
+    baixar(b, `efeito-${carimbo()}${fundoBranco?"-branco":""}.png`);
+  }, "image/png");
+}
+$("b-png-t").onclick = () => exportarPNG(false);
+$("b-png-b").onclick = () => exportarPNG(true);
+$("b-svg").onclick = () => {
+  const svg = construirSVG(false);
+  const mb = svg.length/1048576;
+  baixar(new Blob([svg], {type:"image/svg+xml;charset=utf-8"}), `efeito-${carimbo()}.svg`);
+  if(mb > 12) setTimeout(() => statusMsg(T("svgGrande").replace("{}", mb.toFixed(0))), 120);
+};
+$("b-copiar").onclick = () => {
+  paraCanvas(S.escala, false).toBlob(async b => {
+    try{
+      await navigator.clipboard.write([new ClipboardItem({"image/png": b})]);
+      statusMsg(T("copiado"));
+    }catch(e){ statusMsg(T("erroCopia")); }
+  }, "image/png");
+};
+
+/* ============================================================
+   9. CONTROLES GERAIS
+   ============================================================ */
+$("b-variar").onclick = () => {
+  const c = camAtual();
+  if(!EFEITOS[c.efeito].aleatorio){ statusMsg(T("semAleatorio")); return; }
+  c.semente = (Math.random()*1e9)|0;
+  invalidar(c); redesenhar(); salvar();
+};
+$("b-reset").onclick = () => {
+  const c = camAtual();
+  c.params = padroesDe(c.efeito); c.opacidade = 1;
+  invalidar(c); montarCtls(); redesenhar(); salvar();
+};
+$("b-add").onclick = () => {
+  if(S.camadas.length >= 8){ statusMsg(T("limite")); return; }
+  S.camadas.push(novaCamada("reticula", "#111111"));
+  S.atual = S.camadas.length - 1;
+  montarTudo(); redesenhar(); salvar();
+};
+$("idioma").onchange = e => { LANG = e.target.value; aplicarIdioma(); montarTudo(); salvar(); };
+$("fundo").onchange = e => {
+  S.fundo = e.target.value;
+  $("wrap").className = S.fundo;
+  salvar();
+};
+$("escala").onchange = e => { S.escala = parseFloat(e.target.value); salvar(); };
+$("preset").onchange = e => {
+  if(e.target.value === "x") return;
+  const p = PRESETS[parseInt(e.target.value,10)];
+  aplicarTamanho(p.w, p.h);
+};
+function aplicarTamanho(w,h){
+  S.W = Math.max(64, Math.min(6000, Math.round(w)));
+  S.H = Math.max(64, Math.min(6000, Math.round(h)));
+  $("larg").value = S.W; $("alt").value = S.H;
+  S.camadas.forEach(invalidar);
+  montarPresets(); redesenhar(); salvar();
+}
+$("larg").onchange = () => aplicarTamanho(parseInt($("larg").value,10)||S.W, S.H);
+$("alt").onchange  = () => aplicarTamanho(S.W, parseInt($("alt").value,10)||S.H);
+
+/* ============================================================
+   10. PERSISTÊNCIA (localStorage)
+   ============================================================ */
+const CHAVE = "gerador-efeitos-v1";
+function salvar(){
+  try{
+    localStorage.setItem(CHAVE, JSON.stringify({
+      lang:LANG, W:S.W, H:S.H, fundo:S.fundo, escala:S.escala, atual:S.atual,
+      camadas:S.camadas.map(c => ({
+        efeito:c.efeito, params:c.params, cor:c.cor,
+        opacidade:c.opacidade, visivel:c.visivel, semente:c.semente
+      }))
+    }));
+  }catch(e){}
+}
+function carregar(){
+  try{
+    const d = JSON.parse(localStorage.getItem(CHAVE) || "null");
+    if(!d) return;
+    if(d.lang && I18N[d.lang]) LANG = d.lang;
+    S.W = d.W || S.W; S.H = d.H || S.H;
+    S.fundo = d.fundo || S.fundo; S.escala = d.escala || 1;
+    if(Array.isArray(d.camadas) && d.camadas.length){
+      S.camadas = d.camadas.filter(c => EFEITOS[c.efeito]).map(c => {
+        const base = novaCamada(c.efeito);
+        return Object.assign(base, c, {params:Object.assign(base.params, c.params), formas:null});
+      });
+      if(!S.camadas.length) S.camadas = [novaCamada()];
+    }
+    S.atual = Math.min(d.atual || 0, S.camadas.length-1);
+  }catch(e){}
+}
+
+/* ============================================================
+   11. PARTIDA
+   ============================================================ */
+carregar();
+$("idioma").value = LANG;
+$("larg").value = S.W; $("alt").value = S.H;
+$("fundo").value = S.fundo; $("wrap").className = S.fundo;
+$("escala").value = String(S.escala);
+aplicarIdioma();
+montarTudo();
+desenhar();
+</script>
+</body>
+</html>

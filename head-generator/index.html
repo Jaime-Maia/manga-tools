@@ -1,0 +1,1494 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Gerador de Cabeças</title>
+<style>
+:root{--font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--bg:#f3f1ec;--panel:#fff;--ink:#1d1d1f;--muted:#6d6c70;--line:#e4e1da;--chip:#f0eee8;--on:#fff;--accent:#e0474c;--paper:#fbfaf6;--dot:rgba(0,0,0,.07);--glass:rgba(255,255,255,.9);--glass-ink:#2a2a2e;--glass-muted:#6f6d68;--glass-line:#e4e1da;--glass-hover:#f0eee8}
+@media (prefers-color-scheme:dark){:root{--bg:#161618;--panel:#1f1f22;--ink:#ececee;--muted:#9a9aa1;--line:#323237;--chip:#2a2a2e;--on:#3b3b41;color-scheme:dark;
+  --paper:#1c1c1f;--dot:rgba(255,255,255,.07);--glass:rgba(38,38,42,.92);--glass-ink:#ececee;--glass-muted:#a3a1a8;--glass-line:#3a3a40;--glass-hover:#34343a}}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:14px/1.35 var(--font);-webkit-text-size-adjust:100%}
+#app{display:grid;grid-template-columns:1fr 360px;height:100vh;height:100dvh}
+#stage{position:relative;background:var(--paper);background-image:radial-gradient(var(--dot) 1px,transparent 1px);background-size:22px 22px;overflow:hidden;min-height:0}
+#ref{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;opacity:.35;transform-origin:50% 50%}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+#view{position:relative;width:100%;height:100%;display:block;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+#view:active{cursor:grabbing}
+.hint{position:absolute;top:12px;left:50%;transform:translateX(-50%);font-size:12px;color:var(--glass-muted);background:var(--glass);padding:4px 10px;border-radius:20px;pointer-events:none;white-space:nowrap}
+.readout{position:absolute;left:12px;bottom:12px;font-size:12px;color:var(--glass-muted);background:var(--glass);padding:4px 10px;border-radius:8px;pointer-events:none;font-variant-numeric:tabular-nums}
+#panel{overflow-y:auto;border-left:1px solid var(--line);background:var(--panel);padding-bottom:48px;-webkit-overflow-scrolling:touch}
+.ph{display:flex;justify-content:space-between;align-items:flex-start;padding:16px 16px 10px;gap:10px}
+.ph h1{font-size:18px;margin:0;letter-spacing:-.01em}
+.ph p{margin:2px 0 0;color:var(--muted);font-size:12px}
+.lang{display:flex;background:var(--chip);border-radius:8px;padding:2px}
+.lang button{border:0;background:transparent;color:var(--muted);font:600 12px/1 var(--font);padding:6px 8px;border-radius:6px;cursor:pointer}
+.lang button.on{background:var(--on);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.15)}
+details{border-top:1px solid var(--line)}
+summary{list-style:none;cursor:pointer;padding:12px 16px;font-weight:600;font-size:13px;letter-spacing:.02em;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";color:var(--muted);font-weight:400;font-size:16px}
+details[open] summary::after{content:"–"}
+.body{padding:0 16px 14px}
+.lbl{font-size:12px;color:var(--muted);margin:4px 0 6px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;background:var(--chip);padding:3px;border-radius:10px;margin-bottom:10px}
+.seg button{border:0;background:transparent;color:var(--ink);font:inherit;font-size:13px;padding:8px 4px;border-radius:8px;cursor:pointer}
+.seg button.on{background:var(--on);box-shadow:0 1px 3px rgba(0,0,0,.18);font-weight:600}
+.note{font-size:12px;color:var(--muted);margin:2px 0 10px}
+.btn{border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit;font-size:13px;padding:8px 10px;border-radius:9px;cursor:pointer}
+.btn:hover{background:var(--chip)}
+.btn.wide{width:100%}
+.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
+.row{padding:5px 0}
+.row .lab{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);cursor:default}
+.row .lab b{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0;height:22px}
+.tog{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px;cursor:pointer}
+.tog input{width:18px;height:18px;accent-color:var(--accent);margin:0}
+.sw{width:14px;height:14px;border-radius:4px;flex:none}
+.colorrow{display:flex;align-items:center;gap:10px;margin:-2px 0 10px}
+.colorrow input{width:44px;height:30px;border:1px solid var(--line);border-radius:8px;background:none;padding:2px}
+.exp{display:grid;gap:6px}
+.drop{display:flex;gap:12px;align-items:center;border:1.5px dashed var(--line);border-radius:12px;padding:10px;cursor:pointer;margin-bottom:6px}
+.drop.over{border-color:var(--accent)}
+.drop img{width:56px;height:56px;object-fit:cover;border-radius:8px;background:var(--chip);flex:none}
+.drop span{font-size:13px;color:var(--muted);min-width:0}
+.btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.foot{font-size:11px;color:var(--muted);padding:12px 16px 0}
+[hidden]{display:none!important}
+button,input,select,label,summary,.lpad{touch-action:manipulation}
+.hdr-act{display:flex;gap:6px;align-items:center}
+.ib{border:1px solid var(--line);background:var(--panel);color:var(--ink);min-width:32px;height:30px;border-radius:8px;font-size:15px;line-height:1;cursor:pointer;padding:0 6px}
+.ib:disabled{opacity:.35;cursor:default}
+.tabs{display:flex;padding:0 8px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:4;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:1 0 auto;border:0;background:none;color:var(--muted);font:600 12px/1 var(--font);padding:13px 7px 10px;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap}
+.tabs button.on{color:var(--ink);border-bottom-color:var(--accent)}
+.pane{padding:14px 16px 6px}
+.pane details{border-top:1px solid var(--line);margin:0 -16px}
+.pane details summary{padding:11px 16px;font-size:12px}
+.pane details .body{padding:0 16px 12px}
+.adv{margin-top:10px!important}
+.adv>summary{color:var(--ink)}
+.adv details summary{font-weight:500;text-transform:none;letter-spacing:0;font-size:13px;padding-left:24px}
+.adv details .body{padding-left:24px}
+.modrow{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--chip);border-radius:9px;padding:5px 5px 5px 10px;font-size:12px;margin:0 0 10px}
+.modrow i{width:7px;height:7px;border-radius:50%;background:var(--accent);display:inline-block;margin-right:7px}
+.modrow .btn{padding:6px 10px;font-size:12px}
+.prow{display:flex;gap:6px;margin-bottom:6px}
+.prow select,.prow input{flex:1;min-width:0;font:inherit;font-size:13px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}
+.prow .btn{padding:7px 10px;font-size:12px;white-space:nowrap}
+.lv{display:flex;align-items:center;gap:6px}
+.nmw{display:flex;align-items:center;gap:7px;min-width:0}
+.nb{flex:none;min-width:19px;height:19px;border-radius:10px;border:2px solid var(--nc);color:var(--nc);font:700 10.5px/15px var(--font);text-align:center;padding:0 3px;background:var(--panel)}
+body.nonums .nb{display:none}
+.row.flash{animation:flash 1.1s ease-out}
+@keyframes flash{0%{background:rgba(224,71,76,.18)}100%{background:transparent}}
+@media (prefers-reduced-motion:reduce){.row.flash{animation:none;outline:2px solid var(--accent)}}
+.rs{border:0;background:var(--chip);color:var(--muted);border-radius:6px;font-size:12px;line-height:1;padding:3px 6px;cursor:pointer}
+.btn.primary{background:var(--ink);border-color:var(--ink);color:var(--panel);font-weight:600}
+.btn:disabled{opacity:.5;cursor:default}
+:where(button,input,select,summary,[tabindex]):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.help{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;padding:16px}
+.help[hidden]{display:none}
+.help .card{background:var(--panel);color:var(--ink);border-radius:14px;max-width:460px;width:100%;max-height:calc(100% - 32px);overflow:auto;padding:20px 22px 18px;box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.help h2{margin:0 0 10px;font-size:17px}
+.help ol{margin:0 0 16px;padding-left:20px;font-size:14px;line-height:1.45}
+.help li{margin:0 0 8px}
+.help .btn{width:100%}
+.toast{position:absolute;left:50%;bottom:62px;transform:translateX(-50%);background:#2a2a2e;color:#fff;border-radius:10px;padding:7px 7px 7px 14px;font-size:13px;display:flex;gap:10px;align-items:center;z-index:5;box-shadow:0 6px 20px rgba(0,0,0,.2);max-width:calc(100% - 24px)}
+.toast button{border:0;background:#fff;color:#2a2a2e;font:600 12px/1 var(--font);padding:7px 10px;border-radius:7px;cursor:pointer;white-space:nowrap}
+/* floating bar, orientation, badges */
+.fbar{position:absolute;right:10px;bottom:10px;display:flex;gap:2px;align-items:center;background:var(--glass);border:1px solid var(--glass-line);border-radius:12px;padding:4px;box-shadow:0 2px 10px rgba(0,0,0,.08);z-index:3}
+.fbar button{border:0;background:none;color:var(--glass-ink);font:600 12px/1 var(--font);padding:8px 9px;border-radius:8px;cursor:pointer;min-width:32px}
+.fbar button:hover{background:var(--glass-hover)}.fbar button.on{background:var(--glass-ink);color:var(--paper)}.fbar button:disabled{opacity:.3;cursor:default}
+.fbar i{width:1px;height:20px;background:var(--glass-line);margin:0 3px}
+#gizmo{position:absolute;right:10px;top:10px;width:64px;height:64px;pointer-events:none}
+.mbadge{position:absolute;top:10px;left:50%;transform:translateX(-50%);border:0;background:var(--accent);color:#fff;font:600 12px/1 var(--font);padding:9px 13px;border-radius:20px;cursor:pointer;z-index:4;white-space:nowrap}
+.mdesc{font-size:12px;color:var(--muted);margin:-4px 0 12px;line-height:1.4}
+.lpwrap{display:flex;gap:14px;align-items:center;margin:2px 0 8px}
+.lpad{position:relative;flex:none;width:112px;height:112px;border-radius:50%;background:radial-gradient(circle at 50% 50%,#f4f2ee,#c9c5bd 60%,#8b877f);touch-action:none;cursor:pointer;border:1px solid var(--line)}
+.ldot{position:absolute;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;background:#ffd84a;border:2px solid #2a2a2e;box-shadow:0 0 0 4px rgba(255,216,74,.35);pointer-events:none}
+.ldot.back{background:#fff;border-style:dashed}
+@media (max-width:860px){
+  .tabs{top:50vh}
+  .readout{bottom:auto;top:10px;left:10px}
+  .hint{display:none}
+  html,body{height:auto}
+  #app{grid-template-columns:1fr;grid-template-rows:auto auto;height:auto}
+  #stage{position:sticky;top:0;height:50vh;z-index:5;border-bottom:1px solid var(--line)}
+  #panel{border-left:0;overflow:visible}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <img id="ref" alt="" hidden>
+    <canvas id="gl"></canvas>
+    <svg id="view" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="hint" data-i18n="hint"></div>
+    <div class="readout" id="readout"></div>
+    <div class="toast" id="toast" role="status" hidden></div>
+    <svg id="gizmo" viewBox="-32 -32 64 64" aria-hidden="true"></svg>
+    <button class="mbadge" id="mbadge" hidden data-i18n="ref_badge"></button>
+    <div class="fbar" id="fbar">
+      <button data-act="undo" data-tip="undo">↶</button><button data-act="redo" data-tip="redo">↷</button><i></i>
+      <button data-q="0" data-i18n="q_front"></button><button data-q="1" data-i18n="q_34"></button><button data-q="2" data-i18n="q_prof"></button><i></i>
+      <button id="fb-center" data-tip="center">⌖</button><button id="fb-solid" data-i18n="fb_solid"></button>
+    </div>
+  </div>
+  <div class="help" id="help" role="dialog" aria-modal="true" aria-labelledby="help-t" hidden><div class="card">
+    <h2 id="help-t" data-i18n="help_t"></h2>
+    <ol><li data-i18n="help_1"></li><li data-i18n="help_2"></li><li data-i18n="help_3"></li><li data-i18n="help_4"></li><li data-i18n="help_5"></li><li data-i18n="help_6"></li></ol>
+    <button class="btn primary" id="help-ok" data-i18n="help_ok"></button>
+  </div></div>
+  <aside id="panel">
+    <header class="ph">
+      <div><h1 data-i18n="title"></h1><p data-i18n="sub"></p></div>
+      <div class="hdr-act">
+        <button class="ib" data-act="undo" data-tip="undo">↶</button><button class="ib" data-act="redo" data-tip="redo">↷</button>
+        <button class="ib" id="btn-help" data-tip="help">?</button><div class="lang"><button data-lang="pt">PT</button><button data-lang="en">EN</button></div>
+      </div>
+    </header>
+    <nav class="tabs" role="tablist">
+      <button data-tab="model" data-i18n="tab_model"></button><button data-tab="view" data-i18n="tab_view"></button><button data-tab="light" data-i18n="tab_light"></button><button data-tab="guides" data-i18n="tab_guides"></button><button data-tab="ref" data-i18n="tab_ref"></button><button data-tab="export" data-i18n="tab_export"></button>
+    </nav>
+
+    <section class="pane" data-pane="model">
+      <div class="lbl" data-i18n="method"></div>
+      <div class="seg" id="seg-method">
+        <button data-val="loomis" data-i18n="m_loomis"></button>
+        <button data-val="box" data-i18n="m_box"></button>
+        <button data-val="atari" data-i18n="m_atari"></button>
+        <button data-val="fifths" data-i18n="m_fifths"></button>
+        <button data-val="reilly" data-i18n="m_reilly"></button>
+        <button data-val="bridgman" data-i18n="m_bridgman"></button>
+      </div>
+      <p class="mdesc" id="mdesc"></p>
+      <div class="lbl" data-i18n="style"></div>
+      <div class="seg" id="seg-style">
+        <button data-val="loomis" data-i18n="st_loomis"></button>
+        <button data-val="manga" data-i18n="st_manga"></button>
+        <button data-val="real" data-i18n="st_real"></button>
+      </div>
+      <div class="lbl" data-i18n="base"></div>
+      <div class="seg" id="seg-base">
+        <button data-val="masc" data-i18n="b_masc"></button>
+        <button data-val="fem" data-i18n="b_fem"></button>
+        <button data-val="inf" data-i18n="b_inf"></button>
+      </div>
+      <div class="modrow" id="modrow" hidden><span><i></i><span data-i18n="mod"></span></span><button class="btn" id="btn-reset" data-i18n="restore"></button></div>
+      <div class="lbl" data-i18n="presets"></div>
+      <div class="prow"><select id="psel" aria-label="presets"></select><button class="btn" id="p-apply" data-i18n="p_apply"></button><button class="btn" id="p-del" data-i18n="p_del"></button></div>
+      <div class="prow"><input id="pname" type="text" maxlength="40" data-ph="p_name"><button class="btn" id="p-save" data-i18n="p_save"></button></div>
+      <label class="tog" style="padding-top:0"><input type="checkbox" id="pscene"><span data-i18n="p_scene"></span></label>
+      <div class="prow"><button class="btn" id="p-export" style="flex:1" data-i18n="p_export"></button><button class="btn" id="p-import" style="flex:1" data-i18n="p_import"></button></div>
+      <input type="file" id="p-file" accept="application/json,.json" hidden>
+      <details class="adv" id="adv"><summary data-i18n="adv"></summary>
+        <details id="sec-cran"><summary data-i18n="sec_cran"></summary><div class="body"><div class="sl"></div></div></details>
+        <details id="sec-face"><summary data-i18n="sec_face"></summary><div class="body"><div class="sl"></div></div></details>
+        <details id="sec-jaw"><summary data-i18n="sec_jaw"></summary><div class="body"><div class="sl"></div></div></details>
+        <details id="sec-feat"><summary data-i18n="sec_feat"></summary><div class="body"><div class="sl"></div></div></details>
+        <details id="sec-neck"><summary data-i18n="sec_neck"></summary><div class="body"><div class="sl"></div></div></details>
+      </details>
+    </section>
+
+    <section class="pane" data-pane="view" id="sec-ang" hidden>
+      <div class="quick" id="quick"></div>
+      <button class="btn wide" id="btn-center" style="margin-bottom:6px" data-i18n="center"></button>
+      <label class="tog"><input type="checkbox" id="snapon"><span data-i18n="snap"></span></label>
+      <div class="sl"></div>
+    </section>
+
+    <section class="pane" data-pane="light" id="sec-solid" hidden>
+      <label class="tog"><input type="checkbox" id="solidon"><span data-i18n="solid_show"></span></label>
+      <div class="lbl" data-i18n="shade"></div>
+      <div class="seg" id="seg-shade" style="grid-template-columns:1fr 1fr"><button data-val="flat" data-i18n="sh_flat"></button><button data-val="smooth" data-i18n="sh_smooth"></button></div>
+      <div class="lbl" data-i18n="tones"></div>
+      <div class="seg" id="seg-tones" style="grid-template-columns:repeat(4,1fr)"><button data-val="0" data-i18n="t_cont"></button><button data-val="2">2</button><button data-val="3">3</button><button data-val="4">4</button></div>
+      <div class="colorrow"><input type="color" id="matcol"><span class="note" style="margin:0" data-i18n="mat"></span></div>
+      <div class="lpwrap"><div class="lpad" id="lpad"><div class="ldot" id="ldot"></div></div><p class="note" data-i18n="lpad"></p></div>
+      <div class="lbl" data-i18n="lpre"></div>
+      <div class="seg" id="seg-lpre" style="grid-template-columns:repeat(4,1fr)"><button data-lp="std" data-i18n="lp_std"></button><button data-lp="rem" data-i18n="lp_rem"></button><button data-lp="side" data-i18n="lp_side"></button><button data-lp="top" data-i18n="lp_top"></button><button data-lp="low" data-i18n="lp_low"></button><button data-lp="rim" data-i18n="lp_rim"></button><button data-lp="flat" data-i18n="lp_flat"></button></div>
+      <div class="sl"></div>
+      <p class="note" id="nogl" hidden data-i18n="nogl"></p>
+    </section>
+
+    <section class="pane" data-pane="guides" id="sec-disp" hidden>
+      <div id="groups"></div>
+      <div class="lbl" data-i18n="nums"></div>
+      <div class="seg" id="seg-nums"><button data-val="open" data-i18n="nm_open"></button><button data-val="all" data-i18n="nm_all"></button><button data-val="off" data-i18n="nm_off"></button></div>
+      <p class="note" style="margin-top:-4px" data-i18n="nums_note"></p>
+      <label class="tog"><input type="checkbox" id="haloon"><span data-i18n="halo"></span></label>
+      <div class="lbl" data-i18n="hidden"></div>
+      <div class="seg" id="seg-hidden">
+        <button data-val="dash" data-i18n="h_dash"></button>
+        <button data-val="hide" data-i18n="h_hide"></button>
+        <button data-val="xray" data-i18n="h_xray"></button>
+      </div>
+      <div class="lbl" data-i18n="colors"></div>
+      <div class="seg" id="seg-color" style="grid-template-columns:1fr 1fr">
+        <button data-val="group" data-i18n="c_group"></button>
+        <button data-val="mono" data-i18n="c_mono"></button>
+      </div>
+      <div class="colorrow" id="monorow"><input type="color" id="mono"><span class="note" style="margin:0" data-i18n="c_pick"></span></div>
+      <div class="lbl" data-i18n="palette"></div>
+      <div class="seg" id="seg-pal" style="grid-template-columns:1fr 1fr"><button data-val="std" data-i18n="pal_std"></button><button data-val="cb" data-i18n="pal_cb"></button></div>
+      <div class="sl"></div>
+    </section>
+
+    <section class="pane" data-pane="ref" hidden>
+      <label class="drop" id="drop" for="file"><img id="thumb" alt="" hidden><span id="droptxt" data-i18n="drop"></span></label>
+      <input type="file" id="file" accept="image/*" hidden>
+      <div id="refctl" hidden>
+        <label class="tog"><input type="checkbox" id="refon" checked><span data-i18n="ref_show"></span></label>
+        <button class="btn wide" id="btn-move" data-i18n="ref_move"></button>
+        <div class="sl" id="refsl"></div>
+        <div class="quick" style="grid-template-columns:1fr 1fr;margin-top:6px"><button class="btn" id="btn-refreset" data-i18n="ref_reset"></button><button class="btn" id="btn-refdel" data-i18n="ref_del"></button></div>
+      </div>
+    </section>
+
+    <section class="pane" data-pane="export" hidden>
+      <div class="lbl" data-i18n="exp_bg"></div>
+      <div class="seg" id="seg-expbg" style="grid-template-columns:1fr 1fr"><button data-val="t" data-i18n="bg_t"></button><button data-val="w" data-i18n="bg_w"></button></div>
+      <div class="lbl" data-i18n="exp_size"></div>
+      <div class="seg" id="seg-expsize"><button data-val="1024">1024 px</button><button data-val="2048">2048 px</button><button data-val="4096">4096 px</button></div>
+      <label class="tog"><input type="checkbox" id="cropon"><span data-i18n="exp_crop"></span></label>
+      <div class="exp">
+        <button class="btn primary wide" id="ex-png" data-i18n="exp_dl"></button>
+        <button class="btn wide" id="ex-copy" data-i18n="exp_copy"></button>
+        <button class="btn wide" id="ex-svg" data-i18n="exp_svg"></button>
+      </div>
+      <div class="lbl" style="margin-top:18px" data-i18n="glb"></div>
+      <p class="note" data-i18n="glb_note"></p>
+      <label class="tog"><input type="checkbox" id="glbpose"><span data-i18n="glb_pose"></span></label>
+      <label class="tog"><input type="checkbox" id="glbguides" checked><span data-i18n="glb_guides"></span></label>
+      <button class="btn primary wide" id="ex-glb" data-i18n="glb_dl"></button>
+      <div class="lbl" style="margin-top:18px" data-i18n="sheet"></div>
+      <p class="note" data-i18n="sheet_note"></p>
+      <div class="seg" id="seg-sheet" style="grid-template-columns:1fr 1fr"><button data-val="4" data-i18n="sheet_n4"></button><button data-val="6" data-i18n="sheet_n6"></button><button data-val="grid3" data-i18n="sheet_g3"></button><button data-val="grid5" data-i18n="sheet_g5"></button><button data-val="pick" data-i18n="sheet_pick" style="grid-column:1/-1"></button></div>
+      <div class="seg" id="sheetviews" style="grid-template-columns:repeat(3,1fr);margin-top:8px" hidden></div>
+      <p class="note" id="picknote" data-i18n="sheet_picknote" hidden></p>
+      <div class="lbl" data-i18n="sheet_c"></div>
+      <div class="seg" id="seg-sheetc" style="grid-template-columns:repeat(3,1fr)"><button data-val="both" data-i18n="sc_both"></button><button data-val="solid" data-i18n="sc_solid"></button><button data-val="guides" data-i18n="sc_guides"></button></div>
+      <label class="tog" id="stylbl"><input type="checkbox" id="sheetsty"><span data-i18n="sheet_sty"></span></label>
+      <p class="note" id="gridnote" data-i18n="sheet_gnote"></p>
+      <label class="tog" id="gridlbl"><input type="checkbox" id="sheetlbl"><span data-i18n="sheet_lbl"></span></label>
+      <button class="btn wide" id="ex-sheetpv" data-i18n="sheet_pv"></button>
+      <img id="sheetpv" alt="" hidden style="display:block;width:100%;margin:8px 0;border:1px solid var(--line);border-radius:8px;background:#fff">
+      <button class="btn primary wide" id="ex-sheet" data-i18n="sheet_dl"></button>
+    </section>
+    <p class="foot" data-i18n="dbl"></p>
+  </aside>
+</div>
+
+<script>
+"use strict";
+/* ---------- math ---------- */
+const DEG=Math.PI/180, TAU=Math.PI*2;
+const add=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]];
+const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+const mul=(a,s)=>[a[0]*s,a[1]*s,a[2]*s];
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const norm=a=>{const l=Math.hypot(a[0],a[1],a[2])||1;return[a[0]/l,a[1]/l,a[2]/l]};
+const lerp3=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function mm(A,B){const C=[[0,0,0],[0,0,0],[0,0,0]];for(let i=0;i<3;i++)for(let j=0;j<3;j++)C[i][j]=A[i][0]*B[0][j]+A[i][1]*B[1][j]+A[i][2]*B[2][j];return C}
+const mv=(M,v)=>[M[0][0]*v[0]+M[0][1]*v[1]+M[0][2]*v[2],M[1][0]*v[0]+M[1][1]*v[1]+M[1][2]*v[2],M[2][0]*v[0]+M[2][1]*v[1]+M[2][2]*v[2]];
+const tr=M=>[[M[0][0],M[1][0],M[2][0]],[M[0][1],M[1][1],M[2][1]],[M[0][2],M[1][2],M[2][2]]];
+function rotMat(y,p,r){y*=DEG;p*=DEG;r*=DEG;
+  const cy=Math.cos(y),sy=Math.sin(y),cp=Math.cos(p),sp=Math.sin(p),cr=Math.cos(r),sr=Math.sin(r);
+  return mm([[cy,0,sy],[0,1,0],[-sy,0,cy]],mm([[1,0,0],[0,cp,-sp],[0,sp,cp]],[[cr,-sr,0],[sr,cr,0],[0,0,1]]));}
+
+/* ---------- data ---------- */
+// [section, key, min, max, step, PT, EN]
+const SLIDERS=[
+ ['ang','yaw',-180,180,1,'Girar','Turn'],
+ ['ang','pitch',-75,75,1,'Inclinar (↓ +)','Tilt (down +)'],
+ ['ang','roll',-45,45,1,'Tombar','Roll'],
+ ['ang','persp',0,100,1,'Perspectiva','Perspective'],
+ ['ang','zoom',50,200,1,'Zoom','Zoom'],
+ ['solid','lightAz',-180,180,1,'Luz: direção','Light: direction'],
+ ['solid','lightEl',-80,85,1,'Luz: altura','Light: height'],
+ ['solid','lightInt',0,150,1,'Intensidade da luz','Light intensity'],
+ ['solid','amb',0,80,1,'Luz ambiente','Ambient light'],
+ ['solid','vol',0,100,1,'Volumes do rosto','Facial masses'],
+ ['cran','cw',.75,1.25,.01,'Largura','Width'],
+ ['cran','ch',.8,1.2,.01,'Altura','Height'],
+ ['cran','cd',.85,1.3,.01,'Profundidade','Depth'],
+ ['cran','k',.55,.85,.01,'Corte lateral','Side cut'],
+ ['face','tTop',.7,1.2,.01,'Terço superior (testa)','Upper third (forehead)'],
+ ['face','tMid',.6,1.3,.01,'Terço médio (nariz)','Middle third (nose)'],
+ ['face','tLow',.5,1.4,.01,'Terço inferior (queixo)','Lower third (chin)'],
+ ['face','faceW',.5,.95,.01,'Largura do rosto','Face width'],
+ ['face','faceZ',.8,1.15,.01,'Projeção do rosto','Face projection'],
+ ['jaw','jawW',.35,.9,.01,'Largura da mandíbula','Jaw width'],
+ ['jaw','jawY',.2,.85,.01,'Descida do ângulo da mandíbula','Jaw angle drop'],
+ ['jaw','jawZ',-.35,.2,.01,'Ângulo da mandíbula (trás ↔ frente)','Jaw angle (back ↔ front)'],
+ ['jaw','chinW',.03,.45,.01,'Largura do queixo','Chin width'],
+ ['jaw','chinZ',.65,1.05,.01,'Projeção do queixo','Chin projection'],
+ ['feat','eyeY',.1,.85,.01,'Posição dos olhos (↓)','Eye position (down)'],
+ ['feat','eyeS',.5,2.2,.01,'Tamanho dos olhos','Eye size'],
+ ['feat','eyeH',.25,1.2,.01,'Abertura dos olhos','Eye openness'],
+ ['feat','eyeX',.3,.7,.01,'Distância entre olhos','Eye spacing'],
+ ['feat','noseL',0,1.6,.01,'Nariz','Nose length'],
+ ['feat','mouthY',.15,.6,.01,'Posição da boca (↓)','Mouth position (down)'],
+ ['feat','mouthW',.1,.6,.01,'Largura da boca','Mouth width'],
+ ['feat','earS',.6,1.4,.01,'Tamanho da orelha','Ear size'],
+ ['neck','neckW',.3,.8,.01,'Largura do pescoço','Neck width'],
+ ['neck','neckLean',-10,35,1,'Inclinação do pescoço','Neck lean'],
+ ['neck','neckFollow',0,100,1,'Pescoço acompanha a cabeça','Neck follows the head'],
+ ['disp','lw',.5,4,.1,'Espessura do traço','Line weight'],
+];
+const SDEF={};SLIDERS.forEach(d=>SDEF[d[1]]=d);
+
+const STYLES={
+ loomis:{cw:1,ch:1,cd:1,k:.745,tTop:1,tMid:1,tLow:1,faceW:.78,faceZ:.97,jawW:.53,jawY:.45,jawZ:-.05,chinW:.24,chinZ:.92,eyeY:.33,eyeS:1,eyeH:.55,eyeX:.5,noseL:1,mouthY:.33,mouthW:.38,earS:1,neckW:.5,neckLean:16},
+ manga:{cw:.9,ch:.98,cd:1.1,k:.84,tTop:.95,tMid:.95,tLow:1,faceW:.78,faceZ:.95,jawW:.5,jawY:.45,jawZ:-.05,chinW:.12,chinZ:.95,eyeY:.6,eyeS:1.45,eyeH:.9,eyeX:.5,noseL:.45,mouthY:.4,mouthW:.26,earS:.95,neckW:.36,neckLean:15},
+ real:{cw:.97,ch:1,cd:.97,k:.745,tTop:1,tMid:1.02,tLow:1.08,faceW:.8,faceZ:1,jawW:.54,jawY:.5,jawZ:-.08,chinW:.27,chinZ:.94,eyeY:.33,eyeS:.85,eyeH:.45,eyeX:.5,noseL:1.1,mouthY:.33,mouthW:.4,earS:1.05,neckW:.52,neckLean:18}
+};
+const BASES={
+ masc:{jawW:.03,chinW:.05,jawY:.05,tLow:.05,neckW:.06,eyeS:-.05,eyeY:-.02},
+ fem:{jawW:-.03,chinW:-.06,tLow:-.05,chinZ:-.02,cw:-.03,cd:-.04,eyeS:.12,eyeH:.05,noseL:-.12,neckW:-.07,mouthW:-.03,jawY:-.03},
+ inf:{cw:.05,cd:.03,tMid:-.1,tLow:-.15,jawW:-.1,chinW:-.07,jawY:-.1,eyeY:.2,eyeS:.3,eyeH:.1,noseL:-.35,earS:.05,neckW:-.12,faceZ:-.04}
+};
+const PKEYS=Object.keys(STYLES.loomis);
+function presetValues(style,base){
+  const o={...STYLES[style]},d=BASES[base];
+  for(const k in d)o[k]=o[k]+d[k];
+  for(const k of PKEYS){const s=SDEF[k];o[k]=+clamp(o[k],s[2],s[3]).toFixed(3)}
+  return o;
+}
+const GROUPS=[
+ ['skull','#2a2a2e','Crânio (esfera)','Cranium (ball)'],
+ ['side','#2f6fde','Planos laterais','Side planes'],
+ ['center','#e0474c','Linha central','Center line'],
+ ['thirds','#e8902a','Terços: cabelo, sobrancelha, nariz, queixo','Thirds: hairline, brow, nose, chin'],
+ ['jaw','#1f9d6b','Mandíbula e plano do rosto','Jaw & face plane'],
+ ['feat','#8b5cf6','Feições: olhos, nariz, boca, orelhas','Features: eyes, nose, mouth, ears'],
+ ['neck','#7a7f87','Pescoço','Neck'],
+ ['box','#2a2a2e','Caixa','Box'],
+ ['boxmid','#e0474c','Linhas de centro','Center lines'],
+ ['boxthirds','#e8902a','Terços em volta da caixa','Thirds around the box'],
+ ['boxjaw','#1f9d6b','Mandíbula e rosto na caixa','Jaw & face on the box'],
+ ['vp','#8f96a3','Linhas de fuga','Vanishing lines'],
+ ['acircle','#2a2a2e','Círculo do crânio','Cranium circle'],
+ ['across','#e0474c','Cruz: centro e linha dos olhos','Cross: center & eye line'],
+ ['ajaw','#1f9d6b','Contorno do rosto e queixo','Face outline & chin'],
+ ['q5','#2f6fde','Quintos: cinco olhos de largura','Fifths: five eyes wide'],
+ ['q3','#e8902a','Terços do rosto','Face thirds'],
+ ['qal','#e0474c','Alinhamentos: olhos, nariz e boca','Alignments: eyes, nose & mouth'],
+ ['reilly','#0f8f9c','Ritmos de Reilly','Reilly rhythms'],
+ ['bforehead','#2f6fde','Bloco da testa','Forehead block'],
+ ['bcheek','#e8902a','Planos das maçãs do rosto','Cheekbone planes'],
+ ['bmouth','#e0474c','Barril da boca','Mouth barrel'],
+ ['bjaw','#1f9d6b','Bloco do queixo e mandíbula','Chin & jaw block'],
+];
+const METHODS={loomis:['skull','side','center','thirds','jaw','feat','neck'],box:['box','boxmid','boxthirds','boxjaw','vp','feat','neck'],atari:['acircle','across','ajaw','feat','neck'],fifths:['acircle','q5','q3','qal','feat','neck'],reilly:['acircle','reilly','feat','neck'],bridgman:['acircle','bforehead','bcheek','bmouth','bjaw','feat','neck']};
+const COLORS={};GROUPS.forEach(g=>COLORS[g[0]]=g[1]);COLORS.outline=COLORS.skull;COLORS.acircleO=COLORS.acircle;
+
+const I18N={
+ pt:{title:'Gerador de Cabeças',sub:'Visualizador de construção da cabeça',hint:'Arraste para girar · botão direito ou dois dedos movem a cabeça · role ou pince para zoom',
+  method:'Método de construção',m_loomis:'Loomis',m_box:'Caixa',m_atari:'Atari Mangá',m_fifths:'Quintos',m_reilly:'Reilly',m_bridgman:'Bridgman',
+  style:'Estilo',st_loomis:'Clássico',st_manga:'Mangá',st_real:'Realista',base:'Base',b_masc:'Masculina',b_fem:'Feminina',b_inf:'Infantil',
+  
+  q_front:'Frente',q_34:'¾',q_prof:'Perfil',q_up:'De cima',q_down:'De baixo',q_rand:'Aleatório',
+  sec_cran:'Crânio',sec_face:'Rosto e terços',sec_jaw:'Mandíbula e queixo',sec_feat:'Feições',sec_neck:'Pescoço',
+  hidden:'Linhas ocultas',h_dash:'Tracejadas',h_hide:'Esconder',h_xray:'Raio-X',colors:'Cores',c_group:'Uma por guia',c_mono:'Cor única',c_pick:'Cor do traço',
+  exp_svg:'SVG (vetor, só as guias)',
+  dbl:'Atalhos: setas giram e inclinam (15°) · Shift+setas movem a cabeça · Q/E tombam · 1–5 frente, ¾, perfil, de cima, de baixo · 0 centraliza · +/− zoom · S liga/desliga o sólido · Ctrl/Cmd+Z desfaz · Shift+Ctrl/Cmd+Z refaz. O ↺ ao lado de um ajuste volta ao valor do ponto de partida.',
+  lpre:'Predefinições de luz',lp_std:'Padrão',lp_rem:'Rembrandt',lp_side:'Lateral',lp_top:'De cima',lp_low:'De baixo',lp_rim:'Contraluz',lp_flat:'Chapada',solid_show:'Mostrar cabeça sólida',halo:'Contorno claro nas guias (melhor leitura sobre o sólido)',shade:'Sombreamento',sh_flat:'Facetado',sh_smooth:'Suave',tones:'Tons',t_cont:'Contínuo',mat:'Cor do material',nogl:'Este navegador não consegue desenhar o sólido (WebGL indisponível).',
+  drop:'Escolha, arraste ou cole a imagem de um rosto desenhado',drop_ok:'Imagem carregada. Toque para trocar.',
+  ref_show:'Mostrar desenho por trás do modelo',ref_move:'Arrastar move o desenho',ref_moving:'Arrastando o desenho (toque para voltar a girar)',
+  ref_reset:'Centralizar desenho',ref_del:'Remover desenho',ref_op:'Opacidade',ref_sc:'Tamanho',ref_x:'Posição horizontal',ref_y:'Posição vertical',
+  tab_model:'Modelo',tab_view:'Vista',tab_light:'Luz',tab_guides:'Guias',tab_ref:'Referência',tab_export:'Exportar',
+  help:'Como usar',help_t:'Como usar',help_ok:'Começar',
+  help_1:'Arraste a cabeça para girar. Dois dedos (ou o botão direito do mouse) movem a cabeça no quadro; pinça ou rodinha dão zoom.',
+  help_2:'Em Modelo, escolha o método de construção, o estilo e a base (masculina, feminina ou infantil).',
+  help_3:'Os números na cabeça são os ajustes finos de proporção: toque num número para abrir o ajuste dele.',
+  help_4:'Em Luz, ligue a cabeça sólida, escolha uma predefinição de luz e regule os volumes do rosto.',
+  help_5:'Em Referência, coloque seu desenho por trás do modelo. Em Exportar, saem PNG, SVG, folha de ângulos e modelo 3D.',
+  help_6:'Tudo fica salvo neste navegador. ↶ desfaz. Esta ajuda volta pelo botão ? no topo.',
+  undo:'Desfazer',redo:'Refazer',mod:'Proporções modificadas',restore:'Restaurar',reset_one:'Voltar ao valor do ponto de partida',
+  presets:'Meus presets',p_none:'Nenhum preset salvo',p_apply:'Aplicar',p_del:'Excluir',p_name:'Nome do novo preset',p_save:'Salvar atual',preset:'Preset',
+  p_scene:'Incluir método, ângulo, luz e guias no preset',p_scene_tag:'cena completa',p_export:'Exportar presets',p_import:'Importar presets',
+  p_imported:'Presets importados: ',p_badfile:'Esse arquivo não é um arquivo de presets desta ferramenta.',p_noexp:'Ainda não há presets para exportar.',
+  p_saved:'Preset salvo',p_deleted:'Preset excluído',p_applied:'Preset aplicado',adv:'Ajustes finos de proporção',toast_preset:'Proporções substituídas pelo ponto de partida',
+  exp_bg:'Fundo',bg_t:'Transparente',bg_w:'Branco',exp_dl:'Baixar PNG',
+  sheet:'Folha de modelo',sheet_note:'A mesma cabeça em várias vistas numa única imagem, com o fundo escolhido acima.',sheet_n4:'4 vistas',sheet_n6:'6 vistas',sheet_g3:'Grade 3 × 3',sheet_g5:'Grade 5 × 5',sheet_gnote:'Na grade, cada coluna gira a cabeça (de um perfil ao outro) e cada linha a inclina (olhando para cima no topo, para baixo embaixo).',sheet_lbl:'Mostrar os ângulos em cada célula',sheet_dl:'Baixar folha de modelo',working:'Gerando a imagem…',
+  md_loomis:'Esfera com planos laterais: a base clássica para qualquer ângulo.',md_box:'A cabeça como um bloco: ideal para perspectiva forte e vistas de cima ou de baixo.',
+  md_atari:'O esboço dos livros de mangá: círculo, cruz e contorno do rosto.',md_fifths:'Cinco olhos de largura e os terços: para posicionar as feições.',
+  md_reilly:'Linhas de ritmo que ligam as formas do rosto e dão fluidez ao desenho.',md_bridgman:'A cabeça como blocos encaixados: testa, maçãs do rosto, boca e queixo.',
+  fb_solid:'Sólido',center:'Centralizar a cabeça no quadro',nums:'Números das medidas',nm_open:'Da seção aberta',nm_all:'Todos',nm_off:'Ocultar',nums_note:'Cada número no modelo corresponde a um ajuste fino. "Da seção aberta" mostra só os da seção aberta nos ajustes finos (ou todos, se nenhuma estiver aberta). Toque num número para ir até o ajuste; toque duas vezes para voltar ao valor do ponto de partida.',snap:'Encaixar a cada 15° ao girar (ou segure Shift)',lpad:'Arraste o ponto para mudar a direção da luz. Para luz por trás, use os controles abaixo.',
+  palette:'Paleta das guias',pal_std:'Padrão',pal_cb:'Para daltonismo',exp_size:'Tamanho do PNG (lado maior)',exp_crop:'Recortar justo na cabeça',exp_copy:'Copiar PNG',
+  glb:'Modelo 3D',glb_note:'A cabeça sólida (com pescoço, se estiver ligado) em GLB, para usar como referência no Clip Studio Paint, no Blender ou em outro programa 3D. As guias vão como linhas coloridas (alguns programas, como o Clip Studio, podem ignorá-las).',glb_guides:'Incluir as guias (linhas)',glb_pose:'Manter o ângulo atual (desligado: cabeça reta)',glb_dl:'Baixar modelo 3D (GLB)',
+  copied:'Imagem copiada',copy_fail:'Este navegador não deixou copiar a imagem aqui. Use Baixar PNG.',ref_badge:'Movendo o desenho · toque aqui para voltar a girar',ref_nosave:'O desenho é grande demais para ficar salvo; ele some ao fechar a página.',
+  v_front:'Frente',v_34:'Três quartos',v_prof:'Perfil',v_up:'De cima',v_down:'De baixo',v_back34:'Três quartos de costas',v_back:'Costas',v_34up:'¾ de cima',v_34down:'¾ de baixo',
+  sheet_pv:'Ver prévia da folha',sheet_pvold:'Prévia desatualizada: toque em Ver prévia de novo.',sheet_pick:'Escolher as vistas',sheet_picknote:'Toque nas vistas para ligar ou desligar. Ficam na ordem da lista.',sheet_c:'Conteúdo da folha',sc_both:'Sólido + guias',sc_solid:'Só o sólido',sc_guides:'Só as guias',sheet_sty:'Uma linha por estilo (Clássico, Mangá, Realista)',sheet_min:'Escolha pelo menos uma vista.'},
+ en:{title:'Head Generator',sub:'Head construction viewer',hint:'Drag to rotate · right button or two fingers move the head · scroll or pinch to zoom',
+  method:'Construction method',m_loomis:'Loomis',m_box:'Box',m_atari:'Atari Manga',m_fifths:'Fifths',m_reilly:'Reilly',m_bridgman:'Bridgman',
+  style:'Style',st_loomis:'Classic',st_manga:'Manga',st_real:'Realistic',base:'Base',b_masc:'Male',b_fem:'Female',b_inf:'Child',
+  
+  q_front:'Front',q_34:'¾',q_prof:'Profile',q_up:'From above',q_down:'From below',q_rand:'Random',
+  sec_cran:'Cranium',sec_face:'Face & thirds',sec_jaw:'Jaw & chin',sec_feat:'Features',sec_neck:'Neck',
+  hidden:'Hidden lines',h_dash:'Dashed',h_hide:'Hide',h_xray:'X-ray',colors:'Colors',c_group:'One per guide',c_mono:'Single color',c_pick:'Stroke color',
+  exp_svg:'SVG (vector, guides only)',
+  dbl:'Shortcuts: arrows turn and tilt (15°) · Shift+arrows move the head · Q/E roll · 1–5 front, ¾, profile, above, below · 0 centers · +/− zoom · S toggles the solid · Ctrl/Cmd+Z undo · Shift+Ctrl/Cmd+Z redo. The ↺ next to a setting restores its starting-point value.',
+  lpre:'Light presets',lp_std:'Default',lp_rem:'Rembrandt',lp_side:'Side',lp_top:'Top',lp_low:'Under',lp_rim:'Back light',lp_flat:'Flat',solid_show:'Show solid head',halo:'Light outline on guides (easier to read over the solid)',shade:'Shading',sh_flat:'Faceted',sh_smooth:'Smooth',tones:'Tones',t_cont:'Continuous',mat:'Material color',nogl:'This browser cannot draw the solid (WebGL unavailable).',
+  drop:'Choose, drop or paste an image of a drawn face',drop_ok:'Image loaded. Tap to change.',
+  ref_show:'Show drawing behind the model',ref_move:'Drag moves the drawing',ref_moving:'Dragging the drawing (tap to rotate again)',
+  ref_reset:'Center drawing',ref_del:'Remove drawing',ref_op:'Opacity',ref_sc:'Size',ref_x:'Horizontal position',ref_y:'Vertical position',
+  tab_model:'Model',tab_view:'View',tab_light:'Light',tab_guides:'Guides',tab_ref:'Reference',tab_export:'Export',
+  help:'How to use',help_t:'How to use',help_ok:'Start',
+  help_1:'Drag the head to turn it. Two fingers (or the right mouse button) move the head in the frame; pinch or the wheel zooms.',
+  help_2:'In Model, pick the construction method, the style and the starting point (male, female or child).',
+  help_3:'The numbers on the head are the fine proportion controls: tap a number to open its control.',
+  help_4:'In Light, turn on the solid head, pick a light preset and set the facial masses.',
+  help_5:'In Reference, put your drawing behind the model. Export gives PNG, SVG, an angle sheet and a 3D model.',
+  help_6:'Everything is saved in this browser. ↶ undoes. This help comes back with the ? button at the top.',
+  undo:'Undo',redo:'Redo',mod:'Proportions changed',restore:'Restore',reset_one:'Back to the starting-point value',
+  presets:'My presets',p_none:'No saved presets',p_apply:'Apply',p_del:'Delete',p_name:'Name for a new preset',p_save:'Save current',preset:'Preset',
+  p_scene:'Include method, angle, light and guides in the preset',p_scene_tag:'full scene',p_export:'Export presets',p_import:'Import presets',
+  p_imported:'Presets imported: ',p_badfile:'That file is not a preset file from this tool.',p_noexp:'There are no presets to export yet.',
+  p_saved:'Preset saved',p_deleted:'Preset deleted',p_applied:'Preset applied',adv:'Fine proportion settings',toast_preset:'Proportions replaced by the starting point',
+  exp_bg:'Background',bg_t:'Transparent',bg_w:'White',exp_dl:'Download PNG',
+  sheet:'Model sheet',sheet_note:'The same head in several views in one image, using the background chosen above.',sheet_n4:'4 views',sheet_n6:'6 views',sheet_g3:'3 × 3 grid',sheet_g5:'5 × 5 grid',sheet_gnote:'In the grid, each column turns the head (from one profile to the other) and each row tilts it (looking up at the top, down at the bottom).',sheet_lbl:'Show the angles in each cell',sheet_dl:'Download model sheet',working:'Creating the image…',
+  md_loomis:'Ball with side planes: the classic base for any angle.',md_box:'The head as a block: best for strong perspective and views from above or below.',
+  md_atari:'The sketch from manga drawing books: circle, cross and face outline.',md_fifths:'Five eyes wide plus thirds: for placing the features.',
+  md_reilly:'Rhythm lines that link the forms of the face and add flow to the drawing.',md_bridgman:'The head as fitted blocks: forehead, cheekbones, mouth and chin.',
+  fb_solid:'Solid',center:'Center the head in the frame',nums:'Measurement numbers',nm_open:'Open section',nm_all:'All',nm_off:'Hide',nums_note:'Each number on the model matches a fine setting. "Open section" shows only the ones in the open fine-settings section (or all, if none is open). Tap a number to jump to that setting; double-tap to restore its starting-point value.',snap:'Snap to 15° steps while rotating (or hold Shift)',lpad:'Drag the dot to change the light direction. For back light, use the controls below.',
+  palette:'Guide palette',pal_std:'Standard',pal_cb:'Color-blind friendly',exp_size:'PNG size (longest side)',exp_crop:'Crop tight to the head',exp_copy:'Copy PNG',
+  glb:'3D model',glb_note:'The solid head (with the neck, if it is on) as GLB, to use as a reference in Clip Studio Paint, Blender or another 3D app. Guides go as colored lines (some apps, such as Clip Studio, may ignore them).',glb_guides:'Include the guides (lines)',glb_pose:'Keep the current angle (off: head upright)',glb_dl:'Download 3D model (GLB)',
+  copied:'Image copied',copy_fail:'This browser did not allow copying the image here. Use Download PNG.',ref_badge:'Moving the drawing · tap here to rotate again',ref_nosave:'The drawing is too large to keep; it will be gone when you close the page.',
+  v_front:'Front',v_34:'Three-quarter',v_prof:'Profile',v_up:'From above',v_down:'From below',v_back34:'Three-quarter back',v_back:'Back',v_34up:'¾ from above',v_34down:'¾ from below',
+  sheet_pv:'Preview the sheet',sheet_pvold:'Preview out of date: tap Preview again.',sheet_pick:'Choose the views',sheet_picknote:'Tap the views to turn them on or off. They keep the list order.',sheet_c:'Sheet content',sc_both:'Solid + guides',sc_solid:'Solid only',sc_guides:'Guides only',sheet_sty:'One row per style (Classic, Manga, Realistic)',sheet_min:'Pick at least one view.'}
+};
+const QUICK=[['q_front',{yaw:0,pitch:0,roll:0}],['q_34',{yaw:-35,pitch:5,roll:0}],['q_prof',{yaw:-90,pitch:0,roll:0}],
+ ['q_up',{yaw:-30,pitch:35,roll:0}],['q_down',{yaw:-30,pitch:-30,roll:0}],['q_rand',null]];
+
+const LPRE={std:[-45,35,100,25],rem:[-50,40,115,15],side:[-90,10,120,12],top:[0,75,110,18],low:[-15,-55,120,10],rim:[170,20,130,20],flat:[0,10,90,35]};
+const VIEWS=[['v_front',0,0],['v_34',-35,5],['v_prof',-90,0],['v_up',-30,35],['v_down',-30,-30],['v_back34',-145,8],['v_back',180,5],['v_34up',-35,30],['v_34down',-35,-25]];
+const DEFAULT={sheetViews:['v_front','v_34','v_prof'],sheetC:'both',sheetSty:false,vol:60,panX:0,panY:0,nums:'open',neckFollow:45,sheetLbl:true,presetScene:true,tab:'model',expBg:'t',sheetN:'4',expSize:'2048',expCrop:true,palette:'std',snap:false,solid:true,halo:true,shade:'flat',tones:'3',mat:'#c9c5bd',lightAz:-45,lightEl:35,lightInt:100,amb:25,lang:'pt',style:'loomis',base:'masc',yaw:-30,pitch:8,roll:0,persp:30,zoom:100,lw:1.6,hidden:'dash',colorMode:'group',mono:'#1d1d1f',
+ method:'loomis',groups:{skull:true,side:true,center:true,thirds:true,jaw:true,feat:true,neck:true,box:true,boxmid:true,boxthirds:true,boxjaw:true,vp:false,acircle:true,across:true,ajaw:true,q5:true,q3:true,qal:true,reilly:true,bforehead:true,bcheek:true,bmouth:true,bjaw:true}};
+const STORE='loomis-heads-v1';
+function loadState(){
+  let saved=null;try{saved=JSON.parse(localStorage.getItem(STORE))}catch(e){}
+  const s={...DEFAULT,...presetValues('loomis','masc')};
+  if(saved&&typeof saved==='object'){for(const k in s){if(k in saved)s[k]=saved[k]}s.groups={...DEFAULT.groups,...(saved.groups||{})};if(!Array.isArray(s.sheetViews))s.sheetViews=DEFAULT.sheetViews.slice();if(!['both','solid','guides'].includes(s.sheetC))s.sheetC='both'}
+  return s;
+}
+let S=(typeof localStorage!=='undefined')?loadState():{...DEFAULT,...presetValues('loomis','masc')};
+if(S.nums===true)S.nums='open';else if(S.nums===false)S.nums='off';
+
+/* ---------- geometry (head space: x right, y up, z toward viewer) ---------- */
+const RELIEF_STYLE={loomis:1,real:1.15,manga:.45};
+function buildHead(P){
+  const a=P.cw,b=P.ch,c=P.cd,k=P.k,ka=k*a,sq=Math.sqrt(1-k*k),rY=b*sq,rZ=c*sq;
+  const yH=Math.min(rY*P.tTop,b*.97),yN=-rY*P.tMid,yC=yN-rY*P.tLow;
+  const xB=P.faceW*ka,zB=c*Math.sqrt(Math.max(0,1-(xB/a)*(xB/a)));
+  const xN=xB*.9,zNc=c*P.faceZ,zNk=zNc-.2*c;
+  const xC=Math.max(.02,P.chinW*a),zCc=c*P.chinZ,zCk=zCc-.08*c;
+  const LV=[{y:0,xr:xB,zc:c,zk:zB},{y:yN,xr:xN,zc:zNc,zk:zNk},{y:yC,xr:xC,zc:zCc,zk:zCk}];
+  const fp=(u,v)=>{v=clamp(v,0,2);const i=v<1?0:1,t=v-i,A=LV[i],B=LV[i+1];
+    const y=A.y+(B.y-A.y)*t,xr=A.xr+(B.xr-A.xr)*t,zc=A.zc+(B.zc-A.zc)*t,zk=A.zk+(B.zk-A.zk)*t;
+    return[u*xr,y,zk+(zc-zk)*(1-u*u)]};
+  const fn=(u,v)=>norm(cross(sub(fp(u,v+.01),fp(u,v-.01)),sub(fp(u+.01,v),fp(u-.01,v))));
+  const G=s=>[s*P.jawW*a,yN+(yC-yN)*P.jawY,c*P.jawZ];
+  // with the solid on, the face guides ride on the facial masses instead of floating over the flat plane
+  const RL=faceRelief(P),follow=!!P.solid&&RL.amt>1e-3,fpR=(u,v)=>follow?add(fp(u,v),mul(fn(u,v),RL.h(u,v))):fp(u,v);
+  const eh=(-yN)*.5*P.earS,ew=eh*.5,eyc=yN*.48,al=14*DEG,ca=Math.cos(al),sa=Math.sin(al),ezc=-.01-.55*ew*ca;
+  const E=s=>[s*ka,yN*.7,ezc+.55*ew*ca+.04];
+  const Pv=[0,yN*.7,-.3*c];
+  const L={skull:[],side:[],center:[],thirds:[],jaw:[],feat:[]};
+  const curve=(n,f)=>{const o=[];for(let i=0;i<=n;i++)o.push(f(i/n));return o};
+  const seg=(p,q,n=14)=>curve(n,t=>lerp3(p,q,t));
+  const clip=p=>Math.abs(p[0])>ka+1e-9?null:p;
+  const fz=(p,d)=>[p[0],p[1],p[2]+d];
+
+  // cranium: ear-to-ear ring
+  L.skull.push(curve(160,t=>clip([a*Math.cos(t*TAU),b*Math.sin(t*TAU),0])));
+  // side planes
+  for(const s of[-1,1]){
+    L.side.push(curve(120,t=>[s*ka,rY*Math.sin(t*TAU),rZ*Math.cos(t*TAU)]));
+    L.side.push(seg([s*ka,-rY,0],[s*ka,rY,0],20));
+  }
+  // center line
+  L.center.push(curve(160,t=>[0,b*Math.sin(t*TAU),c*Math.cos(t*TAU)]));
+  L.center.push(curve(40,t=>fz(fpR(0,2*t),.004)));
+  // thirds
+  L.thirds.push(curve(180,t=>clip([a*Math.cos(t*TAU),0,c*Math.sin(t*TAU)])));
+  for(const s of[-1,1])L.thirds.push(seg([s*ka,0,-rZ],[s*ka,0,rZ],20));
+  L.thirds.push(curve(60,t=>{const x=-ka+2*ka*t,r=1-(x/a)**2-(yH/b)**2;return r<0?null:[x,yH,c*Math.sqrt(r)]}));
+  L.thirds.push(curve(40,t=>fz(fpR(-1+2*t,1),.004)));
+  const zEdge=Math.abs(yN)<rY?rZ*Math.sqrt(1-(yN/rY)**2):0;
+  for(const s of[-1,1]){const q=[s*(ka+.006),yN,zEdge];L.thirds.push(seg(fp(s,1),q,12).concat(seg(q,[s*(ka+.006),yN,-rZ*.15],10)))}
+  L.thirds.push(curve(40,t=>fz(fp(-1+2*t,2),.004)));
+  // jaw & face plane
+  for(const s of[-1,1]){
+    L.jaw.push(curve(40,t=>fp(s,2*t)));
+    L.jaw.push(seg(E(s),G(s),16).concat(seg(G(s),fp(s,2),16)));
+  }
+  // features
+  const ev=P.eyeY;
+  L.feat.push(curve(40,t=>fz(fpR(-1+2*t,ev),.005)));
+  for(const s of[-1,1]){
+    const u=s*P.eyeX,c0=fpR(u,ev),n=fn(u,ev),du=norm(sub(fp(u+.01,ev),fp(u-.01,ev))),vu=norm(cross(n,du));
+    const rx=.13*P.eyeS*a,ry=rx*P.eyeH,base=add(c0,mul(n,.012));
+    const ell=(ex,ey)=>curve(48,t=>add(base,add(mul(du,ex*Math.cos(t*TAU)),mul(vu,ey*Math.sin(t*TAU)))));
+    L.feat.push(ell(rx,ry));
+    if(P.eyeH>.62){const ir=Math.min(ry*.78,rx*.55);L.feat.push(ell(ir*.92,ir))}
+  }
+  if(P.noseL>.03){
+    const root=fz(fp(0,Math.min(ev,.5)*.6),.006),tip=fz(fp(0,.92),.2*c*P.noseL),
+      wl=fz(fp(-.24,.98),.01),wr=fz(fp(.24,.98),.01),bc=fz(fp(0,1),.01);
+    L.feat.push(seg(root,tip,14),seg(tip,wl,8),seg(tip,wr,8),seg(wl,bc,6).concat(seg(bc,wr,6)));
+  }
+  L.feat.push(curve(24,t=>fz(fpR(-P.mouthW+2*P.mouthW*t,1+P.mouthY),.01)));
+  for(const s of[-1,1]){
+    const ex=s*(ka+.015);
+    const place=(lz,ly)=>[ex,eyc+lz*sa+ly*ca,ezc+lz*ca-ly*sa];
+    L.feat.push(curve(56,t=>{const th=t*TAU,co=Math.cos(th),si=Math.sin(th);
+      return place(ew*co*(co>0?.55:1)*(si<0?1+.3*si:1),eh*si*(si<0?.92:1))}));
+    L.feat.push(curve(28,t=>{const th=(70+220*t)*DEG;return place(ew*.55*Math.cos(th),eh*.58*Math.sin(th)+eh*.08)}));
+  }
+  // occluder mesh for the face/jaw mass
+  const tris=[],verts=[];
+  const T=(p0,p1,p2)=>{verts.push(p0,p1,p2);tris.push({x:p0[0],y:p0[1],z:p0[2],
+    e1x:p1[0]-p0[0],e1y:p1[1]-p0[1],e1z:p1[2]-p0[2],e2x:p2[0]-p0[0],e2y:p2[1]-p0[1],e2z:p2[2]-p0[2]})};
+  const nu=6,nv=6,dep=follow?.06*RL.amt*.9:0,smo=t=>t<=0?0:t>=1?1:t*t*(3-2*t),
+    fo=(u,v)=>dep?add(fp(u,v),mul(fn(u,v),-dep*smo((1-Math.abs(u))/.12)*smo(v/.12)*smo((2-v)/.08))):fp(u,v);
+  for(let i=0;i<nv;i++)for(let j=0;j<nu;j++){
+    const u0=-1+2*j/nu,u1=-1+2*(j+1)/nu,v0=2*i/nv,v1=2*(i+1)/nv;
+    const p00=fo(u0,v0),p10=fo(u1,v0),p01=fo(u0,v1),p11=fo(u1,v1);T(p00,p10,p11);T(p00,p11,p01)}
+  for(const s of[-1,1]){const B=fp(s,0),N=fp(s,1),C=fp(s,2),e=E(s),g=G(s);T(e,B,N);T(e,N,g);T(g,N,C)}
+  const Cc=fp(0,2),Cp=fp(1,2),Cm=fp(-1,2),Gp=G(1),Gm=G(-1),Ep=E(1),Em=E(-1);
+  T(Cc,Cp,Gp);T(Cc,Gp,Gm);T(Cc,Gm,Cm);T(Ep,Gp,Gm);T(Ep,Gm,Em);
+  let bc=[0,0,0];verts.forEach(v=>bc=add(bc,v));bc=mul(bc,1/verts.length);
+  let br=0;verts.forEach(v=>br=Math.max(br,Math.hypot(v[0]-bc[0],v[1]-bc[1],v[2]-bc[2])));
+  // ---- box method (the box's sides are the Loomis side planes) ----
+  const bx=ka,yT=b,yB=yC,zF=c,zBk=-c,ym=(yT+yB)/2;
+  const BF={front:{n:[0,0,1],c:[0,ym,zF]},back:{n:[0,0,-1],c:[0,ym,zBk]},right:{n:[1,0,0],c:[bx,ym,0]},left:{n:[-1,0,0],c:[-bx,ym,0]},top:{n:[0,1,0],c:[0,yT,0]},bottom:{n:[0,-1,0],c:[0,yB,0]}};
+  const BV=(sx,sy,sz)=>[sx*bx,sy>0?yT:yB,sz>0?zF:zBk];
+  const BL={box:[],boxmid:[],boxthirds:[],boxjaw:[],vp:[]},S2=[-1,1];
+  const bline=(g2,p,q,faces,n=1)=>BL[g2].push({pts:seg(p,q,n),faces});
+  for(const sy of S2)for(const sz of S2){const p=BV(-1,sy,sz),q=BV(1,sy,sz);bline('box',p,q,[sy>0?'top':'bottom',sz>0?'front':'back']);bline('vp',sub(p,[6,0,0]),add(q,[6,0,0]),null)}
+  for(const sx of S2)for(const sz of S2){const p=BV(sx,-1,sz),q=BV(sx,1,sz);bline('box',p,q,[sx>0?'right':'left',sz>0?'front':'back']);bline('vp',sub(p,[0,6,0]),add(q,[0,6,0]),null)}
+  for(const sx of S2)for(const sy of S2){const p=BV(sx,sy,-1),q=BV(sx,sy,1);bline('box',p,q,[sx>0?'right':'left',sy>0?'top':'bottom']);bline('vp',sub(p,[0,0,6]),add(q,[0,0,6]),null)}
+  bline('boxmid',[0,yB,zF],[0,yT,zF],['front']);bline('boxmid',[0,yB,zBk],[0,yT,zBk],['back']);
+  bline('boxmid',[0,yT,zBk],[0,yT,zF],['top']);bline('boxmid',[0,yB,zBk],[0,yB,zF],['bottom']);
+  for(const sx of S2)bline('boxmid',[sx*bx,yB,0],[sx*bx,yT,0],[sx>0?'right':'left']);
+  for(const yy of[yH,0,yN]){bline('boxthirds',[-bx,yy,zF],[bx,yy,zF],['front']);bline('boxthirds',[-bx,yy,zBk],[bx,yy,zBk],['back']);
+    for(const sx of S2)bline('boxthirds',[sx*bx,yy,zBk],[sx*bx,yy,zF],[sx>0?'right':'left'])}
+  const gY=yN+(yC-yN)*P.jawY,gZ=c*P.jawZ;
+  for(const sx of S2){const side=sx>0?'right':'left';
+    bline('boxjaw',E(sx),[sx*bx,gY,gZ],[side]);bline('boxjaw',[sx*bx,gY,gZ],[sx*bx,yB,zF],[side]);
+    bline('boxjaw',[sx*bx,yN,zF],[sx*xC,yB,zF],['front'])}
+  bline('boxjaw',[-xC,yB,zF],[xC,yB,zF],['front']);
+  // ---- atari (manga construction): circle, center + eye-line cross, face outline ----
+  const AL={acircle:[],across:[],ajaw:[]};
+  for(const s of[-1,1])AL.acircle.push(curve(120,t=>[s*ka,rY*Math.sin(t*TAU),rZ*Math.cos(t*TAU)]));
+  AL.across.push(curve(160,t=>[0,b*Math.sin(t*TAU),c*Math.cos(t*TAU)]),curve(40,t=>fz(fp(0,2*t),.004)));
+  const ye=fp(0,P.eyeY)[1],re=Math.sqrt(Math.max(0,1-(ye/b)**2)),ve=P.eyeY,xre=Math.abs(fp(1,ve)[0])||1e-6;
+  AL.across.push(curve(180,t=>{const x=a*re*Math.cos(t*TAU);if(Math.abs(x)>ka+1e-9)return null;let z=c*re*Math.sin(t*TAU);
+    if(z>0&&Math.abs(x)<=xre)z=Math.max(z,fp(x/xre,ve)[2]+.005);return[x,ye,z]}));
+  if(Math.abs(ye)<rY){const zr=rZ*Math.sqrt(1-(ye/rY)**2);for(const s of[-1,1])AL.across.push(seg([s*ka,ye,-zr],[s*ka,ye,zr],16))}
+  for(const s of[-1,1])AL.ajaw.push(curve(30,t=>fp(s,P.eyeY+(2-P.eyeY)*t)),seg(E(s),G(s),16).concat(seg(G(s),fp(s,2),16)));
+  AL.ajaw.push(curve(40,t=>fz(fp(-1+2*t,2),.004)));
+  Object.assign(L,AL);
+  // ---- helpers: a point on the front of the head (ball above the brow, face plane below) ----
+  const yE=fp(0,P.eyeY)[1],yM=fp(0,1+P.mouthY)[1];
+  const frontZ=(x,y)=>{let z=-Infinity;const r2=1-(x/a)**2-(y/b)**2;if(r2>0&&Math.abs(x)<=ka+1e-9)z=c*Math.sqrt(r2);
+    if(y<0&&y>=yC-1e-9){const v=y>=yN?y/yN:1+(y-yN)/(yC-yN),xr=Math.abs(fp(1,v)[0]);if(Math.abs(x)<=xr+1e-9)z=Math.max(z,fp(clamp(x/(xr||1e-6),-1,1),v)[2]);
+      else if(z>-Infinity)z=Math.min(z,fp(Math.sign(x),v)[2]-.75*(Math.abs(x)-xr))}
+    return z===-Infinity?null:z};
+  const onFront=(x,y,d=.006)=>{const z=frontZ(x,y);return z===null?null:[x,y,z+d]};
+  const across=(x0,x1,y,n=40)=>curve(n,t=>onFront(x0+(x1-x0)*t,y));
+  const down=(x,y0,y1,n=40)=>curve(n,t=>onFront(x,y0+(y1-y0)*t));
+  // Catmull-Rom through (x,y) control points, projected onto the front of the head
+  const spline=(cp,n=60)=>curve(n,t=>{const m=cp.length-1,f=t*m,i=Math.min(m-1,Math.floor(f)),u=f-i;
+    const p0=cp[Math.max(0,i-1)],p1=cp[i],p2=cp[i+1],p3=cp[Math.min(m,i+2)];
+    const cr=k=>.5*(2*p1[k]+(-p0[k]+p2[k])*u+(2*p0[k]-5*p1[k]+4*p2[k]-p3[k])*u*u+(-p0[k]+3*p1[k]-3*p2[k]+p3[k])*u*u*u);
+    return onFront(cr(0),cr(1))});
+  const lerpY=(p,q,t)=>p+(q-p)*t;
+  const exC=P.eyeX*Math.abs(fp(1,P.eyeY)[0]),eRx=.13*P.eyeS*a;
+  // ---- fifths: head five eyes wide, thirds, feature alignments ----
+  L.q5=[];for(let i=0;i<=5;i++){const x=-ka+i*2*ka/5;L.q5.push(down(x,yH,yC,60))}
+  L.q3=[across(-ka,ka,yH),across(-ka,ka,0),across(-ka,ka,yN),across(-xC,xC,yC,12)];
+  L.qal=[across(-ka,ka,yE),across(-Math.abs(fp(1,1+P.mouthY)[0]),Math.abs(fp(1,1+P.mouthY)[0]),yM,24)];
+  for(const s of[-1,1]){L.qal.push(down(s*(exC-eRx),yE,yN,20),down(s*exC,yE,yM,24))}
+  // ---- Reilly rhythms, front-view description (finearttutorials, Reilly abstraction): the head width split in
+  //      fifths (eyes in the 2nd and 4th, nose in the 3rd), height in thirds; curves drawn in that grid and laid on the head
+  const H=yH,B=0,Ey=yE,N=yN,M=yM,C=yC,K=ka,mx=Math.abs(fp(P.mouthW,1+P.mouthY)[0]),eyeIn=Math.max(.05,exC-eRx),eyeOut=exC+eRx;
+  L.reilly=[];
+  for(const s of[-1,1]){const X=x=>s*x;
+    L.reilly.push(
+      // 1. outer cheekbone arc: from the ear at the brow line, along the outside of the head
+      spline([[X(.97*K),B],[X(.995*K),lerpY(B,N,.3)],[X(.985*K),lerpY(B,N,.62)],[X(.93*K),lerpY(B,N,.9)]]),
+      // 2. underside of the cheekbone: from the side at the eye line, a "smile" toward the mouth corner
+      spline([[X(.97*K),Ey-.03],[X(.74*K),lerpY(Ey,N,.55)],[X(.48*K),lerpY(N,M,.25)],[X(mx),M]]),
+      // 3. plane change: same start, curves in to touch the nostril, loops back to the mouth corner
+      spline([[X(.95*K),Ey],[X(.6*K),lerpY(Ey,N,.32)],[X(.26*K),lerpY(Ey,N,.82)],[X(.2*K),N],[X(.27*K),lerpY(N,M,.55)],[X(mx*.92),M]],90),
+      // 4. temple line: drops through the outer eye corner, curves in at the jaw toward the chin
+      spline([[X(.88*K),lerpY(B,H,.45)],[X(.86*K),B],[X(Math.min(.9*K,eyeOut+.02)),Ey],[X(.8*K),N],[X(.58*K),lerpY(N,C,.62)],[X(Math.max(xC,.12)),C]],90),
+      // 5. cranial curve: from the inner eye divisions at the brow line, sweeping up and out
+      spline([[X(eyeIn),B],[X(.26*K),lerpY(B,H,.45)],[X(.42*K),H],[X(.6*K),Math.min(b*.93,H+(H-B)*.35)]]),
+      // 6. brow arch over each eye: outer to inner division, peaking ~70% of the way up to the brow
+      spline([[X(eyeOut+.02),Ey],[X(exC),lerpY(Ey,B,.72)],[X(eyeIn-.01),Ey]]),
+      // 7. upper curve: from where the temple line crosses the brow, peaking 1/4 of the way to the hairline
+      spline([[X(.86*K),B],[X(.45*K),lerpY(B,H,.22)],[X(0),lerpY(B,H,.25)]]))}
+  // ---- Bridgman blocks ----
+  const blockFaces=(x0,x1,y0,y1,z0,z1)=>{const cx=(x0+x1)/2,cy2=(y0+y1)/2,cz=(z0+z1)/2;return{
+    f:{n:[0,0,1],c:[cx,cy2,z1]},bk:{n:[0,0,-1],c:[cx,cy2,z0]},r:{n:[1,0,0],c:[x1,cy2,cz]},l:{n:[-1,0,0],c:[x0,cy2,cz]},t:{n:[0,1,0],c:[cx,y1,cz]},bt:{n:[0,-1,0],c:[cx,y0,cz]}}};
+  const block=(g2,x0,x1,y0,y1,z0,z1)=>{const F2=blockFaces(x0,x1,y0,y1,z0,z1),X=[x0,x1],Y=[y0,y1],Z=[z0,z1];BL[g2]=BL[g2]||[];
+    for(const j of[0,1])for(const k2 of[0,1])BL[g2].push({pts:seg([x0,Y[j],Z[k2]],[x1,Y[j],Z[k2]],1),faces:[j?F2.t:F2.bt,k2?F2.f:F2.bk]});
+    for(const i of[0,1])for(const k2 of[0,1])BL[g2].push({pts:seg([X[i],y0,Z[k2]],[X[i],y1,Z[k2]],1),faces:[i?F2.r:F2.l,k2?F2.f:F2.bk]});
+    for(const i of[0,1])for(const j of[0,1])BL[g2].push({pts:seg([X[i],Y[j],z0],[X[i],Y[j],z1],1),faces:[i?F2.r:F2.l,j?F2.t:F2.bt]})};
+  // corners: [x,y,z] in order lbf, rbf, rtf, ltf (front) then lbb, rbb, rtb, ltb (back)
+  const hexa=(g2,V)=>{BL[g2]=BL[g2]||[];const cen=mul(V.reduce((s2,p)=>add(s2,p),[0,0,0]),1/8);
+    const face=(i)=>{const q=i.map(j=>V[j]),cc=mul(q.reduce((s2,p)=>add(s2,p),[0,0,0]),.25);let n=norm(cross(sub(q[1],q[0]),sub(q[3],q[0])));if(dot(n,sub(cc,cen))<0)n=mul(n,-1);return{n,c:cc}};
+    const Fc={f:face([0,1,2,3]),bk:face([4,5,6,7]),l:face([0,3,7,4]),r:face([1,2,6,5]),t:face([3,2,6,7]),bt:face([0,1,5,4])};
+    const E2=[[0,1,'bt','f'],[1,2,'r','f'],[2,3,'t','f'],[3,0,'l','f'],[4,5,'bt','bk'],[5,6,'r','bk'],[6,7,'t','bk'],[7,4,'l','bk'],[0,4,'l','bt'],[1,5,'r','bt'],[2,6,'r','t'],[3,7,'l','t']];
+    for(const[i,j,f1,f2]of E2)BL[g2].push({pts:seg(V[i],V[j],1),faces:[Fc[f1],Fc[f2]]})};
+  {const zt=(frontZ(0,yH)||c*.8)+.02,xt=xB*.82;
+   hexa('bforehead',[[-xB,0,c+.02],[xB,0,c+.02],[xt,yH,zt],[-xt,yH,zt],[-xB,0,c*.45],[xB,0,c*.45],[xt,yH,c*.3],[-xt,yH,c*.3]])}
+  block('bjaw',-xC*1.15,xC*1.15,yC,lerpY(yC,yN,.3),zCc-.25*c,zCc+.01);
+  L.bjaw=[];for(const s of[-1,1])L.bjaw.push(seg(E(s),G(s),16).concat(seg(G(s),fp(s,2),16)));
+  // cheekbone mass (Bridgman): a wedge from the lower outer corner of the forehead, out and down to the cheekbone
+  // (set back toward the ear), sweeping to the chin corner; plus the line that splits each half of the face
+  // from the outer cheekbone corner to the centre of the upper lip
+  L.bcheek=[];const loopOn=(pts,n=10)=>{const o=[];for(let i=0;i<pts.length;i++){const p=pts[i],q=pts[(i+1)%pts.length];for(let k2=0;k2<n;k2++){const t=k2/n;o.push(onFront(p[0]+(q[0]-p[0])*t,p[1]+(q[1]-p[1])*t,.008))}}o.push(o[0]);return o};
+  for(const s of[-1,1]){const cheek=[s*.97*ka,lerpY(0,yN,.42)];
+    L.bcheek.push(loopOn([[s*.78*xB,-.01],cheek,[s*.78*ka,lerpY(yN,yC,.55)],[s*xC*1.15,yC+.02],[s*.3*ka,yN],[s*(exC+eRx*.3),lerpY(yE,yN,.35)]]));
+    L.bcheek.push(curve(30,t=>onFront(cheek[0]*(1-t),lerpY(cheek[1],lerpY(yN,yM,.55),t),.008)))}
+  const yMt=yN-.02,yMb=lerpY(yN,yC,.8),Rb=.4*ka,th0=75*DEG,zbAt=yy=>(frontZ(0,yy)||c)-Rb+.035;
+  const barrel=yy=>{const pts=[],nr=[],zb=zbAt(yy);for(let i=0;i<=30;i++){const th=-th0+2*th0*i/30;pts.push([Rb*Math.sin(th),yy,zb+Rb*Math.cos(th)]);nr.push([Math.sin(th),0,Math.cos(th)])}return{pts,nr}};
+  const barrelLines=[barrel(yMt),barrel(yM),barrel(yMb)];
+  for(const s of[-1,1]){const th=s*th0,pts=[],nr=[];for(let i=0;i<=10;i++){const yy=yMt+(yMb-yMt)*i/10;pts.push([Rb*Math.sin(th),yy,zbAt(yy)+Rb*Math.cos(th)]);nr.push([Math.sin(th),0,Math.cos(th)])}barrelLines.push({pts,nr})}
+  L.bmouth=[];  // the mouth barrel is drawn from barrelLines (needs per-point facing)
+  const nose=P.noseL>.03?{root:fp(0,Math.min(ev,.5)*.6),tip:fz(fp(0,.92),.2*c*P.noseL),wl:fp(-.24,.98),wr:fp(.24,.98),bc:fp(0,1)}:null;
+  return{a,b,c,k,ka,rY,rZ,yH,yN,yC,Pv,L,BL,BF,barrel:barrelLines,tris,bs:{c:bc,r:br+.01},fp,fn,G,E,nose,dep:follow?dep:0,ear:{eh,ew,ezc,eyc,ca,sa}};
+}
+// where each proportion setting's number sits on the model (head space)
+function numAnchors(P,g){const{a,b,c,ka,fp,G,E,yH,yN,yC}=g,ev=P.eyeY,ring=attachRing(g,P),z=(p,d=.03)=>[p[0],p[1],p[2]+d];
+  const fz=(x,y)=>{const r=1-(x/a)**2-(y/b)**2;return r>0?c*Math.sqrt(r):0};
+  return{cw:[a*.93,b*.33,c*.18],ch:[0,b*1.02,0],cd:[0,b*.45,-c*.92],k:[ka+.01,g.rY*.55,0],
+    tTop:[0,yH,fz(0,yH)+.02],tMid:z(fp(.55,1)),tLow:z(fp(0,2),.05),faceW:z(fp(1,.18)),faceZ:z(fp(-.55,.55)),
+    jawW:G(1),jawY:G(-1),jawZ:lerp3(E(1),G(1),.5),chinW:z(fp(1,2)),chinZ:z(fp(-.6,1.85)),
+    eyeY:z(fp(-P.eyeX,ev),.05),eyeS:z(fp(P.eyeX+.32,ev),.03),eyeH:z(fp(P.eyeX,Math.max(.03,ev-.22)),.04),eyeX:z(fp(0,ev),.05),
+    noseL:g.nose?z(g.nose.tip,.04):z(fp(0,.92)),mouthY:z(fp(-P.mouthW-.12,1+P.mouthY)),mouthW:z(fp(P.mouthW+.12,1+P.mouthY)),
+    earS:[ka+.12,g.ear.eyc,g.ear.ezc],neckW:ring(0),neckLean:add(ring(Math.PI/2),[0,-.12,.02])}}
+const NUMKEYS=PKEYS.slice();const NUMOF={};NUMKEYS.forEach((k,i)=>NUMOF[k]=i+1);
+const SECCOL={cran:'#2f6fde',face:'#e8902a',jaw:'#1f9d6b',feat:'#8b5cf6',neck:'#7a7f87'};
+let NUMHL=null,NUMSECS=null;
+// number badges drawn on top of the preview only (never exported); hidden behind the head when occluded
+function buildNumbers(W,H){if(!S.nums||S.nums==='off')return'';const only=S.nums==='open'&&NUMSECS&&NUMSECS.size?NUMSECS:null;const F=frameData(W,H),A=numAnchors(S,geo),placed=[],out=[];
+  const cen=[0,geo.yN*.5,0];
+  for(const k of NUMKEYS){const p=A[k];if(!p||(only&&!only.has(SDEF[k][0])&&NUMHL!==k))continue;const ph=add(p,mul(norm(sub(p,cen)),.02));
+    const pw=toWorld(ph,F);
+    if(!k.startsWith('neck')&&occluded(ph,F))continue;
+    let[x,y]=proj(pw,F);
+    for(let t=0;t<10;t++){const hit=placed.find(q=>Math.hypot(q[0]-x,q[1]-y)<19);if(!hit)break;const an=Math.atan2(y-hit[1],x-hit[0])||(t*1.3);x=hit[0]+Math.cos(an)*20;y=hit[1]+Math.sin(an)*20}
+    if(x<10||y<10||x>W-10||y>H-10)continue;placed.push([x,y]);
+    const sec=SDEF[k][0],base=SECCOL[sec]||'#555',col0=S.palette==='cb'?(CB[base]||base):base,col=DARK?(DARKMAP[col0]||col0):col0,on=NUMHL===k,dim=NUMHL&&!on,r=on?12:9;
+    out.push(`<g data-num="${k}" style="cursor:pointer"${dim?' opacity=".35"':''}><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="17" fill="transparent"/>`+
+      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" fill="${on?col:(DARK?'#1f1f22':'#fff')}" stroke="${col}" stroke-width="2"/>`+
+      `<text x="${x.toFixed(1)}" y="${(y+.5).toFixed(1)}" text-anchor="middle" dominant-baseline="central" font-size="${on?12:10.5}" font-weight="700" font-family="-apple-system,Segoe UI,Roboto,Arial,sans-serif" fill="${on?(DARK?'#1f1f22':'#fff'):col}">${NUMOF[k]}</text></g>`)}
+  return`<g id="nums">${out.join('')}</g>`}
+const relKey=()=>(S.solid?1:0)+'|'+S.vol;
+let geo=buildHead(S),solidDirty=true;geo.rk=relKey();
+function rebuild(){geo=buildHead(S);geo.rk=relKey();solidDirty=true}
+
+/* ---------- solid volumes (head space, triangle soup: pos+normal) ---------- */
+// height (along the face normal) of the facial masses over the face plane, in face coordinates
+// u ∈ [−1,1] across, v ∈ [0,2] from brow (0) through nose base (1) to chin (2). Zero on the outline.
+function faceRelief(P){const amt=(P.vol??60)/100*(RELIEF_STYLE[P.style]??1),s=.06*amt,ev=P.eyeY,ex=P.eyeX,mv=1+P.mouthY;
+  const pos=x=>x>0?x:0,sm=t=>t<=0?0:t>=1?1:t*t*(3-2*t);
+  return{amt,h:(u,v)=>{if(amt<=1e-3)return 0;const au=Math.abs(u);let h=0;
+    // brow ridge: rises from the forehead, peaks, then drops steeply into the sockets (that drop catches the shadow)
+    const pb=v<.12?sm(v/.12):pos(1-(v-.12)/.1);h+=.8*pb*(1-au**6)*(1-.3*Math.exp(-((u/.18)**2)));
+    // eye sockets
+    for(const sx of[-1,1]){const d=((u-sx*ex)/.3)**2+((v-ev-.03)/.22)**2;h-=.75*sm(1-d)}
+    // cheekbones: diamond-shaped masses below the outer eye, giving flat planes
+    // (a rounded diamond: |x|^1.5 keeps the flat planes but without diagonal creases the grid would draw as steps)
+    for(const sx of[-1,1]){const q=((u-sx*.74)/.32)**2+((v-ev-.34)/.38)**2;h+=.85*sm(1-q)**1.5}
+    // mouth barrel: half cylinder from below the nose to above the chin
+    if(au<.55&&v>1.02&&v<mv+.42)h+=.6*sm(1-(u/.55)**2)*sm((v-1.02)/.16)*sm((mv+.42-v)/.2);
+    // chin block
+    {const q=(u/.4)**2+((v-1.84)/.17)**2;h+=.65*sm(1-q)**1.5}
+    return s*h*sm((1-au)/.12)*sm((2-v)/.08)}}}
+
+// neck attachment ring: a tilted ellipse from under the jaw (front) to the base of the skull (back)
+function attachRing(g,P){
+  const F=[0,g.yC+.1,.2*g.c],Bk=[0,g.yN*.95,-.62*g.c],cen=lerp3(F,Bk,.5),ax=mul(sub(F,Bk),.5),rx=P.neckW*g.a;
+  return th=>add(cen,add([rx*Math.cos(th),0,0],mul(ax,Math.sin(th))));
+}
+// Bowyer–Watson Delaunay triangulation of 2D points; returns index triples (counter-clockwise)
+function delaunay(P){const n=P.length,big=1e3,pts=P.concat([[-big,-big],[big,-big],[0,big]]);let T=[[n,n+1,n+2]];
+  const cc=t=>{const[a,b,c]=t.map(i=>pts[i]),d=2*(a[0]*(b[1]-c[1])+b[0]*(c[1]-a[1])+c[0]*(a[1]-b[1]));
+    const ux=((a[0]**2+a[1]**2)*(b[1]-c[1])+(b[0]**2+b[1]**2)*(c[1]-a[1])+(c[0]**2+c[1]**2)*(a[1]-b[1]))/d,uy=((a[0]**2+a[1]**2)*(c[0]-b[0])+(b[0]**2+b[1]**2)*(a[0]-c[0])+(c[0]**2+c[1]**2)*(b[0]-a[0]))/d;
+    return[ux,uy,(a[0]-ux)**2+(a[1]-uy)**2]};
+  let C=T.map(cc);
+  for(let i=0;i<n;i++){const p=pts[i],bad=[],keep=[],keepC=[];
+    T.forEach((t,k)=>{const c=C[k];((p[0]-c[0])**2+(p[1]-c[1])**2<c[2]-1e-12?bad:keep).push(t);if(!((p[0]-c[0])**2+(p[1]-c[1])**2<c[2]-1e-12))keepC.push(c)});
+    const edges=new Map();for(const t of bad)for(let e=0;e<3;e++){const a=t[e],b=t[(e+1)%3],key=a<b?a+','+b:b+','+a;edges.set(key,edges.has(key)?null:[a,b])}
+    T=keep;C=keepC;for(const e of edges.values())if(e){const t=[e[0],e[1],i];T.push(t);C.push(cc(t))}}
+  return T.filter(t=>t.every(i=>i<n)).map(t=>{const[a,b,c]=t.map(i=>pts[i]);return(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])>0?t:[t[0],t[2],t[1]]})}
+function buildSolid(P,g,faceted){
+  const parts={main:[],face:[],strip:[],fan:[]};let cur=parts.main;
+  const tri=(A,B,C,na,nb,nc)=>{if(faceted||!na){const n=norm(cross(sub(B,A),sub(C,A)));na=nb=nc=n}
+    cur.push(A[0],A[1],A[2],na[0],na[1],na[2],B[0],B[1],B[2],nb[0],nb[1],nb[2],C[0],C[1],C[2],nc[0],nc[1],nc[2])};
+  const quad=(p00,p10,p11,p01,n00,n10,n11,n01)=>{if(faceted||!n00){const n=norm(cross(sub(p11,p00),sub(p01,p10)));n00=n10=n11=n01=n;
+      const sv=faceted;faceted=false;tri(p00,p10,p11,n,n,n);tri(p00,p11,p01,n,n,n);faceted=sv;return}
+    tri(p00,p10,p11,n00,n10,n11);tri(p00,p11,p01,n00,n11,n01)};
+  const{a,b,c,ka,fp,fn,G,E}=g;
+  // cranium: ball cut by the side planes, sliced around the ear-to-ear axis
+  // nph is a multiple of 4 so a ring of the grid lies exactly on the brow line (no zigzag where the face plane starts)
+  const nx=faceted?12:40,nph=faceted?24:72,rr=x=>Math.sqrt(Math.max(0,1-(x/a)**2));
+  // the rim of the side plane is rounded instead of a sharp circular edge (reads less like a helmet)
+  const RD=Math.min(.09*a,a-ka-1e-3),RK=.035,xEdge=ka+RD,xs=x=>Math.sign(x)*(Math.min(Math.abs(x),ka)-RK*Math.log1p(Math.exp(-Math.abs(Math.abs(x)-ka)/RK)));
+  // the lower back of the cranium sits higher than a perfect ball (Proko); the guides keep the ideal ball
+  const occ=(y,z)=>z<0&&y<0?1-.2*Math.min(1,-z/c)*Math.min(1,-y/(b*.7)):1;
+  // the face plane slices off the front of the ball below the brow line
+  const relief0=faceRelief(P),sm0=t=>t<=0?0:t>=1?1:t*t*(3-2*t),inset=(u,v)=>relief0.amt>1e-3?.07*sm0((1-Math.abs(u))/.12)*sm0(v/.05)*sm0((2-v)/.08):0;
+  const faceZ=(x,y)=>{if(y>1e-6)return Infinity; // on the brow line itself the ball is trimmed to the face plane's top edge
+   const yy=Math.max(y,g.yC),v=yy>=g.yN?yy/g.yN:1+(yy-g.yN)/(g.yC-g.yN),xr=Math.abs(fp(1,v)[0])||1e-6,u=x/xr;
+    const under=.9*Math.max(0,g.yC-y); // below the chin the cut recedes toward the throat
+    if(Math.abs(u)<=1)return fp(u,v)[2]-under-inset(u,v);
+    return fp(Math.sign(u),v)[2]-under-.75*(Math.abs(x)-xr)};
+  // soft minimum: the ball blends into the face cut with a rounded edge instead of a crease
+  const smin=(p,q,k)=>q===Infinity||k<=1e-4?Math.min(p,q):Math.min(p,q)-k*Math.log1p(Math.exp(-Math.abs(p-q)/k));
+  const sp=(x,ph)=>{const r=rr(x);let y=b*r*Math.cos(ph),z=c*r*Math.sin(ph);y*=occ(y,z);x=xs(x);if(z>0){const f=Math.min(1,Math.max(0,-y/.25)),fz=faceZ(x,y);z=Math.max(0,smin(z,fz,.07*f));
+    // faceted without relief: the face edge is a few straight segments; tuck the ball just behind it on the brow ring
+    // (with relief, the face edge follows the ring with many points, so the two meet without a tuck)
+    if(faceted&&!(relief0.amt>1e-3)&&fz!==Infinity&&y>-.06)z-=.012*(1+y/.06)}return[x,y,z]};
+  const XS=[];for(let i=0;i<=nx;i++)XS.push(-xEdge+2*xEdge*i/nx);
+  const xB=Math.abs(fp(1,0)[0]);for(const v of[-xB,xB])if(!XS.some(q=>Math.abs(q-v)<.02))XS.push(v);XS.sort((p,q)=>p-q);
+  // rings around the ear-to-ear axis; extra rings just below the brow keep the ball from poking through the face plane edge
+  const PH=[];for(let j=0;j<=nph;j++)PH.push(j/nph*TAU);for(const d of[.02,.05,.1])PH.push(Math.PI/2+d);PH.sort((p,q)=>p-q);
+  // each grid point is computed once (positions, and normals in smooth mode) and shared by its four quads
+  const GP=XS.map(x=>PH.map(f=>sp(x,f))),NJ=PH.length;
+  // normals: exact ball normal where the ball is untouched, otherwise from the neighbouring grid points
+  const ballN=(x,f,p)=>{const r=rr(x),zs=c*r*Math.sin(f),ys=b*r*Math.cos(f);
+      if(Math.abs(x)<ka-6*RK&&(Math.abs(p[2]-zs)<.002||Math.abs(p[1])<1e-4)&&Math.abs(p[1]-ys*occ(ys,zs))<.002)return norm([p[0]/(a*a),ys/(b*b),zs/(c*c)]);return null};
+  // faceted with 2–4 tones: the cranium keeps its facets in the silhouette but gets smooth normals, so the
+  // tone bands on the ball are clean curves instead of stair-steps (the face masses stay faceted)
+  const celBall=faceted&&+P.tones>0;
+  const GN=faceted&&!celBall?null:XS.map((x,i)=>PH.map((f,j)=>{const p=GP[i][j],e=ballN(x,f,p);if(e)return e;
+      const jm=j>0?j-1:NJ-2,jp=j<NJ-1?j+1:1,im=Math.max(0,i-1),ip=Math.min(XS.length-1,i+1);
+      let n=norm(cross(sub(GP[i][jp],GP[i][jm]),sub(GP[ip][j],GP[im][j])));if(dot(n,p)<0)n=mul(n,-1);return n}));
+  for(let i=0;i<XS.length-1;i++)for(let j=0;j<PH.length-1;j++){
+    const p00=GP[i][j],p10=GP[i+1][j],p11=GP[i+1][j+1],p01=GP[i][j+1];
+    if(faceted&&!celBall)quad(p00,p10,p11,p01);else{const sv=faceted;faceted=false;quad(p00,p10,p11,p01,GN[i][j],GN[i+1][j],GN[i+1][j+1],GN[i][j+1]);faceted=sv}}
+  // flat side caps, closing the rounded rim
+  for(const s of[-1,1]){const cc=[xs(s*xEdge),0,0],n=[s,0,0];
+    for(let j=0;j<nph;j++)tri(cc,sp(s*xEdge,j/nph*TAU),sp(s*xEdge,(j+1)/nph*TAU),n,n,n)}
+  // face plane (brow -> nose -> chin), drawn with priority over the ball where they touch
+  cur=parts.face;
+  // the face plane carries a relief (brow ridge, eye sockets, cheekbones, mouth barrel, chin); its outline stays put
+  const relief=relief0,hasR=relief.amt>1e-3,surf=(u,v)=>hasR?add(fp(u,v),mul(fn(u,v),relief.h(u,v))):fp(u,v);
+  const nu=hasR?(faceted?10:30):(faceted?4:12),nv=hasR?(faceted?14:44):(faceted?6:18);
+  // faceted relief: grid lines follow the masses (brow, sockets, cheekbones, mouth, chin) so each facet reads as a plane
+  const brk=a=>[...new Set(a.map(x=>Math.round(x*1e4)/1e4))].sort((x,y)=>x-y);
+  const UG=hasR&&faceted?brk([-1,-.88,-P.eyeX-.18,-P.eyeX+.22,0,P.eyeX-.22,P.eyeX+.18,.88,1].map(x=>Math.max(-1,Math.min(1,x)))):null;
+  const VG=hasR&&faceted?brk([0,.12,P.eyeY+.04,P.eyeY+.4,1.02,1+P.mouthY+.4,1.86,2].map(x=>Math.max(0,Math.min(2,x)))):null;
+  const nuR=UG?UG.length-1:nu,nvR=VG?VG.length-1:nv;
+  const FG=[],FN=[];for(let i=0;i<=nvR;i++){FG.push([]);FN.push([]);for(let j=0;j<=nuR;j++){const u=UG?UG[j]:-1+2*j/nu,v=VG?VG[i]:2*i/nv;FG[i].push(surf(u,v));
+    if(!faceted){if(!hasR)FN[i].push(fn(u,v));else{const e=.004,du=sub(surf(Math.min(1,u+e),v),surf(Math.max(-1,u-e),v)),dv=sub(surf(u,Math.min(2,v+e)),surf(u,Math.max(0,v-e)));
+      let n=norm(cross(dv,du));if(dot(n,fn(u,v))<0)n=mul(n,-1);FN[i].push(n)}}}}
+  if(hasR&&faceted){
+    // faceted face: planes laid out by hand on the masses (brow ridge, sockets, cheekbones, muzzle, chin),
+    // triangulated (Delaunay) so the planes run diagonally as on a plane head, not in a rectangular grid
+    const ev=P.eyeY,ex=P.eyeX,mv=1+P.mouthY,cl=(x,lo,hi)=>Math.max(lo,Math.min(hi,x));
+    // the top edge follows the brow ring of the ball closely (many points), so no gap shows between them
+    const half=[[0,0],[.125,0],[.25,0],[.375,0],[.5,0],[.625,0],[.75,0],[.875,0],[1,0],[0,.12],[ex,.12],[1,.16],[0,ev],[ex-.22,ev+.02],[ex,ev+.03],[cl(ex+.3,.6,.9),ev],[1,ev+.12],
+      [.22,ev+.4],[.74,ev+.34],[1,cl(ev+.55,.5,1.1)],[0,1.02],[.45,1.05],[.86,1.12],[1,1.32],[0,mv],[cl(P.mouthW+.12,.3,.7),cl(mv+.08,1.1,1.75)],
+      [0,1.74],[.42,1.78],[1,1.86],[0,2],[.5,2],[1,2]];
+    const pts=[];for(const[u,v]of half){pts.push([u,cl(v,0,2)]);if(u>1e-6)pts.push([-u,cl(v,0,2)])}
+    for(const t of delaunay(pts))tri(surf(...pts[t[0]]),surf(...pts[t[1]]),surf(...pts[t[2]]))}
+  else for(let i=0;i<nvR;i++)for(let j=0;j<nuR;j++){
+    if(faceted)quad(FG[i][j],FG[i][j+1],FG[i+1][j+1],FG[i+1][j]);
+    else quad(FG[i][j],FG[i][j+1],FG[i+1][j+1],FG[i+1][j],FN[i][j],FN[i][j+1],FN[i+1][j+1],FN[i+1][j])}
+  cur=parts.main;
+  // cheek/jaw sides: in smooth mode the light turns gradually from the face plane to the side of the head
+  for(const s of[-1,1]){const B=fp(s,0),N=fp(s,1),C=fp(s,2),e=E(s),gg=G(s);
+    const nB=norm(add(fn(s,0),[s*1.4,0,0])),nN=norm(add(fn(s,1),[s*1.2,0,0])),nC=norm(add(fn(s,2),[s,-.4,0])),nE=[s,0,0],nG=norm([s,-.5,-.2]);
+    tri(e,B,N,nE,nB,nN);tri(e,N,gg,nE,nN,nG);tri(gg,N,C,nG,nN,nC)}
+  // nose wedge
+  if(g.nose){const{root,tip,wl,wr,bc}=g.nose;tri(root,wl,tip);tri(root,tip,wr);tri(wl,bc,tip);tri(tip,bc,wr)}
+  const{eh,ew,ezc,eyc,ca,sa}=g.ear;
+  // ears: a wedge attached at the front edge that flares away from the head toward the back rim,
+  // with a shallow bowl (the concha) on the outer face
+  const NE=faceted?14:32;
+  for(const s of[-1,1]){const ex=s*(ka+.005),pl=(lz,ly,dx)=>[ex+s*dx,eyc+lz*sa+ly*ca,ezc+lz*ca-ly*sa];
+    const base=[],rim=[];
+    for(let i=0;i<=NE;i++){const th=i/NE*TAU,co=Math.cos(th),si=Math.sin(th);
+      const lz=ew*co*(co>0?.55:1)*(si<0?1+.3*si:1),ly=eh*si*(si<0?.92:1);
+      const back=Math.min(1,Math.max(0,(-lz/ew+.25)/1.25)),lobe=si<-.5?.6:1,d=(.02+.11*back)*lobe*P.earS;
+      base.push(pl(lz,ly,0));rim.push(pl(lz*1.04,ly*1.03,d))}
+    const bowl=pl(-ew*.05,-eh*.05,-.01),root=pl(0,0,0);
+    for(let i=0;i<NE;i++){tri(bowl,rim[i],rim[i+1]);quad(base[i],base[i+1],rim[i+1],rim[i]);tri(root,base[i+1],base[i])}}
+  // underside of the jaw, from the jaw line back to the throat (connects to the neck)
+  cur=parts.strip;
+  const ring=attachRing(g,P),line=[G(-1)];
+  for(let i=0;i<=10;i++)line.push(fp(-1+2*i/10,2));line.push(G(1));
+  const acc=[0];for(let i=1;i<line.length;i++)acc.push(acc[i-1]+Math.hypot(...sub(line[i],line[i-1])));
+  const at=t=>{const d=t*acc[acc.length-1];let i=1;while(i<acc.length-1&&acc[i]<d)i++;const f=(d-acc[i-1])/((acc[i]-acc[i-1])||1);return lerp3(line[i-1],line[i],f)};
+  const NS=faceted?8:20;
+  for(let k=0;k<NS;k++){const t0=k/NS,t1=(k+1)/NS;quad(at(t0),at(t1),ring(Math.PI*(1-t1)),ring(Math.PI*(1-t0)))}
+  for(const s of[-1,1]){const th0=s>0?0:Math.PI,dir=s>0?-1:1,e=E(s),gg=G(s);tri(gg,ring(th0),e);
+    const n=faceted?3:8;for(let i=0;i<n;i++)tri(e,ring(th0+dir*Math.PI/2*i/n),ring(th0+dir*Math.PI/2*(i+1)/n))}
+  // without a neck: close the jaw underneath instead
+  cur=parts.fan;
+  const Cc=fp(0,2),Cp=fp(1,2),Cm=fp(-1,2),Gp=G(1),Gm=G(-1);
+  tri(Cc,Cp,Gp);tri(Cc,Gp,Gm);tri(Cc,Gm,Cm);tri(E(1),G(1),G(-1));tri(E(1),G(-1),E(-1));
+  return parts;
+}
+// neck tube in world space: from the attachment ring (moves with the head) down to a fixed base
+function buildNeck(P,g,F,faceted){
+  const out=[],M=faceted?16:48,K=faceted?5:14,lean=P.neckLean*DEG;
+  const dn=[0,-Math.cos(lean),-Math.sin(lean)],u2=[0,-Math.sin(lean),Math.cos(lean)];
+  const top=[0,g.Pv[1]+.15,g.Pv[2]+.08],bot=add(top,mul(dn,1.6)),rx=P.neckW*g.a,rz=rx*.95,ring=attachRing(g,P);
+  const B=th=>bodyToWorld(add(bot,add([rx*Math.cos(th),0,0],mul(u2,rz*Math.sin(th)))),F);
+  const grid=[];for(let k=0;k<=K;k++){const t=k/K,e=t*t*(3-2*t),row=[];
+    for(let j=0;j<=M;j++){const th=j/M*TAU;row.push(lerp3(toWorld(ring(th),F),B(th),e))}grid.push(row)}
+  const nrm=(k,j)=>{const a=grid[Math.max(0,k-1)][j],b=grid[Math.min(K,k+1)][j],c=grid[k][(j+1)%M],d=grid[k][(j-1+M)%M];return norm(cross(sub(c,d),sub(b,a)))};
+  const tri=(A,B2,C,na,nb,nc)=>{if(faceted||!na){const n=norm(cross(sub(B2,A),sub(C,A)));na=nb=nc=n}
+    out.push(A[0],A[1],A[2],na[0],na[1],na[2],B2[0],B2[1],B2[2],nb[0],nb[1],nb[2],C[0],C[1],C[2],nc[0],nc[1],nc[2])};
+  for(let k=0;k<K;k++)for(let j=0;j<M;j++){
+    const p00=grid[k][j],p01=grid[k][j+1],p10=grid[k+1][j],p11=grid[k+1][j+1];
+    let n00=nrm(k,j),n01=nrm(k,(j+1)%M),n10=nrm(k+1,j),n11=nrm(k+1,(j+1)%M);
+    if(faceted){const n=norm(cross(sub(p11,p00),sub(p10,p01)));out.push(...p00,...n,...p10,...n,...p11,...n,...p00,...n,...p11,...n,...p01,...n);continue}
+    tri(p00,p10,p11,n00,n10,n11);tri(p00,p11,p01,n00,n11,n01)}
+  const bw=bodyToWorld(bot,F),dw=mv(F.Ry,dn);for(let j=0;j<M;j++)tri(bw,grid[K][j],grid[K][j+1],dw,dw,dw);
+  return out;
+}
+
+/* ---------- view ---------- */
+function frameData(W,H){
+  const g=geo,R=rotMat(S.yaw,S.pitch,S.roll),RT=tr(R);
+  const D=3.2+300*Math.pow(1-S.persp/100,3);
+  const neck=!!S.groups.neck;
+  const neckBottom=g.Pv[1]+.15-1.6*Math.cos(S.neckLean*DEG);
+  const cy=(g.b+(neck?Math.min(g.yC,neckBottom):g.yC))/2;
+  const scale=Math.min(W,H)/(neck?4.5:3.7)*S.zoom/100;
+  const camW=[0,cy,D],Oh=add(mv(RT,sub(camW,g.Pv)),g.Pv);
+  // the neck and base turn fully with the yaw and follow part of the tilt and roll
+  const nf=(S.neckFollow??45)/100,Ry=rotMat(S.yaw,S.pitch*nf,S.roll*nf);
+  const m=Math.min(W,H),ox=(S.panX||0)*m,oy=(S.panY||0)*m;
+  return{R,RT,Ry,D,cy,scale,camW,Oh,W,H,ox,oy};
+}
+const toWorld=(p,F)=>add(mv(F.R,sub(p,geo.Pv)),geo.Pv);
+const toHead=(w,F)=>add(mv(F.RT,sub(w,geo.Pv)),geo.Pv);
+// the neck and base turn with the head's yaw and follow part of the tilt and roll ("Pescoço acompanha")
+const bodyToWorld=(p,F)=>add(mv(F.Ry,sub(p,geo.Pv)),geo.Pv);
+function proj(w,F){const qz=w[2],f=F.D/(F.D-qz);return[F.W/2+(F.ox||0)+w[0]*f*F.scale,F.H/2+(F.oy||0)-(w[1]-F.cy)*f*F.scale]}
+
+function occluded(ph,F){
+  const g=geo,O=F.Oh,dx=ph[0]-O[0],dy=ph[1]-O[1],dz=ph[2]-O[2];
+  const len=Math.sqrt(dx*dx+dy*dy+dz*dz),tMax=1-.004/len;
+  const ox=O[0]/g.a,oy=O[1]/g.b,oz=O[2]/g.c,ex=dx/g.a,ey=dy/g.b,ez=dz/g.c;
+  const A=ex*ex+ey*ey+ez*ez,B=2*(ox*ex+oy*ey+oz*ez),C=ox*ox+oy*oy+oz*oz-1,disc=B*B-4*A*C;
+  if(disc>0){const q=Math.sqrt(disc),t0=(-B-q)/(2*A),t1=(-B+q)/(2*A);
+    let s0=-1e9,s1=1e9;
+    if(Math.abs(dx)>1e-12){let ta=(-g.ka-O[0])/dx,tb=(g.ka-O[0])/dx;if(ta>tb){const t=ta;ta=tb;tb=t}s0=ta;s1=tb}
+    else if(Math.abs(O[0])>g.ka){s0=1;s1=0}
+    const en=Math.max(t0,s0),xt=Math.min(t1,s1);
+    if(en<xt&&en<tMax&&en>0){
+      // below the brow the front of the ball is trimmed away by the face mass: a hit there doesn't count
+      // (the face mesh below takes over), so lines resting in the eye sockets stay visible
+      let trimmed=false;const py=O[1]+en*dy;
+      if(g.dep&&py<-1e-4&&py>=g.yC){const px=O[0]+en*dx,pz=O[2]+en*dz,v=py>=g.yN?py/g.yN:1+(py-g.yN)/(g.yC-g.yN),xr=Math.abs(g.fp(1,v)[0])||1e-6;
+        if(Math.abs(px)<=xr&&pz>g.fp(px/xr,v)[2]-g.dep-.003)trimmed=true}
+      if(!trimmed)return true}}
+  const bs=g.bs,mx=O[0]-bs.c[0],my=O[1]-bs.c[1],mz=O[2]-bs.c[2];
+  const bB=2*(mx*dx+my*dy+mz*dz),bC=mx*mx+my*my+mz*mz-bs.r*bs.r;
+  if(bB*bB-4*len*len*bC<0)return false;
+  const Tr=g.tris;
+  for(let i=0;i<Tr.length;i++){const t=Tr[i];
+    const px=dy*t.e2z-dz*t.e2y,py=dz*t.e2x-dx*t.e2z,pz=dx*t.e2y-dy*t.e2x;
+    const det=t.e1x*px+t.e1y*py+t.e1z*pz;if(det>-1e-12&&det<1e-12)continue;
+    const inv=1/det,sx=O[0]-t.x,sy=O[1]-t.y,sz=O[2]-t.z,u=(sx*px+sy*py+sz*pz)*inv;if(u<0||u>1)continue;
+    const qx=sy*t.e1z-sz*t.e1y,qy=sz*t.e1x-sx*t.e1z,qz=sx*t.e1y-sy*t.e1x,v=(dx*qx+dy*qy+dz*qz)*inv;if(v<0||u+v>1)continue;
+    const tt=(t.e2x*qx+t.e2y*qy+t.e2z*qz)*inv;if(tt>1e-6&&tt<tMax)return true}
+  return false;
+}
+
+function addCurve(runs,g,pts,isWorld,visFn,F,noOcc){
+  let run=null,prev=null;
+  for(let i=0;i<pts.length;i++){const p=pts[i];
+    if(!p){if(run&&run.pts.length>1)runs.push(run);run=null;prev=null;continue}
+    const pw=isWorld?p:toWorld(p,F),ph=isWorld?toHead(p,F):p;
+    let vis=noOcc?true:!occluded(ph,F);if(vis&&visFn)vis=visFn(i,pw);
+    const sp=proj(pw,F);
+    if(!run)run={g,vis,pts:[sp]};
+    else if(vis===run.vis)run.pts.push(sp);
+    else{const m=[(prev[0]+sp[0])/2,(prev[1]+sp[1])/2];run.pts.push(m);if(run.pts.length>1)runs.push(run);run={g,vis,pts:[m,sp]}}
+    prev=sp}
+  if(run&&run.pts.length>1)runs.push(run);
+}
+function silhouette(F){
+  const g=geo,cp=[F.Oh[0]/g.a,F.Oh[1]/g.b,F.Oh[2]/g.c],Lc=Math.hypot(cp[0],cp[1],cp[2]);
+  if(Lc<=1.0001)return null;
+  const ch=mul(cp,1/Lc),d0=1/Lc,rho=Math.sqrt(1-d0*d0),ref=Math.abs(ch[1])<.9?[0,1,0]:[1,0,0];
+  const e1=norm(cross(ch,ref)),e2=cross(ch,e1),out=[];
+  for(let i=0;i<=160;i++){const t=i/160*TAU,u=add(mul(ch,d0),add(mul(e1,rho*Math.cos(t)),mul(e2,rho*Math.sin(t))));
+    const p=[u[0]*g.a,u[1]*g.b,u[2]*g.c];out.push(Math.abs(p[0])>g.ka?null:p)}
+  return out;
+}
+function neckRuns(runs,F){
+  const g=geo,lean=S.neckLean*DEG,dn=[0,-Math.cos(lean),-Math.sin(lean)],u1=[1,0,0],u2=[0,-Math.sin(lean),Math.cos(lean)];
+  const top=[0,g.Pv[1]+.15,g.Pv[2]+.08],bot=add(top,mul(dn,1.6)),rx=S.neckW*g.a,rz=rx*.95;
+  const ring=(cen,th)=>bodyToWorld(add(cen,add(mul(u1,rx*Math.cos(th)),mul(u2,rz*Math.sin(th)))),F);
+  const pc0=proj(bodyToWorld(top,F),F),pc1=proj(bodyToWorld(bot,F),F),ax=[pc1[0]-pc0[0],pc1[1]-pc0[1]],al=Math.hypot(ax[0],ax[1])||1,nr=[-ax[1]/al,ax[0]/al];
+  const ext=(cen,pc)=>{let mx=-1e9,mn=1e9,tM=0,tm=0;for(let i=0;i<120;i++){const th=i/120*TAU,sp=proj(ring(cen,th),F),d=(sp[0]-pc[0])*nr[0]+(sp[1]-pc[1])*nr[1];if(d>mx){mx=d;tM=th}if(d<mn){mn=d;tm=th}}return[tM,tm]};
+  const[a0,b0]=ext(top,pc0),[a1,b1]=ext(bot,pc1);
+  const seg=(p,q,n)=>{const o=[];for(let i=0;i<=n;i++)o.push(lerp3(p,q,i/n));return o};
+  addCurve(runs,'neck',seg(ring(top,a0),ring(bot,a1),30),true,null,F);
+  addCurve(runs,'neck',seg(ring(top,b0),ring(bot,b1),30),true,null,F);
+  const rp=[],rn=[];for(let i=0;i<=72;i++){const th=i/72*TAU;rp.push(ring(bot,th));rn.push(mv(F.Ry,add(mul(u1,Math.cos(th)/rx),mul(u2,Math.sin(th)/rz))))}
+  addCurve(runs,'neck',rp,true,(i,pw)=>dot(rn[i],sub(F.camW,pw))>0,F);
+}
+function buildRuns(W,H){
+  const F=frameData(W,H),runs=[],front={};
+  for(const k in geo.BF){const f=geo.BF[k];front[k]=dot(f.n,sub(F.Oh,f.c))>0}
+  for(const g of METHODS[S.method]||METHODS.loomis){if(!S.groups[g])continue;
+    if(g==='neck'){if(!S.solid)neckRuns(runs,F);continue}
+    if(g==='skull'||g==='acircle'){const sil=silhouette(F);if(sil)addCurve(runs,g==='skull'?'outline':'acircleO',sil,false,null,F)}
+    if(g==='bmouth')for(const it of geo.barrel)addCurve(runs,g,it.pts,false,i=>dot(it.nr[i],sub(F.Oh,it.pts[i]))>0,F);
+    if(geo.BL[g]){for(const it of geo.BL[g])addCurve(runs,g,it.pts,false,it.faces?()=>it.faces.some(f=>typeof f==='string'?front[f]:dot(f.n,sub(F.Oh,f.c))>0):null,F,true);if(!geo.L[g])continue}
+    for(const pts of geo.L[g]||[])addCurve(runs,g,pts,false,null,F)}
+  return runs;
+}
+// color-blind friendly palette (Okabe–Ito) mapped from the standard guide colors
+const CB={'#2a2a2e':'#1d1d1f','#2f6fde':'#0072b2','#e0474c':'#d55e00','#e8902a':'#e69f00','#1f9d6b':'#009e73','#8b5cf6':'#cc79a7','#0f8f9c':'#56b4e9'};
+let DARK=false; // true only while drawing the on-screen preview with a dark theme
+const DARKMAP={'#2a2a2e':'#e2e0da','#1d1d1f':'#e8e6e1','#7a7f87':'#a7acb4','#8f96a3':'#7d838f'};
+const palColor=g=>{let c=COLORS[g];if(S.palette==='cb')c=CB[c]||c;return DARK?(DARKMAP[c]||c):c};
+// which guide groups light up while a proportion setting is being adjusted
+const HLG={skull:['outline','acircleO','skull','side','acircle','box','boxmid'],thirds:['thirds','q3','boxthirds','across'],
+  face:['jaw','ajaw','boxjaw','q5','bcheek','center'],jaw:['jaw','ajaw','boxjaw','bjaw'],eyes:['feat','qal','across'],feat:['feat','qal','bmouth'],neck:['neck']};
+const HLMAP={cw:'skull',ch:'skull',cd:'skull',k:'skull',tTop:'thirds',tMid:'thirds',tLow:'thirds',faceW:'face',faceZ:'face',
+  jawW:'jaw',jawY:'jaw',jawZ:'jaw',chinW:'jaw',chinZ:'jaw',eyeY:'eyes',eyeS:'eyes',eyeH:'eyes',eyeX:'eyes',noseL:'feat',mouthY:'feat',mouthW:'feat',earS:'feat',neckW:'neck',neckLean:'neck'};
+let HL=null;
+function buildMarkup(W,H,bg){
+  const runs=buildRuns(W,H),lw=S.lw,halo=S.solid&&GL.ok&&S.halo!==false;let hid='',vis='',hal='';
+  for(const r of runs){
+    const d=r.pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join('');
+    const col=S.colorMode==='mono'?(DARK&&S.mono.toLowerCase()==='#1d1d1f'?'#e8e6e1':S.mono):palColor(r.g),lit=HL&&HL.has(r.g),dim=HL&&!lit;
+    if(r.vis){if(lit)hal+=`<path d="${d}" stroke="${col}" stroke-opacity=".28" stroke-width="${(lw*6+4).toFixed(2)}"/>`;
+      if(halo&&r.g!=='vp'&&!dim)hal+=`<path d="${d}" stroke="${DARK?'#1c1c1f':'#fbfaf6'}" stroke-opacity=".75" stroke-width="${(lw*2.8+1).toFixed(2)}"/>`;
+      vis+=`<path d="${d}" stroke="${col}"${dim?' stroke-opacity=".3"':''} stroke-width="${(lw*(lit?1.8:1)*(r.g==='outline'||r.g==='acircleO'?1.45:r.g==='box'?1.2:r.g==='vp'?.6:1)).toFixed(2)}"/>`}
+    else{if(S.hidden==='hide'||r.g==='neck'||r.g==='vp'||dim)continue;
+      hid+=`<path d="${d}" stroke="${col}" stroke-width="${(lw*.75).toFixed(2)}" stroke-opacity="${S.hidden==='xray'?.5:.4}"${S.hidden==='dash'?` stroke-dasharray="${(lw*2.5).toFixed(1)} ${(lw*2.8).toFixed(1)}"`:''}/>`}
+  }
+  return(bg?`<rect width="${W}" height="${H}" fill="${bg}"/>`:'')+`<g fill="none" stroke-linecap="round" stroke-linejoin="round">${hid}${hal}${vis}</g>`;
+}
+
+/* ---------- WebGL solid renderer ---------- */
+const GL={ok:false,max:4096};
+function initGL(canvas){
+  const gl=canvas.getContext('webgl',{preserveDrawingBuffer:true,antialias:true,alpha:true,premultipliedAlpha:true});
+  if(!gl)return false;
+  const vs=`attribute vec3 aP;attribute vec3 aN;uniform mat3 uR;uniform vec3 uPv;uniform float uWorld,uCy,uD,uS,uW,uH,uNr,uFr,uOx,uOy;
+  varying vec3 vN;varying vec3 vQ;
+  void main(){vec3 w=uWorld>.5?aP:uR*(aP-uPv)+uPv;vec3 n=uWorld>.5?aN:uR*aN;vec3 q=vec3(w.x,w.y-uCy,w.z);float d=uD-q.z;
+  gl_Position=vec4(q.x*uD*uS/(uW*.5)+uOx*d,q.y*uD*uS/(uH*.5)+uOy*d,(uFr+uNr)/(uFr-uNr)*d-2.*uFr*uNr/(uFr-uNr),d);vN=n;vQ=q;}`;
+  const fs=`precision mediump float;uniform vec3 uL,uCol,uDark;uniform float uInt,uAmb,uSteps,uDf;varying vec3 vN;varying vec3 vQ;
+  void main(){vec3 n=normalize(vN);vec3 v=normalize(vec3(0.,0.,uDf)-vQ);if(dot(n,v)<0.)n=-n;
+  float s=clamp(uAmb+(1.-uAmb)*max(dot(n,uL),0.)*uInt,0.,1.);
+  if(uSteps>1.5)s=floor(min(s,.999)*uSteps)/(uSteps-1.);
+  gl_FragColor=vec4(mix(uDark,uCol,s),1.);}`;
+  const sh=(t,src)=>{const o=gl.createShader(t);gl.shaderSource(o,src);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))throw gl.getShaderInfoLog(o);return o};
+  const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,vs));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(pr);
+  if(!gl.getProgramParameter(pr,gl.LINK_STATUS))return false;
+  gl.useProgram(pr);
+  const U={};['uR','uPv','uWorld','uCy','uD','uDf','uS','uW','uH','uNr','uFr','uOx','uOy','uL','uCol','uDark','uInt','uAmb','uSteps'].forEach(n=>U[n]=gl.getUniformLocation(pr,n));
+  Object.assign(GL,{ok:true,gl,canvas,U,aP:gl.getAttribLocation(pr,'aP'),aN:gl.getAttribLocation(pr,'aN'),
+    bHead:gl.createBuffer(),bNeck:gl.createBuffer(),ranges:null});
+  gl.enable(gl.DEPTH_TEST);
+  const vp=gl.getParameter(gl.MAX_VIEWPORT_DIMS)||[4096,4096];GL.max=Math.min(4096,gl.getParameter(gl.MAX_RENDERBUFFER_SIZE)||4096,vp[0],vp[1]);
+  return true;
+}
+const hex3=h=>{const v=parseInt((h||'#c9c5bd').slice(1),16);return[(v>>16&255)/255,(v>>8&255)/255,(v&255)/255]};
+function renderGL(W,H,dpr){
+  if(!GL.ok)return;const{gl,canvas,U}=GL;
+  const cw=Math.max(1,Math.round(W*dpr)),ch=Math.max(1,Math.round(H*dpr));
+  if(canvas.width!==cw||canvas.height!==ch){canvas.width=cw;canvas.height=ch}
+  gl.viewport(0,0,cw,ch);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+  if(!S.solid)return;
+  const faceted=S.shade==='flat';
+  const cel=faceted&&+S.tones>0;
+  if(solidDirty||GL.faceted!==faceted||GL.cel!==cel){const p=buildSolid(S,geo,faceted),all=p.main.concat(p.face,p.strip,p.fan);
+    gl.bindBuffer(gl.ARRAY_BUFFER,GL.bHead);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(all),gl.STATIC_DRAW);
+    const m=p.main.length/6,fc=p.face.length/6,st=p.strip.length/6,fa=p.fan.length/6;GL.ranges={main:[0,m],face:[m,fc],strip:[m+fc,st],fan:[m+fc+st,fa]};solidDirty=false;GL.faceted=faceted;GL.cel=cel}
+  const F=frameData(W,H),R=F.R;
+  gl.uniformMatrix3fv(U.uR,false,[R[0][0],R[1][0],R[2][0],R[0][1],R[1][1],R[2][1],R[0][2],R[1][2],R[2][2]]);
+  gl.uniform3fv(U.uPv,geo.Pv);gl.uniform1f(U.uCy,F.cy);gl.uniform1f(U.uD,F.D);gl.uniform1f(U.uDf,F.D);gl.uniform1f(U.uS,F.scale);gl.uniform1f(U.uW,W);gl.uniform1f(U.uH,H);
+  gl.uniform1f(U.uNr,Math.max(.2,F.D-4.5));gl.uniform1f(U.uFr,F.D+4.5);gl.uniform1f(U.uOx,F.ox/(W*.5));gl.uniform1f(U.uOy,-F.oy/(H*.5));
+  const az=S.lightAz*DEG,el=S.lightEl*DEG;gl.uniform3fv(U.uL,[Math.cos(el)*Math.sin(az),Math.sin(el),Math.cos(el)*Math.cos(az)]);
+  const col=hex3(S.mat);gl.uniform3fv(U.uCol,col);gl.uniform3fv(U.uDark,col.map(v=>v*.18+.03));
+  gl.uniform1f(U.uInt,S.lightInt/100);gl.uniform1f(U.uAmb,S.amb/100);gl.uniform1f(U.uSteps,+S.tones||0);
+  const bind=b=>{gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.enableVertexAttribArray(GL.aP);gl.vertexAttribPointer(GL.aP,3,gl.FLOAT,false,24,0);
+    gl.enableVertexAttribArray(GL.aN);gl.vertexAttribPointer(GL.aN,3,gl.FLOAT,false,24,12)};
+  bind(GL.bHead);gl.uniform1f(U.uWorld,0);
+  const neck=!!S.groups.neck,r=GL.ranges;
+  gl.drawArrays(gl.TRIANGLES,r.main[0],r.main[1]);
+  gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(-2,-4);gl.drawArrays(gl.TRIANGLES,r.face[0],r.face[1]);gl.disable(gl.POLYGON_OFFSET_FILL);
+  const extra=neck?r.strip:r.fan;gl.drawArrays(gl.TRIANGLES,extra[0],extra[1]);
+  if(neck){const nk=buildNeck(S,geo,F,faceted);bind(GL.bNeck);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(nk),gl.DYNAMIC_DRAW);
+    gl.uniform1f(U.uWorld,1);gl.drawArrays(gl.TRIANGLES,0,nk.length/6)}
+}
+
+/* ---------- 3D export (GLB = binary glTF 2.0) ---------- */
+// The solid head and neck as one mesh, in meters (ball radius ≈ 10 cm), Y up, face toward +Z.
+// pose=false exports the head upright (turn/tilt/roll = 0); pose=true keeps the current angle.
+function buildGLB(pose,guides){
+  const keep=[S.yaw,S.pitch,S.roll];if(!pose){S.yaw=S.pitch=S.roll=0}
+  try{
+    const F=frameData(800,800),faceted=S.shade==='flat',p=buildSolid(S,geo,faceted),U=.1;
+    const headTris=p.main.concat(p.face,S.groups.neck?p.strip:p.fan);
+    const parts=[{name:'cabeca',arr:headTris,world:false}];
+    if(S.groups.neck)parts.push({name:'pescoco',arr:buildNeck(S,geo,F,faceted),world:true});
+    const bins=[],views=[],accs=[],prims=[];let off=0;
+    for(const pt of parts){const n=pt.arr.length/6,pos=new Float32Array(n*3),nor=new Float32Array(n*3),mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9];
+      for(let i=0;i<n;i++){let P=[pt.arr[i*6],pt.arr[i*6+1],pt.arr[i*6+2]],N=[pt.arr[i*6+3],pt.arr[i*6+4],pt.arr[i*6+5]];
+        if(!pt.world){P=toWorld(P,F);N=mv(F.R,N)}
+        P=[(P[0])*U,(P[1]-geo.Pv[1])*U,(P[2]-geo.Pv[2])*U];N=norm(N);
+        for(let k=0;k<3;k++){pos[i*3+k]=P[k];nor[i*3+k]=N[k];if(P[k]<mn[k])mn[k]=P[k];if(P[k]>mx[k])mx[k]=P[k]}}
+      for(const[arr,isPos]of[[pos,true],[nor,false]]){bins.push(arr);views.push({buffer:0,byteOffset:off,byteLength:arr.byteLength,target:34962});off+=arr.byteLength;
+        accs.push(Object.assign({bufferView:views.length-1,componentType:5126,count:n,type:'VEC3'},isPos?{min:mn,max:mx}:{}))}
+      prims.push({attributes:{POSITION:accs.length-2,NORMAL:accs.length-1},material:0,mode:4})}
+    // guides as line primitives, one per group with its own flat (unlit) color; lifted a hair off the surface
+    // so they don't flicker into it; the 3D app's own depth test hides the ones behind the head
+    // glTF colors are linear; the app's colors are sRGB
+    const lin=x=>x<=.04045?x/12.92:((x+.055)/1.055)**2.4,gmats=[];
+    if(guides){const c0=[0,geo.yN*.4,0],lift=p=>add(p,mul(norm(sub(p,c0)),.006));
+      for(const g of METHODS[S.method]||METHODS.loomis){if(!S.groups[g]||g==='neck')continue;
+        const polys=[...(geo.L[g]||[]),...((geo.BL&&geo.BL[g])||[]).map(it=>it.pts),...(g==='bmouth'?geo.barrel.map(it=>it.pts):[])];
+        const v=[];for(const pl of polys)for(let i=0;i<pl.length-1;i++){const p0=pl[i],p1=pl[i+1];if(!p0||!p1)continue;v.push(lift(p0),lift(p1))}
+        if(!v.length)continue;const n=v.length,pos=new Float32Array(n*3),mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9];
+        for(let i=0;i<n;i++){let P=toWorld(v[i],F);P=[P[0]*U,(P[1]-geo.Pv[1])*U,(P[2]-geo.Pv[2])*U];
+          for(let k=0;k<3;k++){pos[i*3+k]=P[k];if(P[k]<mn[k])mn[k]=P[k];if(P[k]>mx[k])mx[k]=P[k]}}
+        bins.push(pos);views.push({buffer:0,byteOffset:off,byteLength:pos.byteLength,target:34962});off+=pos.byteLength;
+        accs.push({bufferView:views.length-1,componentType:5126,count:n,type:'VEC3',min:mn,max:mx});
+        const gc=hex3(COLORS[g]||'#2a2a2e').map(lin);gmats.push({name:'guia-'+g,pbrMetallicRoughness:{baseColorFactor:[gc[0],gc[1],gc[2],1],metallicFactor:0,roughnessFactor:1},extensions:{KHR_materials_unlit:{}}});
+        prims.push({attributes:{POSITION:accs.length-1},material:gmats.length,mode:1})}}
+    const col=hex3(S.mat).map(lin);
+    const json={asset:{version:'2.0',generator:'Gerador de Cabeças'},...(gmats.length?{extensionsUsed:['KHR_materials_unlit']}:{}),scene:0,scenes:[{nodes:[0]}],
+      nodes:[{name:'cabeca-'+S.style+'-'+S.base,mesh:0}],meshes:[{name:'cabeca',primitives:prims}],
+      materials:[{name:'material',doubleSided:true,pbrMetallicRoughness:{baseColorFactor:[col[0],col[1],col[2],1],metallicFactor:0,roughnessFactor:.85}},...gmats],
+      buffers:[{byteLength:off}],bufferViews:views,accessors:accs};
+    const enc=new TextEncoder();let js=enc.encode(JSON.stringify(json));
+    const jpad=(4-js.length%4)%4,jl=js.length+jpad,total=12+8+jl+8+off,buf=new ArrayBuffer(total),dv=new DataView(buf),u8=new Uint8Array(buf);
+    dv.setUint32(0,0x46546C67,true);dv.setUint32(4,2,true);dv.setUint32(8,total,true);
+    dv.setUint32(12,jl,true);dv.setUint32(16,0x4E4F534A,true);u8.set(js,20);for(let i=0;i<jpad;i++)u8[20+js.length+i]=0x20;
+    let o=20+jl;dv.setUint32(o,off,true);dv.setUint32(o+4,0x004E4942,true);o+=8;
+    for(const a of bins){u8.set(new Uint8Array(a.buffer),o);o+=a.byteLength}
+    return buf}
+  finally{[S.yaw,S.pitch,S.roll]=keep}}
+
+/* ---------- UI ---------- */
+if(typeof document!=='undefined'){(function(){
+  const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],svg=$('#view');
+  const darkQ=window.matchMedia?matchMedia('(prefers-color-scheme: dark)'):{matches:false};
+  const t=k=>{const d=I18N[S.lang]||I18N.pt;return k in d?d[k]:k};
+  const lab=k=>SDEF[k][S.lang==='en'?6:5];
+  let pending=false,anim=null,saveT=null;
+  const wrap=y=>((y+180)%360+360)%360-180;
+
+  // ---------- persistence + history ----------
+  const persist=()=>{try{localStorage.setItem(STORE,JSON.stringify(S))}catch(e){}};
+  let hist=[],hi=-1;
+  const snapState=()=>{const o={...S,groups:{...S.groups}};delete o.lang;delete o.tab;return JSON.stringify(o)};
+  function commit(){const st=snapState();if(hi>=0&&hist[hi]===st)return;hist=hist.slice(0,hi+1);hist.push(st);if(hist.length>120)hist.shift();hi=hist.length-1;updHist()}
+  function flush(){if(saveT){clearTimeout(saveT);saveT=null;persist();commit()}}
+  const save=()=>{clearTimeout(saveT);saveT=setTimeout(()=>{saveT=null;persist();commit()},350)};
+  function restore(i){const o=JSON.parse(hist[i]);Object.assign(S,o);S.groups={...o.groups};hi=i;anim=null;rebuild();renderGroups();syncAll();updHist();persist();request()}
+  const undo=()=>{flush();if(hi>0)restore(hi-1)},redo=()=>{flush();if(hi<hist.length-1)restore(hi+1)};
+  function updHist(){$$('[data-act=undo]').forEach(b=>b.disabled=hi<=0);$$('[data-act=redo]').forEach(b=>b.disabled=hi>=hist.length-1)}
+  const request=()=>{if(!pending){pending=true;requestAnimationFrame(tick)}};
+  const changed=()=>{if(geo.rk!==relKey())rebuild();request();save();markLP()};
+
+  // ---------- toast ----------
+  let toastT=null;
+  function toast(msg,actLabel,act){const el=$('#toast');el.textContent='';const sp=document.createElement('span');sp.textContent=msg;el.appendChild(sp);
+    if(actLabel){const b=document.createElement('button');b.textContent=actLabel;b.addEventListener('click',()=>{el.hidden=true;act()});el.appendChild(b)}
+    el.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{el.hidden=true},5000)}
+
+  // ---------- drawing ----------
+  function draw(){
+    const W=svg.clientWidth||600,H=svg.clientHeight||600;
+    svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+    renderGL(W,H,Math.min(2,window.devicePixelRatio||1));
+    DARK=darkQ.matches;svg.innerHTML=buildMarkup(W,H,null)+buildNumbers(W,H);DARK=false;
+    $('#readout').textContent=`${lab('yaw')} ${Math.round(S.yaw)}° · ${lab('pitch').split(' (')[0]} ${Math.round(S.pitch)}° · ${lab('roll')} ${Math.round(S.roll)}°`;
+    drawGizmo();
+  }
+  // orientation indicator: where the face points (accent), up and ear-to-ear axes
+  function drawGizmo(){DARK=darkQ.matches;try{drawGizmo2()}finally{DARK=false}}
+  function drawGizmo2(){const R=rotMat(S.yaw,S.pitch,S.roll),ax=[[[0,0,1],'#e0474c',3],[[0,1,0],DARK?'#d8d6d0':'#55534e',2],[[1,0,0],DARK?'#77757c':'#a9a59c',2]].map(([v,c,w])=>{const p=mv(R,v);return{p,c,w}});
+    ax.sort((a,b)=>a.p[2]-b.p[2]);let o='<circle r="30" style="fill:var(--glass);stroke:var(--glass-line)"/>';
+    for(const{p,c,w}of ax){const x=p[0]*22,y=-p[1]*22,back=p[2]<-.05;o+=`<line x1="0" y1="0" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"${back?' stroke-dasharray="2 3" opacity=".6"':''}/>`;
+      if(c==='#e0474c')o+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${back?3:4.5}" fill="${back?(DARK?'#26262a':'#fff'):c}" stroke="${c}" stroke-width="1.5"/>`}
+    $('#gizmo').innerHTML=o}
+  function tick(now){pending=false;
+    if(anim){const k=Math.min(1,(now-anim.t0)/380),e=1-Math.pow(1-k,3);
+      for(const key of['yaw','pitch','roll'])S[key]=anim.from[key]+(anim.to[key]-anim.from[key])*e;
+      if(k>=1){S.yaw=wrap(S.yaw);anim=null;save()}else request();
+      syncAngles()}
+    draw()}
+  function animateTo(tg){const from={yaw:S.yaw,pitch:S.pitch,roll:S.roll},dy=((tg.yaw-from.yaw+540)%360)-180;
+    anim={from,to:{yaw:from.yaw+dy,pitch:tg.pitch,roll:tg.roll},t0:performance.now()};request()}
+
+  // ---------- sliders (with per-setting restore) ----------
+  const rows={};
+  const fmt=k=>{const v=S[k];if(['yaw','pitch','roll','neckLean','lightAz','lightEl'].includes(k))return Math.round(v)+'°';if(['persp','zoom','lightInt','amb','neckFollow','vol'].includes(k))return Math.round(v)+'%';if(k==='lw')return(+v).toFixed(1);return(+v).toFixed(2)};
+  const defaultFor=k=>PKEYS.includes(k)?presetValues(S.style,S.base)[k]:DEFAULT[k];
+  const isModified=()=>{const p=presetValues(S.style,S.base);return PKEYS.some(k=>Math.abs(S[k]-p[k])>1e-6)};
+  function resetKey(key){if(PKEYS.includes(key)){S[key]=defaultFor(key);rebuild()}else{S[key]=DEFAULT[key];solidDirty=true}syncAll();changed()}
+  for(const d of SLIDERS){const[sec,key,min,max,step]=d,host=document.querySelector(`#sec-${sec} .sl`);
+    const row=document.createElement('div');row.className='row';
+    const nb=NUMOF[key]&&PKEYS.includes(key)?`<span class="nb" style="--nc:${SECCOL[sec]}">${NUMOF[key]}</span>`:'';
+    row.innerHTML=`<div class="lab"><span class="nmw">${nb}<span class="nm"></span></span><span class="lv"><button class="rs" type="button" hidden>↺</button><b></b></span></div><input type="range" min="${min}" max="${max}" step="${step}">`;
+    row.dataset.key=key;
+    host.appendChild(row);const inp=row.querySelector('input'),rs=row.querySelector('.rs');
+    inp.addEventListener('input',()=>{anim=null;S[key]=+inp.value;if(PKEYS.includes(key))rebuild();if(key==='vol')solidDirty=true;syncRow(key);updMod();if(key==='lightAz'||key==='lightEl')placeLight();changed()});
+    rs.addEventListener('click',()=>resetKey(key));
+    if(HLMAP[key]){const on=()=>setHL(key),off=()=>clearHL();
+      inp.addEventListener('pointerdown',on);inp.addEventListener('focus',on);row.addEventListener('mouseenter',on);
+      inp.addEventListener('pointerup',off);inp.addEventListener('blur',off);row.addEventListener('mouseleave',off);inp.addEventListener('change',off)}
+    row.querySelector('.lab').addEventListener('dblclick',()=>resetKey(key));
+    rows[key]={row,inp,rs,val:row.querySelector('b'),nm:row.querySelector('.nm')}}
+  let hlT=null;
+  function setHL(k){clearTimeout(hlT);HL=new Set(HLG[HLMAP[k]]||[]);NUMHL=NUMOF[k]?k:null;request()}
+  function clearHL(){clearTimeout(hlT);hlT=setTimeout(()=>{HL=null;NUMHL=null;request()},450)}
+  let lastTap={k:null,t:0};
+  function numTap(k){const now=performance.now();
+    if(lastTap.k===k&&now-lastTap.t<380){lastTap={k:null,t:0};resetKey(k);flashRow(k);return}
+    lastTap={k,t:now};const sec=SDEF[k][0];setTab('model');$('#adv').open=true;const d=$('#sec-'+sec);if(d)d.open=true;
+    const r=rows[k];r.row.scrollIntoView({block:'center',behavior:'smooth'});flashRow(k);setHL(k);clearHL();
+    try{r.inp.focus({preventScroll:true})}catch(e){}}
+  function flashRow(k){const r=rows[k].row;r.classList.remove('flash');void r.offsetWidth;r.classList.add('flash')}
+  function syncRow(k){const r=rows[k];r.inp.value=S[k];r.val.textContent=fmt(k);const dv=defaultFor(k);r.rs.hidden=dv===undefined||Math.abs(S[k]-dv)<1e-6}
+  function syncAngles(){['yaw','pitch','roll','zoom'].forEach(syncRow)}
+  function updMod(){$('#modrow').hidden=!isModified()}
+  function segOn(sel,val){$$(sel+' button').forEach(b=>{const on=b.dataset.val===String(val);b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)})}
+  function syncAll(){for(const k in rows)syncRow(k);
+    markLP();segOn('#seg-shade',S.shade);segOn('#seg-tones',String(S.tones));$('#solidon').checked=!!S.solid;$('#haloon').checked=S.halo!==false;$('#matcol').value=S.mat;
+    segOn('#seg-method',S.method);segOn('#seg-style',S.style);segOn('#seg-base',S.base);segOn('#seg-hidden',S.hidden);segOn('#seg-color',S.colorMode);
+    segOn('#seg-expbg',S.expBg);segOn('#seg-sheet',S.sheetN);segOn('#seg-sheetc',S.sheetC||'both');$('#sheetsty').checked=!!S.sheetSty;segOn('#seg-pal',S.palette);segOn('#seg-expsize',S.expSize);
+    $('#cropon').checked=S.expCrop!==false;$('#pscene').checked=S.presetScene!==false;segOn('#seg-nums',S.nums);document.body.classList.toggle('nonums',S.nums==='off');$('#sheetlbl').checked=S.sheetLbl!==false;updGrid();$('#snapon').checked=!!S.snap;$('#fb-solid').classList.toggle('on',!!S.solid);
+    $('#mdesc').textContent=t('md_'+S.method);placeLight();
+    $('#mono').value=S.mono;$('#monorow').hidden=S.colorMode!=='mono';
+    $$('#groups input').forEach(i=>i.checked=!!S.groups[i.dataset.g]);updMod()}
+  function bindSeg(sel,key,after){$$(sel+' button').forEach(b=>b.addEventListener('click',()=>{flush();S[key]=b.dataset.val;segOn(sel,S[key]);if(after)after();changed()}))}
+
+  // starting point: replacing changed proportions offers an undo
+  function applyPreset(wasMod){Object.assign(S,presetValues(S.style,S.base));rebuild();syncAll();persist();commit();
+    if(wasMod)toast(t('toast_preset'),t('undo'),undo)}
+  for(const[sel,key]of[['#seg-style','style'],['#seg-base','base']])
+    $$(sel+' button').forEach(b=>b.addEventListener('click',()=>{flush();const was=isModified();S[key]=b.dataset.val;segOn(sel,S[key]);applyPreset(was);request()}));
+  $('#btn-reset').addEventListener('click',()=>{flush();applyPreset(true)});
+  bindSeg('#seg-hidden','hidden');
+  bindSeg('#seg-color','colorMode',()=>{$('#monorow').hidden=S.colorMode!=='mono'});
+  // light presets: direction, height, strength, fill
+  function markLP(){$$('#seg-lpre button').forEach(b=>{const v=LPRE[b.dataset.lp];const on=v[0]===Math.round(S.lightAz)&&v[1]===Math.round(S.lightEl)&&v[2]===Math.round(S.lightInt)&&v[3]===Math.round(S.amb);b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)})}
+  $$('#seg-lpre button').forEach(b=>b.addEventListener('click',()=>{const[a,e,i,m]=LPRE[b.dataset.lp];S.lightAz=a;S.lightEl=e;S.lightInt=i;S.amb=m;['lightAz','lightEl','lightInt','amb'].forEach(syncRow);placeLight();changed()}));
+  bindSeg('#seg-shade','shade');bindSeg('#seg-tones','tones');
+  bindSeg('#seg-expbg','expBg');bindSeg('#seg-sheet','sheetN',()=>updGrid());
+  function updGrid(){const g=String(S.sheetN).startsWith('grid'),pk=S.sheetN==='pick';$('#gridnote').hidden=!g;$('#gridlbl').hidden=!g;
+    $('#sheetviews').hidden=!pk;$('#picknote').hidden=!pk;$('#stylbl').hidden=g;
+    $('#sheetviews').innerHTML='';const on=new Set(S.sheetViews||[]);
+    for(const[key]of VIEWS){const b=document.createElement('button');b.type='button';b.textContent=t(key);b.classList.toggle('on',on.has(key));b.setAttribute('aria-pressed',on.has(key));
+      b.addEventListener('click',()=>{const s2=new Set(S.sheetViews||[]);s2.has(key)?s2.delete(key):s2.add(key);S.sheetViews=VIEWS.map(v=>v[0]).filter(k=>s2.has(k));const kb=document.activeElement===b;updGrid();if(kb)$$('#sheetviews button')[VIEWS.findIndex(v=>v[0]===key)].focus();save()});$('#sheetviews').appendChild(b)}}
+  bindSeg('#seg-sheetc','sheetC');$('#sheetsty').addEventListener('change',e=>{S.sheetSty=e.target.checked;save()});
+  $('#sheetlbl').addEventListener('change',e=>{S.sheetLbl=e.target.checked;save()});bindSeg('#seg-expsize','expSize');
+  bindSeg('#seg-pal','palette',()=>renderGroups());
+  $('#cropon').addEventListener('change',e=>{S.expCrop=e.target.checked;save()});
+  bindSeg('#seg-nums','nums',()=>document.body.classList.toggle('nonums',S.nums==='off'));
+  // keep track of the open fine-settings sections (for "open section" numbers)
+  const updSecs=()=>{const adv=$('#adv');NUMSECS=new Set(adv.open?$$('#adv details[open]').map(d=>d.id.replace('sec-','')):[]);request()};
+  $$('#adv,#adv details').forEach(d=>d.addEventListener('toggle',updSecs));updSecs();
+  const centerHead=()=>{flush();S.panX=S.panY=0;changed()};
+  $('#fb-center').addEventListener('click',centerHead);$('#btn-center').addEventListener('click',centerHead);
+  $('#snapon').addEventListener('change',e=>{S.snap=e.target.checked;save()});
+  $('#fb-solid').addEventListener('click',()=>{if(!GL.ok)return;flush();S.solid=!S.solid;syncAll();changed()});
+  $$('#fbar [data-q]').forEach(b=>b.addEventListener('click',()=>animateTo(QUICK[+b.dataset.q][1])));
+  // light pad: the dot is the light seen from the front (front hemisphere)
+  function placeLight(){const az=S.lightAz*DEG,el=S.lightEl*DEG,back=Math.abs(S.lightAz)>90,x=Math.sin(az)*Math.cos(el),y=Math.sin(el);
+    const d=$('#ldot');d.style.left=(50+x*44)+'%';d.style.top=(50-y*44)+'%';d.classList.toggle('back',back)}
+  {const pad=$('#lpad');let dragging=false;
+    const setFrom=e=>{const r=pad.getBoundingClientRect();let nx=((e.clientX-r.left)/r.width-.5)/.44,ny=-((e.clientY-r.top)/r.height-.5)/.44;
+      const m=Math.hypot(nx,ny);if(m>1){nx/=m;ny/=m}const el=Math.asin(clamp(ny,-1,1)),ce=Math.cos(el);
+      S.lightEl=Math.round(el/DEG);S.lightAz=Math.round(ce>1e-3?Math.asin(clamp(nx/ce,-1,1))/DEG:0);syncRow('lightAz');syncRow('lightEl');placeLight();changed()};
+    pad.addEventListener('pointerdown',e=>{dragging=true;pad.setPointerCapture(e.pointerId);setFrom(e)});
+    pad.addEventListener('pointermove',e=>{if(dragging)setFrom(e)});
+    pad.addEventListener('pointerup',()=>{dragging=false});pad.addEventListener('pointercancel',()=>{dragging=false})}
+  $('#solidon').addEventListener('change',e=>{S.solid=e.target.checked;changed()});
+  $('#haloon').addEventListener('change',e=>{S.halo=e.target.checked;changed()});
+  $('#matcol').addEventListener('input',e=>{S.mat=e.target.value;changed()});
+  $('#mono').addEventListener('input',e=>{S.mono=e.target.value;changed()});
+  try{if(!initGL($('#gl')))throw 0}catch(e){GL.ok=false;S.solid=false;$('#nogl').hidden=false;$('#solidon').disabled=true}
+
+  // ---------- my presets ----------
+  const PSTORE='loomis-heads-presets-v1';
+  // first-use help, reopened with the ? button
+  const HSTORE='gerador-cabecas-help-v1',help=$('#help');
+  let helpFrom=null;const openHelp=()=>{helpFrom=document.activeElement;help.hidden=false;$('#help-ok').focus()},closeHelp=()=>{help.hidden=true;try{localStorage.setItem(HSTORE,'1')}catch(e){}
+    if(helpFrom&&helpFrom.focus&&document.contains(helpFrom))helpFrom.focus();helpFrom=null};
+  $('#btn-help').addEventListener('click',openHelp);$('#help-ok').addEventListener('click',closeHelp);
+  help.addEventListener('click',e=>{if(e.target===help)closeHelp()});
+  // while the help is open: Esc/Enter close it, Tab stays on its button, other shortcuts don't reach the head behind it
+  document.addEventListener('keydown',e=>{if(help.hidden)return;if(e.key==='Escape'||e.key==='Enter'){e.preventDefault();e.stopPropagation();closeHelp()}
+    else if(e.key==='Tab'){e.preventDefault();$('#help-ok').focus()}else if(e.key!==' ')e.stopPropagation()},true);
+  {let seen=false;try{seen=!!localStorage.getItem(HSTORE)}catch(e){seen=true}if(!seen&&!/[?&]nohelp/.test(location.search))openHelp()}
+  let presets=[];try{presets=JSON.parse(localStorage.getItem(PSTORE))||[]}catch(e){}
+  const storePresets=()=>{try{localStorage.setItem(PSTORE,JSON.stringify(presets))}catch(e){}};
+  function renderPresets(sel){const el=$('#psel');el.textContent='';
+    if(!presets.length){el.add(new Option(t('p_none'),''));el.disabled=true}
+    else{el.disabled=false;presets.forEach((p,i)=>el.add(new Option(p.scene?`${p.name} · ${t('p_scene_tag')}`:p.name,String(i))));if(sel!==undefined)el.value=String(sel)}
+    $('#p-apply').disabled=$('#p-del').disabled=!presets.length}
+  // what a "full scene" preset keeps besides the proportions
+  const SCENE_NUM=['yaw','pitch','roll','persp','zoom','lightAz','lightEl','lightInt','amb','lw','neckFollow','panX','panY','vol'];
+  const SCENE_ENUM={method:Object.keys(METHODS),shade:['flat','smooth'],tones:['0','2','3','4'],hidden:['dash','hide','xray'],colorMode:['group','mono'],palette:['std','cb']};
+  const SCENE_BOOL=['solid','halo'],SCENE_HEX=['mat','mono'];
+  const sceneOf=()=>{const o={groups:{...S.groups}};SCENE_NUM.forEach(k=>o[k]=S[k]);Object.keys(SCENE_ENUM).forEach(k=>o[k]=S[k]);SCENE_BOOL.forEach(k=>o[k]=S[k]);SCENE_HEX.forEach(k=>o[k]=S[k]);return o};
+  // files from elsewhere are checked field by field; anything unknown or out of range is dropped or clamped
+  function cleanPreset(p){if(!p||typeof p!=='object'||typeof p.name!=='string'||!p.name.trim()||!p.vals||typeof p.vals!=='object')return null;
+    const out={name:p.name.trim().slice(0,40),style:STYLES[p.style]?p.style:'loomis',base:BASES[p.base]?p.base:'masc',vals:{}};
+    const base=presetValues(out.style,out.base);
+    for(const k of PKEYS){const v=Number(p.vals[k]),d=SDEF[k];out.vals[k]=Number.isFinite(v)?+clamp(v,d[2],d[3]).toFixed(3):base[k]}
+    if(p.scene&&typeof p.scene==='object'){const sc={},q=p.scene;
+      for(const k of SCENE_NUM){const v=Number(q[k]),d=SDEF[k];if(Number.isFinite(v))sc[k]=d?clamp(v,d[2],d[3]):clamp(v,-1.5,1.5)}
+      for(const k in SCENE_ENUM)if(SCENE_ENUM[k].includes(String(q[k])))sc[k]=String(q[k]);
+      for(const k of SCENE_BOOL)if(typeof q[k]==='boolean')sc[k]=q[k];
+      for(const k of SCENE_HEX)if(typeof q[k]==='string'&&/^#[0-9a-f]{6}$/i.test(q[k]))sc[k]=q[k];
+      if(q.groups&&typeof q.groups==='object'){sc.groups={};for(const g in DEFAULT.groups)if(typeof q.groups[g]==='boolean')sc.groups[g]=q.groups[g]}
+      out.scene=sc}
+    return out}
+  $('#pscene').addEventListener('change',e=>{S.presetScene=e.target.checked;persist()});
+  $('#p-save').addEventListener('click',()=>{const name=$('#pname').value.trim()||`${t('preset')} ${presets.length+1}`,vals={};PKEYS.forEach(k=>vals[k]=S[k]);
+    const entry={name,style:S.style,base:S.base,vals},i=presets.findIndex(p=>p.name===name);if(S.presetScene!==false)entry.scene=sceneOf();
+    if(i>=0)presets[i]=entry;else presets.push(entry);storePresets();renderPresets(i>=0?i:presets.length-1);$('#pname').value='';toast(t('p_saved'))});
+  $('#pname').addEventListener('keydown',e=>{if(e.key==='Enter')$('#p-save').click()});
+  $('#p-apply').addEventListener('click',()=>{const p=presets[+$('#psel').value];if(!p)return;flush();
+    Object.assign(S,{style:p.style,base:p.base},p.vals);
+    if(p.scene){const{groups,...rest}=p.scene;Object.assign(S,rest);if(groups)S.groups={...S.groups,...groups};anim=null}
+    rebuild();renderGroups();syncAll();persist();commit();request();toast(t('p_applied'),t('undo'),undo)});
+  $('#p-export').addEventListener('click',()=>{if(!presets.length){toast(t('p_noexp'));return}
+    const data={app:'gerador-de-cabecas',kind:'presets',version:1,presets};
+    download(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),`presets-gerador-de-cabecas.json`)});
+  $('#p-import').addEventListener('click',()=>$('#p-file').click());
+  $('#p-file').addEventListener('change',e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+    f.text().then(txt=>{let data;try{data=JSON.parse(txt)}catch(err){data=null}
+      const list=data&&data.kind==='presets'&&Array.isArray(data.presets)?data.presets.map(cleanPreset).filter(Boolean):[];
+      if(!list.length){toast(t('p_badfile'));return}
+      for(const p of list){const i=presets.findIndex(q=>q.name===p.name);if(i>=0)presets[i]=p;else presets.push(p)}
+      storePresets();renderPresets(presets.findIndex(q=>q.name===list[list.length-1].name));toast(t('p_imported')+list.length)},()=>toast(t('p_badfile')))});
+  $('#p-del').addEventListener('click',()=>{const i=+$('#psel').value;if(!presets[i])return;presets.splice(i,1);storePresets();renderPresets();toast(t('p_deleted'))});
+
+  // ---------- tabs ----------
+  function setTab(id){S.tab=id;$$('.tabs button').forEach(b=>{const on=b.dataset.tab===id;b.classList.toggle('on',on);b.setAttribute('aria-selected',on)});
+    $$('.pane').forEach(p=>p.hidden=p.dataset.pane!==id);persist()}
+  $$('.tabs button').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));
+
+  // ---------- quick angles ----------
+  for(const[key,ang]of QUICK){const b=document.createElement('button');b.className='btn';b.dataset.i18n=key;
+    b.addEventListener('click',()=>animateTo(ang||{yaw:Math.round(Math.random()*300-150),pitch:Math.round(Math.random()*80-40),roll:Math.round(Math.random()*36-18)}));
+    $('#quick').appendChild(b)}
+
+  // ---------- guide groups ----------
+  function renderGroups(){const host=$('#groups');host.textContent='';DARK=darkQ.matches;
+    for(const g of METHODS[S.method]||METHODS.loomis){const l=document.createElement('label');l.className='tog';
+      l.innerHTML=`<input type="checkbox" data-g="${g}"><span class="sw" style="background:${palColor(g)}"></span><span data-gl="${g}"></span>`;
+      const inp=l.querySelector('input');inp.checked=!!S.groups[g];
+      inp.addEventListener('change',e=>{S.groups[g]=e.target.checked;changed()});host.appendChild(l)}
+    host.querySelectorAll('[data-gl]').forEach(el=>{const gg=GROUPS.find(x=>x[0]===el.dataset.gl);el.textContent=gg[S.lang==='en'?3:2]});DARK=false}
+  bindSeg('#seg-method','method',()=>{renderGroups();$('#mdesc').textContent=t('md_'+S.method)});
+
+  // ---------- language ----------
+  function applyLang(){document.documentElement.lang=S.lang==='en'?'en':'pt-BR';document.title=t('title');
+    $$('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n));
+    $$('[data-ph]').forEach(el=>el.placeholder=t(el.dataset.ph));
+    updGrid();
+    $$('[data-tip]').forEach(el=>{el.title=t(el.dataset.tip);el.setAttribute('aria-label',t(el.dataset.tip))});
+    for(const k in rows){rows[k].nm.textContent=lab(k);rows[k].rs.title=t('reset_one')}
+    $$('[data-gl]').forEach(el=>{const g=GROUPS.find(x=>x[0]===el.dataset.gl);el.textContent=g[S.lang==='en'?3:2]});
+    $$('.lang button').forEach(b=>b.classList.toggle('on',b.dataset.lang===S.lang));
+    $('#mdesc').textContent=t('md_'+S.method);renderPresets($('#psel').value);setMove(moveRef);request()}
+  $$('.lang button').forEach(b=>b.addEventListener('click',()=>{S.lang=b.dataset.lang;applyLang();persist()}));
+
+  // ---------- undo / redo ----------
+  $$('[data-act=undo]').forEach(b=>b.addEventListener('click',undo));
+  $$('[data-act=redo]').forEach(b=>b.addEventListener('click',redo));
+  // keyboard: arrows turn/tilt (Shift+arrows move the head), Q/E roll, 1–5 quick views, 0 centers, +/− zoom, S solid
+  document.addEventListener('keydown',e=>{if(e.metaKey||e.ctrlKey||e.altKey)return;const tg=e.target;
+    if(tg&&(/^(INPUT|SELECT|TEXTAREA)$/.test(tg.tagName)||tg.isContentEditable))return;
+    const k=e.key,step=15,turn=(dy,dp,dr)=>{flush();const base=anim?anim.to:S;animateTo({yaw:wrap(Math.round((base.yaw+dy)/step)*step),pitch:clamp(Math.round((base.pitch+dp)/step)*step,-75,75),roll:clamp(Math.round((base.roll+dr)/step)*step,-45,45)})};
+    let done=true;
+    if(e.shiftKey&&k.startsWith('Arrow')){const d=e.repeat?.03:.02;panBy(k==='ArrowLeft'?-d*pm():k==='ArrowRight'?d*pm():0,k==='ArrowUp'?-d*pm():k==='ArrowDown'?d*pm():0);changed()}
+    else if(k==='ArrowLeft')turn(-step,0,0);else if(k==='ArrowRight')turn(step,0,0);
+    else if(k==='ArrowUp')turn(0,-step,0);else if(k==='ArrowDown')turn(0,step,0);
+    else if(k==='q'||k==='Q')turn(0,0,-step);else if(k==='e'||k==='E')turn(0,0,step);
+    else if(/^[1-5]$/.test(k))animateTo(QUICK[+k-1][1]);
+    else if(k==='0'){flush();S.panX=S.panY=0;changed()}
+    else if(k==='+'||k==='='){S.zoom=clamp(S.zoom*1.1,50,200);syncAngles();changed()}
+    else if(k==='-'||k==='_'){S.zoom=clamp(S.zoom/1.1,50,200);syncAngles();changed()}
+    else if((k==='s'||k==='S')&&GL.ok){flush();S.solid=!S.solid;syncAll();changed()}
+    else done=false;
+    if(done)e.preventDefault()});
+  document.addEventListener('keydown',e=>{if(!(e.metaKey||e.ctrlKey))return;const tg=e.target;if(tg&&(tg.tagName==='INPUT'&&tg.type==='text'))return;
+    const k=e.key.toLowerCase();if(k==='z'){e.preventDefault();e.shiftKey?redo():undo()}else if(k==='y'){e.preventDefault();redo()}});
+
+  // ---------- reference drawing ----------
+  const ref=$('#ref'),R={x:0,y:0,s:1,o:35};let moveRef=false;
+  const REFSL=[['o',5,90,1,'ref_op'],['s',.1,5,.01,'ref_sc'],['x',-800,800,1,'ref_x'],['y',-800,800,1,'ref_y']],refIn={};
+  for(const[k,min,max,step,lk]of REFSL){const row=document.createElement('div');row.className='row';
+    row.innerHTML=`<div class="lab"><span data-i18n="${lk}"></span><b></b></div><input type="range" id="ref-${k}" min="${min}" max="${max}" step="${step}">`;
+    $('#refsl').appendChild(row);const inp=row.querySelector('input');inp.addEventListener('input',()=>{R[k]=+inp.value;applyRef()});refIn[k]={inp,val:row.querySelector('b')}}
+  function applyRef(){storeRef();
+    ref.style.opacity=R.o/100;ref.style.transform=`translate(${R.x}px,${R.y}px) scale(${R.s})`;
+    for(const k in refIn){refIn[k].inp.value=R[k];refIn[k].val.textContent=k==='o'?Math.round(R.o)+'%':k==='s'?R.s.toFixed(2)+'×':Math.round(R[k])+' px'}}
+  function setMove(on){moveRef=on;const b=$('#btn-move');b.classList.toggle('on',on);b.textContent=t(on?'ref_moving':'ref_move');svg.style.cursor=on?'move':'';
+    $('#mbadge').hidden=!on;document.querySelector('.hint').hidden=on}
+  $('#mbadge').addEventListener('click',()=>setMove(false));
+  const RSTORE='loomis-heads-ref-v1';let refData=null,refSaveT=null;
+  function storeRef(){clearTimeout(refSaveT);refSaveT=setTimeout(()=>{if(!refData)return;try{localStorage.setItem(RSTORE,JSON.stringify({d:refData,R}))}catch(e){toast(t('ref_nosave'))}},400)}
+  function showRef(d){refData=d;ref.src=d;$('#thumb').src=d;$('#thumb').hidden=false;$('#droptxt').dataset.i18n='drop_ok';$('#droptxt').textContent=t('drop_ok');
+    $('#refctl').hidden=false;$('#refon').checked=true;ref.hidden=false}
+  // shrink big images so the drawing can be kept in the browser between sessions
+  function setImage(f){if(!f||!/^image\//.test(f.type))return;const url=URL.createObjectURL(f),im=new Image();
+    im.onload=()=>{const m=1600,k=Math.min(1,m/Math.max(im.width,im.height)),cv=document.createElement('canvas');cv.width=Math.round(im.width*k);cv.height=Math.round(im.height*k);
+      cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);URL.revokeObjectURL(url);
+      const d=f.type==='image/png'?cv.toDataURL('image/png'):cv.toDataURL('image/jpeg',.88);
+      showRef(d.length>3.5e6?cv.toDataURL('image/jpeg',.8):d);Object.assign(R,{x:0,y:0,s:1});applyRef()};
+    im.src=url}
+  $('#file').addEventListener('change',e=>setImage(e.target.files[0]));
+  const drop=$('#drop');
+  drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('over')});
+  drop.addEventListener('dragleave',()=>drop.classList.remove('over'));
+  drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('over');setImage(e.dataTransfer.files[0])});
+  document.addEventListener('paste',e=>{const it=[...(e.clipboardData?.items||[])].find(i=>i.type.startsWith('image/'));if(it)setImage(it.getAsFile())});
+  $('#refon').addEventListener('change',e=>{ref.hidden=!e.target.checked});
+  $('#btn-move').addEventListener('click',()=>setMove(!moveRef));
+  $('#btn-refreset').addEventListener('click',()=>{Object.assign(R,{x:0,y:0,s:1});applyRef()});
+  $('#btn-refdel').addEventListener('click',()=>{ref.hidden=true;ref.removeAttribute('src');refData=null;try{localStorage.removeItem(RSTORE)}catch(e){}$('#thumb').hidden=true;
+    $('#droptxt').dataset.i18n='drop';$('#droptxt').textContent=t('drop');$('#refctl').hidden=true;$('#file').value='';setMove(false)});
+  try{const sv=JSON.parse(localStorage.getItem(RSTORE));if(sv&&sv.d){Object.assign(R,sv.R||{});showRef(sv.d)}}catch(e){}
+  applyRef();
+
+  // ---------- pointer: drag to rotate, pinch to zoom ----------
+  const ptrs=new Map();
+  let raw=null;
+  let panBtn=false,numCand=null;const pm=()=>Math.min(svg.clientWidth,svg.clientHeight)||600;
+  const panBy=(dx,dy)=>{S.panX=clamp((S.panX||0)+dx/pm(),-1.5,1.5);S.panY=clamp((S.panY||0)+dy/pm(),-1.5,1.5)};
+  svg.addEventListener('contextmenu',e=>e.preventDefault());
+  // Safari: keep a pinch on the drawing from zooming the whole page
+  for(const ev of['gesturestart','gesturechange'])$('#stage').addEventListener(ev,e=>e.preventDefault());
+  svg.addEventListener('pointerdown',e=>{
+    // a number reacts only to a short tap; a drag that starts on it still rotates the head
+    const num=e.target.closest&&e.target.closest('[data-num]');numCand=num&&!moveRef&&!ptrs.size?{k:num.dataset.num,x:e.clientX,y:e.clientY}:null;
+    svg.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});anim=null;raw={y:S.yaw,p:S.pitch};
+    panBtn=e.pointerType==='mouse'&&(e.button===1||e.button===2)});
+  svg.addEventListener('pointermove',e=>{const p=ptrs.get(e.pointerId);if(!p)return;
+    if(numCand&&(ptrs.size>1||Math.hypot(e.clientX-numCand.x,e.clientY-numCand.y)>6))numCand=null;
+    if(moveRef){
+      if(ptrs.size===1){R.x+=e.clientX-p.x;R.y+=e.clientY-p.y}
+      else if(ptrs.size===2){const o=[...ptrs.entries()].find(([id])=>id!==e.pointerId)[1];
+        const d0=Math.hypot(p.x-o.x,p.y-o.y)||1,d1=Math.hypot(e.clientX-o.x,e.clientY-o.y);R.s=clamp(R.s*d1/d0,.1,5)}
+      p.x=e.clientX;p.y=e.clientY;applyRef();return}
+    if(ptrs.size===1&&panBtn){panBy(e.clientX-p.x,e.clientY-p.y)}
+    else if(ptrs.size===1){raw=raw||{y:S.yaw,p:S.pitch};raw.y+=(e.clientX-p.x)*.5;raw.p=clamp(raw.p+(e.clientY-p.y)*.4,-75,75);const sn=S.snap||e.shiftKey;
+      S.yaw=wrap(sn?Math.round(raw.y/15)*15:raw.y);S.pitch=sn?Math.round(raw.p/15)*15:raw.p}
+    else if(ptrs.size===2){const o=[...ptrs.entries()].find(([id])=>id!==e.pointerId)[1];
+      const d0=Math.hypot(p.x-o.x,p.y-o.y)||1,d1=Math.hypot(e.clientX-o.x,e.clientY-o.y);S.zoom=clamp(S.zoom*d1/d0,50,200);
+      // two fingers: the midpoint moves the head, the spread zooms
+      panBy((e.clientX-p.x)/2,(e.clientY-p.y)/2)}
+    p.x=e.clientX;p.y=e.clientY;syncAngles();request()});
+  const up=e=>{if(ptrs.delete(e.pointerId)){raw=null;if(!ptrs.size)panBtn=false;
+    if(numCand&&e.type==='pointerup'&&!ptrs.size){const k=numCand.k;numCand=null;numTap(k);return}numCand=null;save()}};
+  svg.addEventListener('pointerup',up);svg.addEventListener('pointercancel',up);
+  svg.addEventListener('wheel',e=>{e.preventDefault();if(moveRef){R.s=clamp(R.s*Math.exp(-e.deltaY*.0012),.1,5);applyRef();return}S.zoom=clamp(S.zoom*Math.exp(-e.deltaY*.0012),50,200);syncAngles();changed()},{passive:false});
+
+  // ---------- export ----------
+  const stamp=()=>`${S.method}_${S.style}_${S.base}`;
+  // ow/oh: pixel size the SVG is rasterized at, so lines stay sharp when the image is enlarged
+  const svgDoc=(W,H,bg,ow=W,oh=H)=>`<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${ow}" height="${oh}" viewBox="0 0 ${W} ${H}">${buildMarkup(W,H,bg)}</svg>`;
+  const loadImg=src=>new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=rej;im.src=src});
+  function download(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},60000)}
+  const bgCol=()=>S.expBg==='w'?'#ffffff':null;
+  // the solid (WebGL) and the guides (SVG) drawn together into one canvas
+  async function snapshot(W,H,sc,bg,noGuides){const cv=document.createElement('canvas');cv.width=Math.round(W*sc);cv.height=Math.round(H*sc);const cx=cv.getContext('2d');
+    if(bg){cx.fillStyle=bg;cx.fillRect(0,0,cv.width,cv.height)}
+    if(S.solid&&GL.ok){renderGL(W,H,sc);cx.drawImage(GL.canvas,0,0,cv.width,cv.height)}
+    if(noGuides)return cv;
+    const im=await loadImg('data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svgDoc(W,H,null,cv.width,cv.height)));cx.drawImage(im,0,0,cv.width,cv.height);return cv}
+  // iPad/Safari refuses canvases above ~16.7 million pixels; stay under it everywhere
+  const MAXPX=16e6;
+  // render only a region (box, in view pixels) of the current view, at its own resolution:
+  // zoom and pan are adjusted so the head lands exactly where it was inside that region
+  async function renderRegion(W,H,box,target,bg){const keep=[S.zoom,S.panX,S.panY],m=Math.min(W,H),m2=Math.min(box.w,box.h);
+    const ox=(S.panX||0)*m,oy=(S.panY||0)*m;
+    S.zoom=S.zoom*m/m2;S.panX=(W/2+ox-box.x-box.w/2)/m2;S.panY=(H/2+oy-box.y-box.h/2)/m2;
+    const sc=Math.min(target/Math.max(box.w,box.h),GL.max/box.w,GL.max/box.h,Math.sqrt(MAXPX/(box.w*box.h)),8);
+    try{return await snapshot(box.w,box.h,sc,bg)}finally{[S.zoom,S.panX,S.panY]=keep}}
+  const toBlob=cv=>new Promise(r=>cv.toBlob(r,'image/png'));
+  // bounding box of everything drawn (solid + guides), from a transparent low-res pass
+  function alphaBox(cv){try{const w=cv.width,h=cv.height,d=cv.getContext('2d').getImageData(0,0,w,h).data;let x0=w,y0=h,x1=-1,y1=-1;
+      for(let y=0;y<h;y+=2)for(let x=0;x<w;x+=2)if(d[(y*w+x)*4+3]>10){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}
+      return x1<0?null:{x:x0,y:y0,w:x1-x0+1,h:y1-y0+1}}catch(e){return null}}
+  async function makePNG(){const W=svg.clientWidth,H=svg.clientHeight,target=+S.expSize||2048;
+    try{let box={x:0,y:0,w:W,h:H};
+      if(S.expCrop!==false){const b=alphaBox(await snapshot(W,H,1,null));if(b){const m=Math.max(b.w,b.h)*.06,x0=Math.max(0,b.x-m),y0=Math.max(0,b.y-m);box={x:x0,y:y0,w:Math.min(W,b.x+b.w+m)-x0,h:Math.min(H,b.y+b.h+m)-y0}}}
+      return await toBlob(await renderRegion(W,H,box,target,bgCol()))}finally{request()}}
+  // model sheet: named views, or an angle grid (columns turn the head, rows tilt it from looking up to looking down)
+  function sheetCells(){const k=S.sheetN;
+    if(k==='grid3'||k==='grid5'){const yaws=k==='grid3'?[-60,0,60]:[-90,-45,0,45,90],pitches=k==='grid3'?[-40,0,40]:[-60,-30,0,30,60];
+      const cells=[];for(const p of pitches)for(const y of yaws)cells.push({y,p,label:`${lab('yaw')} ${y}° · ${lab('pitch').split(' (')[0]} ${p}°`});
+      return{cells,cols:yaws.length,C:k==='grid3'?640:520,small:true}}
+    let vs;if(k==='pick'){const on=new Set(S.sheetViews||[]);vs=VIEWS.filter(v=>on.has(v[0]))}else vs=VIEWS.slice(0,k==='6'?6:4);
+    const n=vs.length,cells=vs.map(([key,y,p])=>({y,p,label:t(key)}));
+    // one row per style: same views, each style from its own starting point
+    if(S.sheetSty){const out=[];for(const st of Object.keys(STYLES))for(const c of cells)out.push({...c,style:st,label:`${t('st_'+st)} · ${c.label}`});return{cells:out,cols:n,C:n>4?460:560,small:false}}
+    return{cells,cols:n<=3?n:n===4?2:3,C:700,small:false}}
+  async function makeSheet(pv){const{cells,cols,C,small}=sheetCells();if(!cells.length){toast(t('sheet_min'));return null}const k=pv?Math.min(.3,700/(cols*C)):1,rows=Math.ceil(cells.length/cols),showLbl=!small||S.sheetLbl!==false;
+    const pad=small?16:28,lblH=showLbl?(small?30:44):0,headH=76,bg=bgCol();
+    const out=document.createElement('canvas');out.width=Math.round((cols*C+(cols+1)*pad)*k);out.height=Math.round((headH+rows*(C+lblH)+rows*pad)*k);const cx=out.getContext('2d');cx.scale(k,k);const OW=out.width/k;
+    if(bg){cx.fillStyle=bg;cx.fillRect(0,0,OW,out.height/k)}
+    const font='-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
+    cx.fillStyle='#1d1d1f';cx.font=`600 30px ${font}`;cx.textBaseline='alphabetic';cx.textAlign='left';cx.fillText(t('title'),pad,50);
+    cx.fillStyle='#6d6c70';cx.font=`400 22px ${font}`;cx.textAlign='right';cx.fillText(S.sheetSty&&!small?`${t('m_'+S.method)} · ${t('b_'+S.base)}`:`${t('m_'+S.method)} · ${t('st_'+S.style)} · ${t('b_'+S.base)}`,OW-pad,50);
+    const keep=[S.yaw,S.pitch,S.roll,S.zoom,S.panX,S.panY,S.solid],keepP={style:S.style};PKEYS.forEach(k=>keepP[k]=S[k]);let cur=S.style;
+    anim=null;S.zoom=small?112:122;S.panX=S.panY=0;const sc=S.sheetC||'both';if(sc==='guides')S.solid=false;if(sc==='solid'&&GL.ok)S.solid=true;
+    try{for(let i=0;i<cells.length;i++){const c=cells[i];S.yaw=c.y;S.pitch=c.p;S.roll=0;
+        if(c.style&&c.style!==cur){Object.assign(S,presetValues(c.style,S.base));S.style=c.style;cur=c.style;rebuild()}else if(S.solid!==keep[6]||i===0)rebuild();
+        const cv=await snapshot(C,C,k,null,sc==='solid'),x=pad+(i%cols)*(C+pad),yy=headH+Math.floor(i/cols)*(C+lblH+pad);
+        cx.drawImage(cv,x,yy,C,C);
+        if(showLbl){cx.fillStyle='#4a4a4f';cx.font=`500 ${small?18:24}px ${font}`;cx.textAlign='center';cx.fillText(c.label,x+C/2,yy+C+(small?22:34))}}}
+    finally{[S.yaw,S.pitch,S.roll,S.zoom,S.panX,S.panY,S.solid]=keep;Object.assign(S,keepP);rebuild();request()}
+    return pv?out:toBlob(out)}
+  async function run(btn,job,name){if(btn.disabled)return;btn.disabled=true;const old=btn.textContent;btn.textContent=t('working');
+    try{const blob=await job();if(blob)download(blob,name)}finally{btn.disabled=false;btn.textContent=old}}
+  $('#ex-png').addEventListener('click',e=>run(e.currentTarget,makePNG,`cabeca_${stamp()}_${Math.round(S.yaw)}.png`));
+  $('#ex-glb').addEventListener('click',()=>download(new Blob([buildGLB($('#glbpose').checked,$('#glbguides').checked)],{type:'model/gltf-binary'}),`cabeca_${stamp()}.glb`));
+  $('#ex-copy').addEventListener('click',()=>{if(!navigator.clipboard||!window.ClipboardItem){toast(t('copy_fail'));return}
+    navigator.clipboard.write([new ClipboardItem({'image/png':makePNG()})]).then(()=>toast(t('copied')),()=>toast(t('copy_fail')))});
+  $('#ex-svg').addEventListener('click',()=>download(new Blob([svgDoc(svg.clientWidth,svg.clientHeight,S.expBg==='w'?'#ffffff':null)],{type:'image/svg+xml'}),`cabeca_${stamp()}_${Math.round(S.yaw)}.svg`));
+  $('#ex-sheetpv').addEventListener('click',async e=>{const btn=e.currentTarget;if(btn.disabled)return;btn.disabled=true;const old=btn.textContent;btn.textContent=t('working');
+    try{const cv=await makeSheet(true);if(cv){const im=$('#sheetpv');im.src=cv.toDataURL('image/png');im.hidden=false;im.style.opacity=1;im.title='';im.alt=t('sheet_pv')}}finally{btn.disabled=false;btn.textContent=old}});
+  // any change to the sheet options greys out an old preview
+  const pvStale=()=>{const im=$('#sheetpv');if(!im.hidden){im.style.opacity=.35;im.title=t('sheet_pvold')}};
+  ['#seg-sheet','#seg-sheetc','#sheetviews','#seg-expbg'].forEach(q=>$(q).addEventListener('click',pvStale));['#sheetsty','#sheetlbl'].forEach(q=>$(q).addEventListener('change',pvStale));
+  $('#ex-sheet').addEventListener('click',e=>run(e.currentTarget,makeSheet,`${String(S.sheetN).startsWith('grid')?'grade-de-angulos':'folha-de-modelo'}_${stamp()}.png`));
+
+  new ResizeObserver(request).observe(svg);
+  if(darkQ.addEventListener)darkQ.addEventListener('change',()=>{renderGroups();request()});
+  renderGroups();syncAll();applyLang();setTab(S.tab||'model');commit();request();
+})()}
+</script>
+</body>
+</html>
